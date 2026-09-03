@@ -50,6 +50,32 @@ create policy "profiles: eigene Zeile bei Registrierung anlegen" on public.profi
 create policy "profiles: Admin aktualisiert alle" on public.profiles
   for update using (public.is_admin()) with check (true);
 
+-- Profil automatisch anlegen, sobald sich jemand registriert – per Trigger auf
+-- auth.users statt per Insert vom Client aus. Läuft serverseitig (security
+-- definer, umgeht RLS) und funktioniert dadurch unabhängig davon, ob bei der
+-- Registrierung schon eine angemeldete Sitzung besteht (z.B. wenn "Confirm
+-- email" aktiviert ist, gibt es direkt nach signUp() noch keine Sitzung –
+-- ein Insert vom Client aus würde dann an der RLS-Policy oben scheitern).
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, email, full_name, category)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email,'@',1)),
+    coalesce((new.raw_user_meta_data->>'category')::user_category, 'buffet')
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
 -- ---------- Planungsdaten: 1 Zeile je bisherigem localStorage-Key ----------
 -- ersetzt kidscup-cfg-v1 / kidscup-quali-v9 / kidscup-finale-v9 / kidscup-texts-v1
 create table public.plan_state (

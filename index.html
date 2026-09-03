@@ -1935,15 +1935,17 @@ function doRegister(){
   var cat=document.getElementById("reCat").value;
   if(!name||!email||pass.length<6){ authSay("reMsg","Name, E-Mail und ein Passwort mit mindestens 6 Zeichen ausfüllen.",true); return; }
   authSay("reMsg","Registriere …");
-  sbClient.auth.signUp({email:email,password:pass}).then(function(r){
+  /* Profil wird serverseitig per DB-Trigger angelegt (siehe supabase/schema.sql,
+     handle_new_user) – nicht per Insert vom Client, das würde ohne aktive
+     Sitzung (z.B. bei aktivierter E-Mail-Bestätigung) an der RLS scheitern. */
+  sbClient.auth.signUp({email:email, password:pass, options:{data:{full_name:name, category:cat}}}).then(function(r){
     if(r.error){ authSay("reMsg",r.error.message,true); return; }
-    var uid=r.data.user&&r.data.user.id;
-    if(!uid){ authSay("reMsg","Registrierung eingegangen – falls eine Bestätigungsmail kommt, den Link öffnen und dich danach anmelden.",false); return; }
-    sbClient.from("profiles").insert({id:uid, email:email, full_name:name, category:cat}).then(function(r2){
-      if(r2.error){ authSay("reMsg",r2.error.message,true); return; }
+    if(r.data.session){
       authSay("reMsg","Registriert – warte auf Freigabe durch die Orga.");
       refreshSession();
-    }).catch(function(err){ authSay("reMsg","Profil anlegen fehlgeschlagen: "+((err&&err.message)||err),true); });
+    } else {
+      authSay("reMsg","Registrierung eingegangen – prüfe deine E-Mails, öffne den Bestätigungslink und melde dich danach an.",false);
+    }
   }).catch(function(err){ authSay("reMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 document.getElementById("reGo").onclick=doRegister;
