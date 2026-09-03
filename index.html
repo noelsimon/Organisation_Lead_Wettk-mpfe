@@ -1,0 +1,2352 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Interaktiver Regieplan für Kletterwettkämpfe: Wertungsklassen, Zeitplan, Personal und PDF-Export. Landesverband Sachsen des DAV.">
+<meta name="color-scheme" content="light dark">
+<title>Regieplan Kids Cup Sachsen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Grundlage, die im Claude-Artifact die Laufzeit mitbringt */
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none !important}
+</style>
+<style>
+:root{
+  --bg:#F2F4F0; --surface:#FFFFFF; --surface-2:#E9ECE6; --sunken:#EDEFEA;
+  --ink:#141815; --ink-2:#3F4642; --muted:#6C756F;
+  --line:#D9DED6; --line-strong:#B4BCB2;
+  --c0:#B87708;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
+  --c1:#1F7A55; --c1-m-bg:#EDF7F2; --c1-m-br:#C4E0D3; --c1-w-bg:#CBE7D9; --c1-w-br:#8FC3A9;
+  --c2:#2559A6; --c2-m-bg:#EEF4FC; --c2-m-br:#C7D9F0; --c2-w-bg:#CFE0F4; --c2-w-br:#98BAE1;
+  --c3:#A93B34; --c3-m-bg:#FDF0EE; --c3-m-br:#EDCBC6; --c3-w-bg:#F2D3CE; --c3-w-br:#DBA199;
+  --c4:#763E96; --c4-m-bg:#F7F1FB; --c4-m-br:#DFCDEC; --c4-w-bg:#E3D3F0; --c4-w-br:#BFA3D6;
+  --c5:#0D7480; --c5-m-bg:#EAF7F8; --c5-m-br:#BFDFE3; --c5-w-bg:#C6E7EA; --c5-w-br:#88C0C7;
+  --c6:#83592C; --c6-m-bg:#FAF4EB; --c6-m-br:#E2D3BC; --c6-w-bg:#ECDCC4; --c6-w-br:#C9AE83;
+  --c7:#4A5666; --c7-m-bg:#F1F3F6; --c7-m-br:#D3D9E1; --c7-w-bg:#D6DCE4; --c7-w-br:#AAB4C1;
+  --ok:#1F7A55; --warn:#B87708; --bad:#A93B34; --grid:#D9DED6;
+  --ring:#141815;
+  --shadow:0 1px 2px rgba(20,24,21,.05), 0 8px 24px -18px rgba(20,24,21,.35);
+  --serif:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --disp:"Oswald","Arial Narrow",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121513; --surface:#1A1E1B; --surface-2:#232823; --sunken:#161A17;
+    --ink:#E9EDE7; --ink-2:#BCC4BE; --muted:#8B958E;
+    --line:#2C322E; --line-strong:#454E48;
+    --c0:#E0A63C;  --c0-m-bg:#2A2110; --c0-m-br:#4A3A18; --c0-w-bg:#3E2E10; --c0-w-br:#715620;
+    --c1:#4FBB89; --c1-m-bg:#0E2B20; --c1-m-br:#1C4B38; --c1-w-bg:#134532; --c1-w-br:#2A7355;
+    --c2:#6C9FE0; --c2-m-bg:#13202F; --c2-m-br:#223A5B; --c2-w-bg:#1B3150; --c2-w-br:#345880;
+    --c3:#E5766C; --c3-m-bg:#2E1C1A; --c3-m-br:#4D2C28; --c3-w-bg:#46261F; --c3-w-br:#754038;
+    --c4:#B48BD8; --c4-m-bg:#241830; --c4-m-br:#3E2A52; --c4-w-bg:#33204A; --c4-w-br:#553977;
+    --c5:#49B7C4; --c5-m-bg:#0E2A2E; --c5-m-br:#1B484F; --c5-w-bg:#134048; --c5-w-br:#276C77;
+    --c6:#C79A63; --c6-m-bg:#291F13; --c6-m-br:#48371F; --c6-w-bg:#3B2B16; --c6-w-br:#6B5029;
+    --c7:#9AA8BB; --c7-m-bg:#1B2029; --c7-m-br:#333C49; --c7-w-bg:#252D3A; --c7-w-br:#4A5768;
+    --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#2C322E;
+    --ring:#E9EDE7;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121513; --surface:#1A1E1B; --surface-2:#232823; --sunken:#161A17;
+  --ink:#E9EDE7; --ink-2:#BCC4BE; --muted:#8B958E;
+  --line:#2C322E; --line-strong:#454E48;
+  --c0:#E0A63C;  --c0-m-bg:#2A2110; --c0-m-br:#4A3A18; --c0-w-bg:#3E2E10; --c0-w-br:#715620;
+  --c1:#4FBB89; --c1-m-bg:#0E2B20; --c1-m-br:#1C4B38; --c1-w-bg:#134532; --c1-w-br:#2A7355;
+  --c2:#6C9FE0; --c2-m-bg:#13202F; --c2-m-br:#223A5B; --c2-w-bg:#1B3150; --c2-w-br:#345880;
+  --c3:#E5766C; --c3-m-bg:#2E1C1A; --c3-m-br:#4D2C28; --c3-w-bg:#46261F; --c3-w-br:#754038;
+  --c4:#B48BD8; --c4-m-bg:#241830; --c4-m-br:#3E2A52; --c4-w-bg:#33204A; --c4-w-br:#553977;
+  --c5:#49B7C4; --c5-m-bg:#0E2A2E; --c5-m-br:#1B484F; --c5-w-bg:#134048; --c5-w-br:#276C77;
+  --c6:#C79A63; --c6-m-bg:#291F13; --c6-m-br:#48371F; --c6-w-bg:#3B2B16; --c6-w-br:#6B5029;
+  --c7:#9AA8BB; --c7-m-bg:#1B2029; --c7-m-br:#333C49; --c7-w-bg:#252D3A; --c7-w-br:#4A5768;
+  --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#2C322E;
+  --ring:#E9EDE7;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1140px; margin:0 auto; padding:0 24px}
+@media (max-width:640px){ .wrap{padding:0 16px} }
+
+.masthead{background:var(--surface); border-bottom:1px solid var(--line); padding:44px 0 0}
+.eyebrow{font-family:var(--disp); font-weight:500; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:0 0 10px}
+h1{font-family:var(--disp); font-weight:600; letter-spacing:-.005em; font-size:clamp(34px,5.2vw,54px); line-height:1.03; margin:0; text-wrap:balance}
+.dek{font-size:clamp(16px,2vw,19px); color:var(--ink-2); max-width:62ch; margin:16px 0 0}
+.dek strong{color:var(--ink); font-weight:600}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:1px; background:var(--line); border-top:1px solid var(--line); margin-top:34px}
+.stat{background:var(--surface); padding:16px 4px 18px}
+.stat b{display:block; font-family:var(--mono); font-weight:500; font-size:23px; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.stat span{display:block; font-family:var(--disp); font-size:11px; font-weight:400; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-top:3px}
+
+section{padding:52px 0 4px}
+section + section{border-top:1px solid var(--line)}
+.sec-head{margin:0 0 26px}
+.sec-head p.eyebrow{margin-bottom:6px}
+h2{font-family:var(--disp); font-weight:500; font-size:clamp(22px,3vw,30px); line-height:1.15; margin:0; text-wrap:balance}
+h3{font-family:var(--disp); font-weight:500; font-size:17px; margin:0 0 10px}
+h4{font-family:var(--disp); font-weight:500; font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:0 0 8px}
+p{margin:0 0 14px; max-width:70ch}
+.lede{color:var(--ink-2); max-width:68ch}
+ul,ol{margin:0 0 14px; padding-left:20px; max-width:70ch}
+li{margin-bottom:6px}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+.cards{display:grid; gap:14px; margin:0 0 18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(228px,1fr))}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px; box-shadow:var(--shadow)}
+.card p:last-child,.card ul:last-child{margin-bottom:0}
+.note{background:var(--sunken); border:1px solid var(--line); border-left:3px solid var(--line-strong); border-radius:2px; padding:16px 18px; margin:0 0 18px}
+.note h4{color:var(--ink); letter-spacing:.07em}
+.note p:last-child,.note ul:last-child,.note ol:last-child{margin-bottom:0}
+
+[data-ac="c0"]{--ac:var(--c0);  --m-bg:var(--c0-m-bg);  --m-br:var(--c0-m-br);  --w-bg:var(--c0-w-bg);  --w-br:var(--c0-w-br)}
+[data-ac="c1"]{--ac:var(--c1);--m-bg:var(--c1-m-bg); --m-br:var(--c1-m-br); --w-bg:var(--c1-w-bg); --w-br:var(--c1-w-br)}
+[data-ac="c2"]{--ac:var(--c2);--m-bg:var(--c2-m-bg); --m-br:var(--c2-m-br); --w-bg:var(--c2-w-bg); --w-br:var(--c2-w-br)}
+[data-ac="c3"]{--ac:var(--c3);--m-bg:var(--c3-m-bg); --m-br:var(--c3-m-br); --w-bg:var(--c3-w-bg); --w-br:var(--c3-w-br)}
+[data-ac="c4"]{--ac:var(--c4);--m-bg:var(--c4-m-bg);--m-br:var(--c4-m-br);--w-bg:var(--c4-w-bg);--w-br:var(--c4-w-br)}
+[data-ac="c5"]{--ac:var(--c5);--m-bg:var(--c5-m-bg);--m-br:var(--c5-m-br);--w-bg:var(--c5-w-bg);--w-br:var(--c5-w-br)}
+[data-ac="c6"]{--ac:var(--c6);--m-bg:var(--c6-m-bg);--m-br:var(--c6-m-br);--w-bg:var(--c6-w-bg);--w-br:var(--c6-w-br)}
+[data-ac="c7"]{--ac:var(--c7);--m-bg:var(--c7-m-bg);--m-br:var(--c7-m-br);--w-bg:var(--c7-w-bg);--w-br:var(--c7-w-br)}
+[data-ac="mix"]{--ac:var(--muted);--m-bg:var(--surface-2);--m-br:var(--line-strong);--w-bg:var(--surface-2);--w-br:var(--line-strong)}
+
+.tag{display:inline-flex; align-items:center; gap:6px; font-family:var(--disp); font-size:11px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:2px; color:var(--ac); background:var(--m-bg); border:1px solid var(--m-br)}
+.tag.w{background:var(--w-bg); border-color:var(--w-br)}
+.pill{display:inline-block; font-family:var(--disp); font-size:10.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:2px 7px; border-radius:2px; border:1px solid var(--line-strong); color:var(--muted); white-space:nowrap}
+.pill.bad{color:var(--bad); border-color:var(--bad)}
+.pill.ok{color:var(--ok); border-color:var(--ok)}
+
+.routes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(234px,1fr))}
+.route{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--ac); border-radius:3px; padding:14px 15px 13px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px}
+.route-id{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.route-id b{font-family:var(--disp); font-weight:600; font-size:21px; color:var(--ac)}
+.route-who{font-family:var(--disp); font-size:14px; font-weight:400; color:var(--ink)}
+.route-meta{display:flex; flex-wrap:wrap; gap:6px 10px; font-family:var(--mono); font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.route-desc{font-size:14px; color:var(--ink-2); margin:0}
+
+/* ---------- Gantt ---------- */
+.toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 14px}
+.toolbar .lbl{font-family:var(--disp); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-right:2px}
+.fbtn{font-family:var(--disp); font-size:12.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:5px 12px; border-radius:2px; cursor:pointer; background:var(--surface); color:var(--ink-2); border:1px solid var(--line-strong)}
+.fbtn:hover{border-color:var(--ink-2); color:var(--ink)}
+.fbtn[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.fbtn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.readout{display:flex; flex-wrap:wrap; gap:6px 18px; align-items:baseline; padding:10px 14px; margin:0 0 12px;
+  background:var(--sunken); border:1px solid var(--line); border-radius:3px; font-size:13.5px}
+.readout b{font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--ink)}
+.readout span{color:var(--muted)}
+.readout .flag{font-family:var(--disp); letter-spacing:.06em; text-transform:uppercase; font-size:11.5px; padding:2px 8px; border-radius:2px; border:1px solid var(--ok); color:var(--ok)}
+.readout .flag.bad{border-color:var(--bad); color:var(--bad)}
+
+.gantt{background:var(--surface); border:1px solid var(--line); border-radius:3px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:14px}
+.gantt-scroll{overflow-x:auto}
+.gantt-inner{min-width:860px; padding:0 0 6px}
+.grow{display:grid; grid-template-columns:186px 1fr; align-items:stretch}
+.grow + .grow{border-top:1px solid var(--line)}
+.gaxis{border-bottom:1px solid var(--line-strong); background:var(--surface-2)}
+.rlabel{padding:8px 12px; border-right:1px solid var(--line); display:flex; flex-direction:column; justify-content:center; gap:1px}
+.rlabel b{font-family:var(--disp); font-weight:600; font-size:14px; letter-spacing:.04em; color:var(--ac)}
+.rlabel span{font-size:11.5px; color:var(--muted); line-height:1.3}
+.track{position:relative; min-height:40px; background-image:repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px var(--tick))}
+.gaxis .rlabel{border-right-color:var(--line-strong)}
+.gaxis .track{min-height:26px; background-image:none}
+.gaxis .track .t{position:absolute; top:6px; transform:translateX(-50%); font-family:var(--mono); font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+.gaxis .track .t:first-child{transform:none}
+.gaxis .track .t:last-child{transform:translateX(-100%)}
+
+.blk{position:absolute; top:5px; bottom:5px; border-radius:2px; padding:2px 6px; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:center; cursor:grab; touch-action:none;
+  background:var(--m-bg); border:1px solid var(--m-br); border-left:3px solid var(--ac);
+  transition:opacity .18s ease, box-shadow .12s ease;}
+.blk[data-g="w"]{background:var(--w-bg); border-color:var(--w-br)}
+.blk[data-fixed="1"]{cursor:default}
+.blk:hover{box-shadow:0 0 0 1px var(--ink-2) inset}
+.blk:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+.blk.dragging{cursor:grabbing; box-shadow:0 4px 14px -4px rgba(0,0,0,.4); z-index:5}
+.blk.clash{outline:2px solid var(--bad); outline-offset:-1px}
+.blk.warn{outline:2px dashed var(--warn); outline-offset:-1px}
+.blk.sel{outline:2px solid var(--ink); outline-offset:-1px; box-shadow:0 2px 10px -3px rgba(0,0,0,.35)}
+.editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:3px; box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
+.ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
+.ed-head b{font-family:var(--disp); font-weight:600; font-size:17px; color:var(--ac)}
+.ed-head span{font-family:var(--mono); font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.ed-head .fbtn{margin-left:auto}
+.ed-grid{display:flex; flex-wrap:wrap; gap:10px 22px; align-items:center}
+.ed-grid label{display:flex; align-items:center; gap:7px; font-family:var(--disp); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.ed-grid select,.ed-grid input{font-family:var(--mono); font-size:13.5px; padding:5px 7px; border-radius:2px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.ed-grid input[type="number"]{width:70px}
+.ed-grid select:focus-visible,.ed-grid input:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+.readout .flag.warn{border-color:var(--warn); color:var(--warn)}
+.rlabel b{display:flex; align-items:center; gap:6px}
+.rdel{margin-left:auto; font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
+  border:1px solid transparent; border-radius:2px; background:transparent; color:var(--muted); cursor:pointer; padding:0}
+.grow:hover .rdel:not(:disabled),.rdel:focus-visible{border-color:var(--line-strong); color:var(--bad)}
+.rdel:disabled{opacity:0; cursor:default}
+.grow:hover .rdel:disabled{opacity:.35}
+.rdel:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+.addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:3px; padding:14px 16px; margin:0 0 14px}
+.flowwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:3px; box-shadow:var(--shadow); padding:8px 0 4px}
+.flowwrap svg{display:block; min-width:980px}
+tbody tr.tstart td{border-top:1px solid var(--line-strong)}
+.blk b{font-family:var(--disp); font-weight:500; font-size:12px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.blk span{font-family:var(--mono); font-size:10px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+.blk.iso{background:transparent; border-style:dashed; border-left-style:dashed; border-left-width:1px; border-color:var(--line-strong)}
+.blk.dim{opacity:.14}
+.legend{display:flex; flex-wrap:wrap; gap:8px 18px; margin:0 0 14px; font-size:13px; color:var(--ink-2)}
+.legend div{display:flex; align-items:center; gap:7px}
+.sw{width:26px; height:13px; border-radius:2px; border:1px solid var(--m-br); background:var(--m-bg); border-left:3px solid var(--ac)}
+.sw.w{background:var(--w-bg); border-color:var(--w-br); border-left-color:var(--ac)}
+.hint{font-size:13px; color:var(--muted); margin:-4px 0 22px}
+
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:3px; background:var(--surface); box-shadow:var(--shadow); margin:0 0 18px}
+table{border-collapse:collapse; width:100%; min-width:540px; font-size:14.5px}
+th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--line); vertical-align:baseline}
+thead th{font-family:var(--disp); font-weight:500; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); background:var(--surface-2); border-bottom:1px solid var(--line-strong); white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+td.tm{font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+tbody tr.sum td{background:var(--surface-2); font-weight:600; border-top:1px solid var(--line-strong)}
+td .ac{font-family:var(--disp); font-weight:600; color:var(--ac); letter-spacing:.03em}
+
+.rail{display:grid; margin:0 0 18px}
+.rail .step{display:grid; grid-template-columns:76px 1fr; gap:14px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line)}
+.rail .step:last-child{border-bottom:none}
+.rail .step time{font-family:var(--mono); font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums}
+.rail .step div b{font-family:var(--disp); font-weight:500; font-size:15px; display:block}
+.rail .step div span{font-size:13.5px; color:var(--muted)}
+.rail .step.q{border-left:3px solid var(--line-strong); padding-left:12px; margin-left:-15px}
+footer{border-top:1px solid var(--line); margin-top:48px; padding:26px 0 40px; font-size:13px; color:var(--muted)}
+footer p{max-width:74ch; margin-bottom:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+
+/* ---------- Download-Leiste ---------- */
+.dlbar{display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px; margin:26px 0 8px;
+  background:var(--surface); border:1px solid var(--line-strong); border-radius:3px; padding:18px 20px; box-shadow:var(--shadow)}
+.dlbar .fbtn.big{font-size:14px; padding:10px 20px; background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.dlbar .fbtn.big:hover{opacity:.88}
+.dlbar p{margin:0; font-size:13.5px; color:var(--muted); max-width:62ch}
+.dlbar .pdfmsg{flex-basis:100%; font-family:var(--mono); font-size:12.5px; color:var(--ok)}
+.dlbar .pdfmsg:empty{display:none}
+.dlbar .pdfmsg.bad{color:var(--bad)}
+.printonly{display:none}
+
+/* ---------- Meldezahlen-Eingabe ---------- */
+.nin{width:64px; font-family:var(--mono); font-size:14px; font-variant-numeric:tabular-nums; text-align:right;
+  padding:4px 6px; border-radius:2px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.nin:hover{border-color:var(--ink-2)}
+.nin:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+#meldtab td .ac{font-size:15px}
+#meldtab{min-width:840px}
+#peotab{min-width:660px}
+#cattab{min-width:320px}
+#standtab{min-width:600px}
+
+/* ---------- Textbearbeitung ---------- */
+.textbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:22px 0 0;
+  background:var(--sunken); border:1px solid var(--line); border-radius:3px; padding:12px 16px}
+.textbar p{margin:0; flex-basis:100%; font-size:13px; color:var(--muted); max-width:80ch}
+/* ---------- Rollenansicht ---------- */
+.vbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:18px 0 0;
+  background:var(--surface); border:1px solid var(--line-strong); border-radius:3px; padding:12px 16px; box-shadow:var(--shadow)}
+.vbar .lbl{font-family:var(--disp); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-right:4px}
+.vbar p{flex-basis:100%; margin:0; font-size:12.5px; color:var(--muted)}
+body[data-view="orga"]  main section:not([data-views~="orga"]),
+body[data-view="bau"]   main section:not([data-views~="bau"]),
+body[data-view="teams"] main section:not([data-views~="teams"]),
+body[data-view="sport"] main section:not([data-views~="sport"]){display:none}
+body:not([data-view="alles"]) .textbar{display:none}
+
+/* ---------- Konfigurationsfelder ---------- */
+.cin{font-family:var(--serif); font-size:14px; padding:4px 6px; border-radius:2px; max-width:100%;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.cin.sel{font-size:13px; padding:4px 4px}
+.cin:hover{border-color:var(--ink-2)}
+.cin:focus-visible,.tin:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+#meldtab .nm{font-family:var(--disp); font-weight:600; color:var(--ac)}
+.tin{font-family:var(--mono); font-size:13.5px; padding:4px 6px; border-radius:2px; width:100px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.cfgbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:3px; padding:14px 16px; margin:0 0 16px}
+.cfgbox h4{margin-bottom:10px}
+.cfgrow{display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center}
+.cfgrow label{display:flex; align-items:center; gap:7px; font-family:var(--disp); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.pgrp{display:inline-block; margin-right:12px; font-size:13.5px}
+.pgrp b{font-family:var(--disp); font-weight:500; color:var(--muted); font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; margin-right:4px}
+td.pcell{font-size:13.5px; line-height:1.5}
+#nolist,#vlist{font-size:13.5px; line-height:1.7}
+#nolist b,#vlist b{font-family:var(--disp); font-weight:500}
+#vlist .tm{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.stbar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin:0 0 14px}
+.stbar .grow2{flex:1 1 220px}
+.stbar input[type="text"]{width:100%; font-family:var(--serif); font-size:14px; padding:6px 8px; border-radius:2px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.pdfmsg:empty{display:none}
+.pdfmsg{font-family:var(--mono); font-size:12.5px; color:var(--ok); margin:0 0 12px}
+.pdfmsg.bad{color:var(--bad)}
+body.editing [data-ed]{outline:1px dashed var(--line-strong); outline-offset:3px; border-radius:2px}
+body.editing [data-ed]:hover{outline-color:var(--ink-2)}
+body.editing [data-ed]:focus{outline:2px solid var(--ring); outline-offset:3px; background:var(--surface)}
+body.editing{caret-color:var(--ink)}
+
+/* ---------- Druck / PDF ---------- */
+@media print{
+  @page{size:A4 landscape; margin:11mm}
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"]{
+    --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F0F2EE; --sunken:#F5F6F3;
+    --ink:#141815; --ink-2:#3F4642; --muted:#5F6863;
+    --line:#D2D7CE; --line-strong:#A9B1A7;
+    --c0:#8C5A06;  --c0-m-bg:#FBF3E2; --c0-m-br:#DFD0AC; --c0-w-bg:#EEDDB2; --c0-w-br:#C9AC72;
+    --c1:#186045; --c1-m-bg:#EAF5EF; --c1-m-br:#BADAC9; --c1-w-bg:#C4E3D4; --c1-w-br:#85BCA1;
+    --c2:#1D4A8C; --c2-m-bg:#EBF2FB; --c2-m-br:#BFD4EE; --c2-w-bg:#C9DCF2; --c2-w-br:#8DB2DD;
+    --c3:#8E2F29; --c3-m-bg:#FCEDEB; --c3-m-br:#E7C3BE; --c3-w-bg:#EFCCC7; --c3-w-br:#D4978F;
+    --c4:#5E3079; --c4-m-bg:#F5EEFA; --c4-m-br:#D9C4E8; --c4-w-bg:#DFCCEE; --c4-w-br:#B99BD1;
+    --c5:#0A5C66; --c5-m-bg:#E7F5F6; --c5-m-br:#B8DBDF; --c5-w-bg:#C1E4E7; --c5-w-br:#81BCC3;
+    --c6:#6A4722; --c6-m-bg:#F8F2E8; --c6-m-br:#DECFB6; --c6-w-bg:#E9D8BF; --c6-w-br:#C4A87C;
+    --c7:#3B4553; --c7-m-bg:#EEF1F4; --c7-m-br:#CFD6DE; --c7-w-bg:#D2D9E1; --c7-w-br:#A5AFBD;
+    --ok:#186045; --warn:#8C5A06; --bad:#8E2F29; --grid:#EEF0EC;
+    --shadow:none; color-scheme:light;
+  }
+  html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  .wrap{max-width:none; padding:0}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
+  #staende{display:none !important}
+  .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
+  .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  body.editing [data-ed]{outline:none !important}
+  .printonly{display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin:0 0 10px}
+  .masthead{padding-top:0; border-bottom:1px solid var(--line-strong)}
+  h1{font-size:30px}
+  .dek{font-size:14px; max-width:none}
+  .stats{margin-top:16px}
+  .stat b{font-size:18px}
+  section{padding:16px 0 0}
+  section + section{border-top:none}
+  #quali,#personal,#routenplan,#finale,#routenbau,#offen,#wege{break-before:page}
+  #melde{padding-top:6px}
+  h2{font-size:20px}
+  .lede,p{font-size:13px; max-width:none}
+  .gantt-scroll,.tblwrap,.flowwrap{overflow:visible !important}
+  .gantt-inner{min-width:0 !important}
+  .flowwrap svg{min-width:0 !important; width:100% !important; height:auto !important}
+  .gantt,.tblwrap,.flowwrap,.card,.note,.route,.readout{break-inside:avoid; box-shadow:none}
+  .grow,tr,.rail .step{break-inside:avoid}
+  table{font-size:11.5px; min-width:0}
+  th,td{padding:5px 8px}
+  .blk b{font-size:10.5px}
+  .blk span{font-size:8.5px}
+  .track{min-height:34px; background-image:none !important}
+  .routes{grid-template-columns:repeat(4,1fr)}
+  .route-desc{font-size:11.5px}
+  footer{margin-top:18px; break-inside:avoid}
+}
+</style>
+
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
+    <p class="printonly" id="stamp"></p>
+    <h1>Regieplan Kids Cup</h1>
+    <p class="dek">Elf Qualirouten, sieben Finalrouten. Jede Altersklasse braucht <strong>höchstens zwei Routen gleichzeitig</strong> – die U9 sogar nur eine. Der Plan ist ein Werkzeug, kein Ausdruck: <strong>Wertungsklassen, Meldezahlen und Zeitfenster ändern, Balken verschieben, Personal eintragen</strong> – Endzeiten, Pausen und Personalbedarf rechnen sich sofort neu. Oben wählst du die Ansicht für deine Rolle, unten sicherst du Zwischenstände und gibst sie weiter.</p>
+    <div class="stats">
+      <div class="stat"><b id="stAth">67</b><span>Athlet*innen</span></div>
+      <div class="stat"><b id="stRoutes">18</b><span>Routen</span></div>
+      <div class="stat"><b id="stMin">804</b><span>Kletterminuten</span></div>
+      <div class="stat"><b id="stTeams">7</b><span>Routen-Teams</span></div>
+      <div class="stat"><b id="stPers">21</b><span>Personen im Peak</span></div>
+      <div class="stat"><b id="stEnd">12:59</b><span>Quali-Ende</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<div class="wrap">
+  <div class="vbar">
+    <span class="lbl">Ansicht für</span>
+    <button class="fbtn vbtn" type="button" data-v="alles" aria-pressed="true">Alles</button>
+    <button class="fbtn vbtn" type="button" data-v="orga">Orga-Team</button>
+    <button class="fbtn vbtn" type="button" data-v="bau">Routenbau</button>
+    <button class="fbtn vbtn" type="button" data-v="teams">Routen-Teams / Sicherung</button>
+    <button class="fbtn vbtn" type="button" data-v="sport">Trainer*innen &amp; Athlet*innen</button>
+    <p id="viewNote">Alle Kapitel sichtbar.</p>
+  </div>
+  <div class="textbar">
+    <button class="fbtn" id="txtToggle" type="button" aria-pressed="false">Texte bearbeiten</button>
+    <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
+    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
+  </div>
+</div>
+
+<!-- ============ WERTUNGSKLASSEN ============ -->
+<section id="melde" data-views="orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
+      <h2>Klassen, Gruppen, Zahlen – alles frei einstellbar</h2>
+      <p class="lede">Diese Tabelle ist der Ursprung des ganzen Plans. Klassennamen und Gruppenbezeichnungen sind frei: aus U15 männlich/weiblich wird bei Bedarf U21 Herren/Damen. Jede Änderung verlängert oder verkürzt sofort die Balken im Zeitplan, verschiebt die Endzeiten und passt Laufkarte, Team-Zeitplan, Wegediagramm und Finalquoten an.</p>
+    </div>
+    <div class="tblwrap"><table id="meldtab">
+      <thead><tr><th>Klasse</th><th>Gruppe 1</th><th class="num">TN</th><th>Gruppe 2</th><th class="num">TN</th>
+        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="toolbar">
+      <button class="fbtn" id="addClsToggle" type="button">+ Wertungsklasse</button>
+      <button class="fbtn" id="resetField" type="button">Klassen zurücksetzen</button>
+      <span class="lbl" style="margin-left:2px">zurück auf U9 · U11 · U13 · U15</span>
+    </div>
+
+    <div class="addbox" id="addCls" hidden>
+      <div class="cfgrow">
+        <label>Name <input class="cin" id="acName" placeholder="U17" size="7"></label>
+        <label>Gruppe 1 <input class="cin" id="acLm" value="männlich" size="9"></label>
+        <label>TN <input class="nin" id="acM" type="number" min="0" max="99" value="0"></label>
+        <label>Gruppe 2 <input class="cin" id="acLw" value="weiblich" size="9"></label>
+        <label>TN <input class="nin" id="acW" type="number" min="0" max="99" value="0"></label>
+        <label>Sicherung <select class="cin sel" id="acMode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
+        <label><button class="fbtn" id="addClsGo" type="button">Klasse anlegen</button></label>
+        <label><button class="fbtn" id="addClsCancel" type="button">Abbrechen</button></label>
+      </div>
+      <p class="hint" style="margin:12px 0 0">Eine neue Klasse bekommt automatisch drei Qualirouten (gemischt, Gruppe 1, Gruppe 2) mit einem Karussell in derselben Logik wie U13 und U15, dazu zwei Finalrouten. Danach lässt sich alles wie gewohnt verschieben, teilen oder wieder löschen.</p>
+    </div>
+
+    <h3>Zeitfenster des Wettkampfs</h3>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Quali von <input class="tin" id="winQs" type="time" step="300"></label>
+        <label>bis <input class="tin" id="winQe" type="time" step="300"></label>
+        <label>Finale von <input class="tin" id="winFs" type="time" step="300"></label>
+        <label>bis <input class="tin" id="winFe" type="time" step="300"></label>
+        <label>Besichtigung <input class="nin" id="winBes" type="number" min="0" max="180" step="5"> Min</label>
+        <label>ISO <input class="nin" id="winIso" type="number" min="0" max="180" step="5"> Min</label>
+        <label><button class="fbtn" id="winReset" type="button">Zurücksetzen</button></label>
+      </div>
+      <p class="hint" style="margin:12px 0 0"><span class="mono" id="winOut"></span> · Die Zeitachsen beider Zeitpläne folgen diesen Werten; Besichtigung und ISO beginnen automatisch mit dem Finalfenster. Balken, die aus dem Fenster fallen würden, rücken an den Rand.</p>
+    </div>
+
+    <p class="hint">Rechenwert: 6 Minuten pro Athlet*in und Route. Die Finalquote folgt automatisch: ab 20 Gemeldeten in einer Wertung 10 Plätze, darunter 6 – und nie mehr Plätze als Gemeldete.</p>
+  </div>
+</section>
+
+<!-- ============ TAGESABLAUF ============ -->
+<section id="tag" data-views="orga teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Tagesablauf</p>
+      <h2>Von der Registrierung bis zur Siegerehrung</h2>
+    </div>
+    <div class="rail">
+      <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
+      <div class="step" data-ac="mix"><time>09:15</time><div><b>Technical Meeting</b><span>bis 10:00 · laut Ausschreibung</span></div></div>
+      <div class="step" data-ac="mix"><time>10:00</time><div><b>Aufwärmen</b><span>30 Minuten zwischen Meeting und erstem Start</span></div></div>
+      <div class="step q" data-ac="mix"><time>10:30</time><div><b>Start Qualifikation</b><span>Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen</span></div></div>
+      <div class="step q" data-ac="mix"><time>12:36</time><div><b>U11 fertig</b><span>danach U9 12:45, U15 12:48</span></div></div>
+      <div class="step q" data-ac="mix"><time>12:59</time><div><b>Quali zu Ende</b><span>U13 als letzte Klasse</span></div></div>
+      <div class="step" data-ac="mix"><time>13:00</time><div><b>Auswertung und Aushang</b><span>30 Minuten bis zur Besichtigung</span></div></div>
+      <div class="step" data-ac="mix"><time>13:30</time><div><b>Besichtigung der Finalrouten</b><span>25 Minuten, alle Finalist*innen gemeinsam</span></div></div>
+      <div class="step" data-ac="mix"><time>13:55</time><div><b>ISO-Raum</b><span>20 Minuten: Athlet*innen werden in Startreihenfolge aufgestellt</span></div></div>
+      <div class="step" data-ac="mix"><time>14:15</time><div><b>Start Finale</b><span>Alle Routen parallel – U9 durchgehend, U11 und U15 je weiblich vor männlich, U13 parallel</span></div></div>
+      <div class="step" data-ac="mix"><time>15:29</time><div><b>Letzter Zug des Tages</b><span>eine Minute vor der ausgeschriebenen Wettkampfzeit</span></div></div>
+      <div class="step" data-ac="mix"><time>15:45</time><div><b>Siegerehrung</b><span>acht Wertungen, Medaillen und Urkunden Platz 1 bis 3</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUALI ============ -->
+<section id="quali" data-views="orga teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Zeitplan Qualifikation</p>
+      <h2>Jede Klasse mit zwei Routen-Teams</h2>
+      <p class="lede">Alle vier Altersklassen starten um 10:30. Innerhalb einer Klasse laufen die drei Routen so versetzt, dass <strong>nie mehr als zwei gleichzeitig besetzt sind</strong> – das Team der frei werdenden Route wandert zur nächsten. Bei der U9 reicht sogar ein Team für beide Routen. Ein Routen-Team sind drei Personen: Sicherung plus Ergebnisdienst. Helle Balken sind die Jungs, dunkle die Mädchen.</p>
+    </div>
+
+    <div class="legend">
+      <div data-ac="c1"><span class="sw"></span> männlich (hell)</div>
+      <div data-ac="c1"><span class="sw w"></span> weiblich (dunkel)</div>
+      <div style="color:var(--muted)">Farbe = Altersklasse · Balken ziehen (auch nach oben/unten auf eine andere Route) · anklicken zum Teilen · Pfeiltasten bewegen und wechseln die Route</div>
+    </div>
+
+    <div class="toolbar">
+      <span class="lbl">Filter</span>
+      <span id="fbar" style="display:contents"></span>
+      <span style="flex:1"></span>
+      <button class="fbtn" id="addQtoggle">+ Route</button>
+      <button class="fbtn" id="resetQ">Zurücksetzen</button>
+    </div>
+
+    <div class="addbox" id="addQ" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse
+          <select id="addQcls"><option>U9</option><option>U11</option><option selected>U13</option><option>U15</option></select></label>
+        <label>Typ
+          <select id="addQallow"><option value="mw">gemischt</option><option value="m">nur männlich</option><option value="w">nur weiblich</option></select></label>
+        <label>Sicherung
+          <select id="addQmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
+        <label><button class="fbtn" id="addQgo" type="button">Route anlegen</button></label>
+        <label><button class="fbtn" id="addQcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
+    <div class="readout" id="roQ"></div>
+    <div class="editor" id="edQ" hidden></div>
+    <div class="gantt" id="gq" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gq-inner"></div></div></div>
+    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
+
+    <h3>Laufkarte der Startgruppen</h3>
+    <div class="tblwrap"><table id="lk">
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Route 2</th><th class="num">Pause</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
+    <div class="cards g2">
+      <div class="card">
+        <h4>Wie die Klassen ihre drei Routen abarbeiten</h4>
+        <ul style="font-size:14.5px">
+          <li><strong>U11:</strong> Mädchen starten auf ihrer eigenen Route Q5, die Jungs gleichzeitig auf der gemischten Q3. Sobald Q3 frei ist, gehen die Mädchen dort hoch; wenn Q5 frei wird, wandert das Team auf die Jungenroute Q4.</li>
+          <li><strong>U13:</strong> genauso – Jungs auf Q6, Mädchen auf Q8, danach Mädchen auf Q6 und zuletzt die Jungs auf Q7.</li>
+          <li><strong>U15:</strong> Jungs eröffnen die gemischte Q9, 15 Minuten später gehen die Mädchen dort hoch; parallel läuft die Jungenroute Q10, danach die Mädchenroute Q11.</li>
+          <li><strong>U9:</strong> Q1 von 10:30 bis 11:30, 15 Minuten Pause, dann Q2 – ein einziges Team für beide Routen.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Startreihenfolge</h4>
+        <ul style="font-size:14.5px">
+          <li>Auf den gemischten Routen klettern <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken.</li>
+          <li>Innerhalb einer Gruppe nach Ranking sortieren und in umgekehrter Reihenfolge starten: die Stärksten zuletzt.</li>
+          <li><strong>Dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich.</li>
+          <li>Individuelle Startzeit = Blockbeginn + Startnummer × 6 Minuten.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note" style="border-left-color:var(--warn)">
+      <h4>Der Preis für zwei Teams pro Klasse</h4>
+      <p>Wenn nur zwei Routen gleichzeitig laufen dürfen, muss eine der beiden Wertungsgruppen auf ihre zweite Route warten, bis eine Route frei wird. Das trifft jeweils die Jungs: <strong class="mono">U11 78 Min</strong>, <strong class="mono">U13 101 Min</strong> Pause statt der angepeilten 45 bis 60. Bei der U9 sind es 75 Minuten, weil du die 15-Minuten-Pause zwischen Q1 und Q2 gesetzt hast. Nur die U15 bleibt mit 45 Minuten im Zielkorridor.</p>
+      <p style="margin-top:10px">Wenn du das für die U13 nicht willst: <strong>ein drittes Team von 11:25 bis 12:13</strong> genügt. Dann klettern die Jungs Q7 direkt nach ihrer Pause (55 Minuten statt 101) und die Quali endet trotzdem 12:59. Verschieb dazu einfach den Balken „Q7 U13 männlich" nach links – die Anzeige über dem Plan zeigt dir sofort, was das kostet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PERSONAL ============ -->
+<section id="personal" data-views="orga teams">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Personal</p>
+      <h2>Der Team-Zeitplan entsteht aus dem Plan</h2>
+      <p class="lede">Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
+    </div>
+
+    <div class="readout"><span>Bedarf</span> <b id="teamsum">—</b></div>
+
+    <div class="tblwrap"><table id="teamtable">
+      <thead><tr><th>Team</th><th>Zeit</th><th>Route</th><th>Wer klettert</th><th>Personen</th><th class="num">Pers.</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
+    <h3>Kategorien</h3>
+    <p class="lede">Lege fest, welche Rollen es am Wettkampftag gibt – Sicherung, Ergebnisdienst, Routenbau, Orga, Buffet, was auch immer du brauchst.</p>
+    <div class="tblwrap" style="max-width:520px"><table id="cattab">
+      <thead><tr><th>Kategorie</th><th class="num">Personen</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Neue Kategorie <input class="cin" id="newKat" placeholder="z. B. Routenschiri" size="20"></label>
+        <label><button class="fbtn" id="addKatGo" type="button">Kategorie anlegen</button></label>
+      </div>
+    </div>
+
+    <h3>Personen und ihre Teams</h3>
+    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
+    <div class="tblwrap"><table id="peotab">
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Name <input class="cin" id="newPname" placeholder="z. B. Lara Wächter" size="20"></label>
+        <label>Kategorie <select class="cin sel" id="newPcat"></select></label>
+        <label>Team <select class="cin sel" id="newPteam"></select></label>
+        <label><button class="fbtn" id="addPeoGo" type="button">Person hinzufügen</button></label>
+      </div>
+    </div>
+
+    <h4>Ohne Team-Zuordnung</h4>
+    <div id="nolist" style="margin:0 0 22px"></div>
+
+    <div class="cards g3">
+      <div class="card"><h4>Wie die Zuteilung entsteht</h4><p style="font-size:14.5px;margin-bottom:0">Die Routen werden nach Startzeit sortiert und der Reihe nach vergeben. Ein Team, das frei wird, übernimmt bevorzugt die nächste Route <em>derselben Altersklasse</em> – so bleibt jedes Team bei „seinen" Kindern.</p></div>
+      <div class="card"><h4>Der Peak dauert zehn Minuten</h4><p style="font-size:14.5px;margin-bottom:0">Sieben gleichzeitige Routen gibt es nur 11:23–11:30 und 12:00–12:03. Zieh den U13-Mädchen-Block auf Q6 auf 11:32 und den U15-Mädchen-Block auf Q11 auf 12:05: dann sind es <strong>6 Teams = 18 Personen</strong>, die Quali endet 13:08 statt 12:59.</p></div>
+      <div class="card"><h4>Dazu fix</h4><p style="font-size:14.5px;margin-bottom:0">Meldebüro, zentrale Auswertung, ISO-Aufsicht ab 13:55 und Moderation kommen zu den Routen-Teams hinzu.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROUTENPLAN ============ -->
+<section id="routenplan" data-views="orga bau">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Routenplan</p>
+      <h2>Elf Qualirouten – U11 neu mit eigener M- und W-Route</h2>
+      <p class="lede">Die U11 hat jetzt dieselbe Struktur wie U13 und U15: eine gemischte, eine reine Männer- und eine reine Frauenroute. Dadurch verschiebt sich die Nummerierung gegenüber der letzten Fassung – die Zuordnung steht auf jeder Karte.</p>
+    </div>
+
+    <div class="routes" style="margin-bottom:22px">
+      <div class="route" data-ac="c0"><div class="route-id"><b>Q1</b><span class="route-who">U9 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>10:30–11:30</span></div>
+        <p class="route-desc">Einstiegsniveau. Zone für alle zehn erreichbar, Top nur für die Spitze.</p></div>
+      <div class="route" data-ac="c0"><div class="route-id"><b>Q2</b><span class="route-who">U9 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>11:45–12:45</span></div>
+        <p class="route-desc">Gleiches Niveau, anderes Bewegungsthema. Startet 15 Minuten nach Q1.</p></div>
+      <div class="route" data-ac="c1"><div class="route-id"><b>Q3</b><span class="route-who">U11 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>20 Starts</span><span>120 Min</span><span>10:30–12:36</span></div>
+        <p class="route-desc">Läuft mit einer kurzen Unterbrechung durch: erst die 7 Jungs, dann die 13 Mädchen.</p></div>
+      <div class="route" data-ac="c1"><div class="route-id"><b>Q4</b><span class="route-who">U11 · Toprope</span></div>
+        <span class="tag">nur männlich</span>
+        <div class="route-meta"><span>7 Starts</span><span>42 Min</span><span>11:48–12:30</span></div>
+        <p class="route-desc">Neu. Wird erst gebraucht, wenn Q5 frei ist – dasselbe Team wechselt hinüber.</p></div>
+      <div class="route" data-ac="c1"><div class="route-id"><b>Q5</b><span class="route-who">U11 · Toprope</span></div>
+        <span class="tag w">nur weiblich</span>
+        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–11:48</span></div>
+        <p class="route-desc">Neu. Eröffnet den Tag zusammen mit Q3 – 13 Mädchen sind das zweitgrößte Feld.</p></div>
+      <div class="route" data-ac="c2"><div class="route-id"><b>Q6</b><span class="route-who">U13 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>24 Starts</span><span>144 Min</span><span>10:30–12:59</span></div>
+        <p class="route-desc">Meistgekletterte Route des Tages: erst die 8 Jungs, dann die 16 Mädchen.</p></div>
+      <div class="route" data-ac="c2"><div class="route-id"><b>Q7</b><span class="route-who">U13 · Toprope</span></div>
+        <span class="tag">nur männlich</span>
+        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:11–12:59</span></div>
+        <p class="route-desc">Startet erst, wenn Q8 frei ist. Letzte Route des Tages, gemeinsam mit Q6.</p></div>
+      <div class="route" data-ac="c2"><div class="route-id"><b>Q8</b><span class="route-who">U13 · Toprope</span></div>
+        <span class="tag w">nur weiblich</span>
+        <div class="route-meta"><span>16 Starts</span><span>96 Min</span><span>10:30–12:06</span></div>
+        <p class="route-desc">Größtes Einzelfeld im Wettkampf – hier zählt Differenzierung am meisten.</p></div>
+      <div class="route" data-ac="c3"><div class="route-id"><b>Q9</b><span class="route-who">U15 · Vorstieg</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–12:03</span></div>
+        <p class="route-desc">Jungs ab 10:30, nach 15 Minuten Pause die Mädchen. Muss beide Gruppen spreizen.</p></div>
+      <div class="route" data-ac="c3"><div class="route-id"><b>Q10</b><span class="route-who">U15 · Vorstieg</span></div>
+        <span class="tag">nur männlich</span>
+        <div class="route-meta"><span>5 Starts</span><span>30 Min</span><span>11:15–11:45</span></div>
+        <p class="route-desc">Härteste Route im Haus, kürzester Einsatz des Tages.</p></div>
+      <div class="route" data-ac="c3"><div class="route-id"><b>Q11</b><span class="route-who">U15 · Vorstieg</span></div>
+        <span class="tag w">nur weiblich</span>
+        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:00–12:48</span></div>
+        <p class="route-desc">Startet 15 Minuten nach Q10, eigenständiges Thema gegenüber Q9.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINALE ============ -->
+<section id="finale" data-views="orga teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Finale · 14:15 – 15:29</p>
+      <h2>Besichtigung, ISO, dann alles parallel</h2>
+      <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
+    </div>
+
+    <div class="toolbar">
+      <span class="lbl">Finale</span>
+      <button class="fbtn" id="resetF">Zurücksetzen</button>
+    </div>
+    <div class="readout" id="roF"></div>
+    <div class="editor" id="edF" hidden></div>
+    <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
+    <p class="hint">Besichtigung und ISO sind fixiert; die Kletterblöcke lassen sich verschieben und auf andere Finalrouten ziehen.</p>
+
+    <h3>Finalquoten</h3>
+    <div class="tblwrap"><table id="finaltab">
+      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th class="num">im Finale</th><th>Route</th><th>Zeit</th><th class="num">Team</th><th>Ablauf</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+  </div>
+</section>
+
+<!-- ============ ROUTENBAU ============ -->
+<section id="routenbau" data-views="bau orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Routenbau · Paul Ballsuweit</p>
+      <h2>18 Routen stehen am Freitag</h2>
+    </div>
+    <div class="cards g3">
+      <div class="card"><h4>1 · Demovideos nur für die Quali</h4><p style="font-size:14.5px;margin-bottom:0">Die Videos am Vorabend betreffen die <strong>elf Qualirouten</strong>. Die sieben Finalrouten müssen ungesehen bleiben: kein Video, und am Wettkampftag bis 13:30 abgehängt oder abgetrennt.</p></div>
+      <div class="card"><h4>2 · Belastung einplanen</h4><p style="font-size:14.5px;margin-bottom:0">Q6 wird 24-mal geklettert, Q3 20-mal, Q8 16-mal, Q5 13-mal. Griffe fest anziehen, nicht zu fingerlastig – Q6 läuft zweieinhalb Stunden fast ohne Unterbrechung.</p></div>
+      <div class="card"><h4>3 · Toprope oder Vorstieg</h4><p style="font-size:14.5px;margin-bottom:0">Q1–Q8 und F1–F5 sind Toprope (U9, U11, U13), Q9–Q11 und F6/F7 Vorstieg (U15). Umlenkungen und Exen entsprechend vorbereiten.</p></div>
+    </div>
+    <div class="cards g2">
+      <div class="card"><h4>Prioritäten aus deiner Skizze</h4>
+        <ul style="font-size:14.5px">
+          <li>Ungewöhnliche Bewegungsprobleme statt Kraftkletterei</li>
+          <li>Differenzierung über die gesamte Routenlänge</li>
+          <li>Herausfordernd <em>und</em> komplex</li>
+          <li>Zone und Top als echte Hürde, nicht als Formsache</li>
+        </ul></div>
+      <div class="card"><h4>Die drei gemischten Routen Q3, Q6 und Q9</h4>
+        <ul style="font-size:14.5px">
+          <li><strong>Kein Wandsprung.</strong> Wird es an einer Stelle plötzlich hart, fällt das halbe Feld am selben Zug und die Wertung ist wertlos.</li>
+          <li><strong>Beide Wertungsgruppen müssen sich spreizen</strong> – in der U13 sind 16 von 24 Gemeldeten Mädchen, in der U11 13 von 20.</li>
+          <li><strong>Zone im mittleren Drittel</strong>, Top so, dass ihn nur wenige halten.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OFFENE PUNKTE ============ -->
+<section id="offen" data-views="orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Offene Punkte</p>
+      <h2>Was noch zu entscheiden ist</h2>
+    </div>
+    <div class="note" style="border-left-color:var(--warn)">
+      <h4>Drei Dinge für die Ausschreibung</h4>
+      <ol>
+        <li><strong>Lange Pausen für die Jungs.</strong> U13 101 Minuten, U11 78 Minuten – Folge der Zwei-Team-Regel. Entweder so lassen und im Zeitplan ankündigen, damit sich die Athleten neu aufwärmen können, oder je Klasse ein drittes Team für rund 45 Minuten einplanen.</li>
+        <li><strong>Beobachtung in der Quali ausdrücklich erlauben.</strong> Die Demovideos machen die Quali faktisch zum Flash-Format; weil Wertungsgruppen dieselbe Route nacheinander klettern, sollte Zuschauen explizit erlaubt sein. Das Finale bleibt on-sight mit Isolation.</li>
+        <li><strong>Bezug der Finalquote.</strong> Hier je Wertungsgruppe angewendet. Zählt stattdessen die Gesamtzahl der Altersklasse, ändert sich nur die U13 (24 &gt; 20 → Quote 10): dann 8 Jungs und 10 Mädchen im Finale, F4 dauert 60 statt 36 Minuten.</li>
+      </ol>
+    </div>
+    <div class="note">
+      <h4>Nachmeldungen bis zum 20.09.</h4>
+      <p>Jede zusätzliche Person verlängert einen Block um 6 Minuten. Bis zur ausgeschriebenen Besichtigung um 13:30 liegen nach dem Quali-Ende 31 Minuten Reserve – das trägt etwa fünf Nachmeldungen, ohne dass sich am Ablauf etwas ändert. Schieb die Balken einfach selbst nach hinten, die Anzeige rechnet mit.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WEGE ============ -->
+<section id="wege" data-views="teams sport orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Wege der Startgruppen</p>
+      <h2>Wer geht wann von welcher Route auf welche</h2>
+      <p class="lede">Dieselben Daten wie oben, nur andersherum sortiert: eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
+    </div>
+    <div class="flowwrap" id="flow"></div>
+    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
+
+  </div>
+</section>
+
+<!-- ============ SPEICHERSTÄNDE ============ -->
+<section id="staende" data-views="orga bau teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Speicherstände</p>
+      <h2>Zwischenstände sichern und weitergeben</h2>
+      <p class="lede">Jeder Stand friert den kompletten Plan ein: Klassen, Meldezahlen, Zeitfenster, alle Balken, Personal und die bearbeiteten Texte. Unten steht, wer zuletzt hier war und was er oder sie gemacht hat.</p>
+    </div>
+    <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
+
+    <div class="stbar">
+      <label class="lbl" for="meName" style="font-family:var(--disp);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)">Ich bin</label>
+      <span class="grow2"><input type="text" id="meName" placeholder="dein Name – erscheint an deinen Ständen"></span>
+      <span class="lbl mono" id="stState" style="color:var(--muted);font-size:12.5px"></span>
+    </div>
+
+    <div class="stbar">
+      <span class="grow2"><input type="text" id="stTitle" placeholder="Titel des Standes, z. B. „Entwurf für Rainer“"></span>
+      <span class="grow2"><input type="text" id="stNote" placeholder="Notiz, optional"></span>
+      <button class="fbtn big" id="stSave" type="button">Stand speichern</button>
+      <button class="fbtn" id="stExport" type="button">Als Datei sichern</button>
+      <button class="fbtn" id="stImport" type="button">Datei laden</button>
+      <input type="file" id="stFile" accept="application/json,.json" hidden>
+    </div>
+    <p class="pdfmsg" id="stMsg" role="status"></p>
+
+    <div class="tblwrap"><table id="standtab">
+      <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
+    <h4>Wer war zuletzt hier</h4>
+    <div id="vlist" style="margin:0 0 8px"></div>
+    <p class="hint">Die Liste führt nur Namen, die die Leute selbst eintragen – sie ersetzt keine Anwesenheitskontrolle, zeigt dir aber, ob dein Stand angekommen ist. <strong>Als Datei sichern</strong> legt denselben Stand als JSON auf deine Festplatte: praktisch für alle, die den Link nicht öffnen können, oder als Sicherungskopie vor einer größeren Umstellung.</p>
+
+    <div class="dlbar">
+      <button class="fbtn big" id="pdfbtn" type="button">PDF herunterladen</button>
+      <button class="fbtn" id="printbtn" type="button">Drucken</button>
+      <p><strong>PDF herunterladen</strong> baut die Datei direkt hier im Browser: sechs Seiten im Querformat – Kennzahlen, Meldezahlen, Tagesablauf und Routenübersicht · Quali-Zeitplan mit Laufkarte · Team-Zeitplan · Finale mit Quoten · Wegediagramm · Routenbau und offene Punkte. Immer mit dem Stand, den der Plan gerade hat, samt deiner geänderten Meldezahlen und Texte. <strong>Drucken</strong> öffnet stattdessen den Druckdialog des Browsers.</p>
+      <p class="pdfmsg" id="pdfmsg" role="status"></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Grundlage: Ausschreibung 4. Offener Sächsischer Kidscup 2026 (Lead, U9–U15, Quacke Zittau, 26.09.2026) und Meldeliste mit 67 Athlet*innen (U9 4/6, U11 7/13, U13 8/16, U15 5/8). Planwert 6 Minuten pro Athlet*in und Route inklusive Einbinden und Transfer.</p>
+    <p>Geprüft auf Routen-Doppelbelegung, Pausenzeiten, gleichzeitige Routen je Klasse und Endzeiten: 0 Konflikte, 804 Kletterminuten, jede Klasse mit höchstens zwei Routen gleichzeitig, Quali-Ende 12:59.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var CLIMB=6, SNAP=5, TEAM_PERS=3;
+var TEAMNAMES=["Wölfe","Falken","Luchse","Uhus","Fischotter","Dachse","Kraniche","Habichte","Biber","Reiher","Steinadler","Wanderfalken","Gämsen","Murmeltiere"];
+function fmt(t){var h=Math.floor(t/60),m=Math.round(t%60);return (h<10?"0":"")+h+":"+(m<10?"0":"")+m;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c];});}
+var M=function(h,m){return h*60+m;};
+function parseTime(v){var p=(v||"").split(":");if(p.length<2)return null;var h=+p[0],m=+p[1];if(isNaN(h)||isNaN(m))return null;return h*60+m;}
+var GTXT={m:"männlich",w:"weiblich",mw:"m + w"};
+var PALETTE=[{k:"c0",n:"Ocker"},{k:"c1",n:"Grün"},{k:"c2",n:"Blau"},{k:"c3",n:"Rot"},
+             {k:"c4",n:"Violett"},{k:"c5",n:"Petrol"},{k:"c6",n:"Braun"},{k:"c7",n:"Schiefer"}];
+var PDFCOL={
+ c0:{ac:[184,119,8],  m:[252,246,232], w:[241,225,184]},
+ c1:{ac:[31,122,85],  m:[237,247,242], w:[203,231,217]},
+ c2:{ac:[37,89,166],  m:[238,244,252], w:[207,224,244]},
+ c3:{ac:[169,59,52],  m:[253,240,238], w:[242,211,206]},
+ c4:{ac:[118,62,150], m:[247,241,251], w:[227,211,240]},
+ c5:{ac:[13,116,128], m:[234,247,248], w:[198,231,234]},
+ c6:{ac:[131,89,44],  m:[250,244,235], w:[236,220,196]},
+ c7:{ac:[74,86,102],  m:[241,243,246], w:[214,220,228]},
+ ink:[20,24,21], muted:[108,117,111], line:[210,215,206], soft:[240,242,238]
+};
+var clone=function(x){return JSON.parse(JSON.stringify(x));};
+
+/* ================= Konfiguration: Wertungsklassen, Zeitfenster, Personal ================= */
+var CFG0={
+  classes:[
+    {id:"U9",  name:"U9",  color:0, lm:"männlich", lw:"weiblich", m:4, w:6,  mode:"TR"},
+    {id:"U11", name:"U11", color:1, lm:"männlich", lw:"weiblich", m:7, w:13, mode:"TR"},
+    {id:"U13", name:"U13", color:2, lm:"männlich", lw:"weiblich", m:8, w:16, mode:"TR"},
+    {id:"U15", name:"U15", color:3, lm:"männlich", lw:"weiblich", m:5, w:8,  mode:"Vorstieg"}
+  ],
+  win:{qs:M(10,15), qe:M(13,45), fs:M(13,30), fe:M(15,45), bes:25, iso:20},
+  cats:[{id:"k1",name:"Sicherung"},{id:"k2",name:"Ergebnisdienst"},{id:"k3",name:"Routenbau"},
+        {id:"k4",name:"Orga-Team"},{id:"k5",name:"Buffet"}],
+  people:[],
+  seq:100
+};
+var CFG=clone(CFG0);
+var CLASSES=[], ACOF={}, FIELD={}, LABS={}, CNAME={};
+function reindex(){
+  CLASSES=[]; ACOF={}; FIELD={}; LABS={}; CNAME={};
+  CFG.classes.forEach(function(c){
+    CLASSES.push(c.id);
+    ACOF[c.id]=PALETTE[(c.color||0)%PALETTE.length].k;
+    FIELD[c.id]={m:c.m,w:c.w};
+    LABS[c.id]={m:c.lm||"männlich", w:c.lw||"weiblich", mw:(c.lm||"m")+" + "+(c.lw||"w")};
+    CNAME[c.id]=c.name;
+  });
+}
+function CL(id){for(var i=0;i<CFG.classes.length;i++) if(CFG.classes[i].id===id) return CFG.classes[i]; return null;}
+function CLn(id){return CNAME[id]||id;}
+function gl(id,g){return (LABS[id]&&LABS[id][g])||GTXT[g]||g;}
+function newId(p){return p+(++CFG.seq);}
+function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG));}catch(e){}}
+try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
+  if(_c&&_c.classes&&_c.classes.length){
+    CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
+    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100;
+    ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(CFG.win[k]==null) CFG.win[k]=CFG0.win[k]; });
+  }}catch(e){}
+reindex();
+function quota(n){ if(n<=0) return 0; return Math.min(n, n>=20?10:6); }
+function totalAth(){var t=0;CFG.classes.forEach(function(c){t+=(+c.m||0)+(+c.w||0);});return t;}
+function allowTxt(r){ return r.allow==="mw" ? "gemischt" : "nur "+gl(r.cls,r.allow); }
+
+/* ================= Stammdaten ================= */
+var QROWS=[
+ {id:"Q1", cls:"U9",  allow:"mw", mode:"TR"},{id:"Q2", cls:"U9",  allow:"mw", mode:"TR"},
+ {id:"Q3", cls:"U11", allow:"mw", mode:"TR"},{id:"Q4", cls:"U11", allow:"m",  mode:"TR"},
+ {id:"Q5", cls:"U11", allow:"w",  mode:"TR"},{id:"Q6", cls:"U13", allow:"mw", mode:"TR"},
+ {id:"Q7", cls:"U13", allow:"m",  mode:"TR"},{id:"Q8", cls:"U13", allow:"w",  mode:"TR"},
+ {id:"Q9", cls:"U15", allow:"mw", mode:"Vorstieg"},{id:"Q10",cls:"U15", allow:"m",  mode:"Vorstieg"},
+ {id:"Q11",cls:"U15", allow:"w",  mode:"Vorstieg"}
+];
+var QGROUPS=[
+ {id:"g1", base:"U9 männlich",  cls:"U9",  gender:"m", n:4},
+ {id:"g2", base:"U9 weiblich",  cls:"U9",  gender:"w", n:6},
+ {id:"g3", base:"U11 männlich", cls:"U11", gender:"m", n:7},
+ {id:"g4", base:"U11 weiblich", cls:"U11", gender:"w", n:13},
+ {id:"g5", base:"U13 männlich", cls:"U13", gender:"m", n:8},
+ {id:"g6", base:"U13 weiblich", cls:"U13", gender:"w", n:16},
+ {id:"g7", base:"U15 männlich", cls:"U15", gender:"m", n:5},
+ {id:"g8", base:"U15 weiblich", cls:"U15", gender:"w", n:8}
+];
+var QBLOCKS=[
+ {id:"b1", gid:"g1", r:"Q1", s:M(10,30)}, {id:"b2", gid:"g1", r:"Q2", s:M(11,45)},
+ {id:"b3", gid:"g2", r:"Q1", s:M(10,54)}, {id:"b4", gid:"g2", r:"Q2", s:M(12,9)},
+ {id:"b5", gid:"g3", r:"Q3", s:M(10,30)}, {id:"b6", gid:"g3", r:"Q4", s:M(11,48)},
+ {id:"b7", gid:"g4", r:"Q5", s:M(10,30)}, {id:"b8", gid:"g4", r:"Q3", s:M(11,18)},
+ {id:"b9", gid:"g5", r:"Q6", s:M(10,30)}, {id:"b10",gid:"g5", r:"Q7", s:M(12,11)},
+ {id:"b11",gid:"g6", r:"Q8", s:M(10,30)}, {id:"b12",gid:"g6", r:"Q6", s:M(11,23)},
+ {id:"b13",gid:"g7", r:"Q9", s:M(10,30)}, {id:"b14",gid:"g7", r:"Q10",s:M(11,15)},
+ {id:"b15",gid:"g8", r:"Q9", s:M(11,15)}, {id:"b16",gid:"g8", r:"Q11",s:M(12,0)}
+];
+var FROWS=[
+ {id:"F1", cls:"U9",  allow:"mw", mode:"TR"},{id:"F2", cls:"U11", allow:"w",  mode:"TR"},
+ {id:"F3", cls:"U11", allow:"m",  mode:"TR"},{id:"F4", cls:"U13", allow:"w",  mode:"TR"},
+ {id:"F5", cls:"U13", allow:"m",  mode:"TR"},{id:"F6", cls:"U15", allow:"w",  mode:"Vorstieg"},
+ {id:"F7", cls:"U15", allow:"m",  mode:"Vorstieg"}
+];
+var FGROUPS=[
+ {id:"h1", base:"U9 m + w",     cls:"U9",  gender:"mw", n:10},
+ {id:"h2", base:"U11 weiblich", cls:"U11", gender:"w",  n:6},
+ {id:"h3", base:"U11 männlich", cls:"U11", gender:"m",  n:6},
+ {id:"h4", base:"U13 weiblich", cls:"U13", gender:"w",  n:6},
+ {id:"h5", base:"U13 männlich", cls:"U13", gender:"m",  n:6},
+ {id:"h6", base:"U15 weiblich", cls:"U15", gender:"w",  n:6},
+ {id:"h7", base:"U15 männlich", cls:"U15", gender:"m",  n:5}
+];
+var FBLOCKS=[
+ {id:"c1",gid:"h1",r:"F1",s:M(14,15)}, {id:"c2",gid:"h2",r:"F2",s:M(14,15)},
+ {id:"c3",gid:"h3",r:"F3",s:M(14,53)}, {id:"c4",gid:"h4",r:"F4",s:M(14,15)},
+ {id:"c5",gid:"h5",r:"F5",s:M(14,15)}, {id:"c6",gid:"h6",r:"F6",s:M(14,15)},
+ {id:"c7",gid:"h7",r:"F7",s:M(14,53)}
+];
+function ffix(plan){
+  var out=[], s=plan.o.start, b=+CFG.win.bes||0, i=+CFG.win.iso||0;
+  plan.rows.forEach(function(row){
+    if(b>0) out.push({r:row.id, cls:row.cls, dur:b, s:s, lab:"Besichtigung"});
+    if(i>0) out.push({r:row.id, cls:row.cls, dur:i, s:s+b, lab:"ISO"});
+  });
+  return out;
+}
+
+/* ================= Plan-Engine ================= */
+function Plan(opt){
+  var self=this;
+  this.o=opt; this.el=document.getElementById(opt.mount); this.seq=1000;
+  this.base={rows:opt.rows, groups:opt.groups, blocks:opt.blocks};
+  this.restore(); this.sel=null; this.render();
+  window.addEventListener("resize",function(){self.position();});
+}
+Plan.prototype.g=function(id){for(var i=0;i<this.groups.length;i++) if(this.groups[i].id===id) return this.groups[i];};
+Plan.prototype.b=function(id){for(var i=0;i<this.blocks.length;i++) if(this.blocks[i].id===id) return this.blocks[i];};
+Plan.prototype.row=function(id){for(var i=0;i<this.rows.length;i++) if(this.rows[i].id===id) return this.rows[i];};
+Plan.prototype.dur=function(b){return this.g(b.gid).n*CLIMB;};
+Plan.prototype.parts=function(g){return this.groups.filter(function(x){return x.cls===g.cls&&x.gender===g.gender;});};
+Plan.prototype.gname=function(g){return CLn(g.cls)+" "+gl(g.cls,g.gender);};
+Plan.prototype.label=function(g){var p=this.parts(g), n=this.gname(g);return p.length<2?n:n+" "+(p.indexOf(g)+1);};
+Plan.prototype.desc=function(r){return CLn(r.cls)+" · "+allowTxt(r)+" · "+r.mode;};
+Plan.prototype.save=function(){
+  try{localStorage.setItem(this.o.store,JSON.stringify({rows:this.rows,groups:this.groups,blocks:this.blocks,seq:this.seq}));}catch(e){}
+};
+Plan.prototype.restore=function(){
+  this.rows=clone(this.base.rows); this.groups=clone(this.base.groups); this.blocks=clone(this.base.blocks);
+  try{
+    var st=JSON.parse(localStorage.getItem(this.o.store)||"null");
+    if(st&&st.rows&&st.groups&&st.blocks&&st.rows.length&&st.groups.length){
+      this.rows=st.rows; this.groups=st.groups; this.blocks=st.blocks; this.seq=st.seq||1000;
+    }
+  }catch(e){}
+  this.prune();
+};
+/* Zeilen und Gruppen entfernen, deren Wertungsklasse es nicht mehr gibt */
+Plan.prototype.prune=function(){
+  var known={}; CFG.classes.forEach(function(c){known[c.id]=1;});
+  var gone={};
+  this.groups=this.groups.filter(function(g){ if(known[g.cls]) return true; gone[g.id]=1; return false; });
+  this.rows=this.rows.filter(function(r){return known[r.cls];});
+  var rows={}; this.rows.forEach(function(r){rows[r.id]=1;});
+  var gs={}; this.groups.forEach(function(g){gs[g.id]=1;});
+  this.blocks=this.blocks.filter(function(b){return gs[b.gid]&&rows[b.r];});
+  if(!this.rows.length&&CFG.classes.length)
+    this.rows.push({id:this.o.prefix+"1",cls:CFG.classes[0].id,allow:"mw",mode:CFG.classes[0].mode||"TR"});
+};
+Plan.prototype.reset=function(){
+  try{localStorage.removeItem(this.o.store);}catch(e){}
+  this.rows=clone(this.base.rows); this.groups=clone(this.base.groups); this.blocks=clone(this.base.blocks);
+  this.seq=1000; this.sel=null; this.applyField(); this.render();
+};
+/* Meldezahlen auf die Gruppen verteilen */
+Plan.prototype.setTotal=function(cls,gender,total){
+  var self=this, parts=this.groups.filter(function(g){return g.cls===cls&&g.gender===gender;});
+  if(!parts.length) return;
+  total=Math.max(0,Math.round(total));
+  while(parts.length>Math.max(1,total)){
+    var drop=parts.pop();
+    this.blocks.filter(function(b){return b.gid===drop.id;}).forEach(function(b){
+      var d=self.nodes&&self.nodes[b.id]; if(d&&d.parentNode) d.parentNode.removeChild(d);
+      if(self.nodes) delete self.nodes[b.id];
+      self.blocks.splice(self.blocks.indexOf(b),1);
+    });
+    this.groups.splice(this.groups.indexOf(drop),1);
+  }
+  var k=parts.length, base=Math.floor(total/k), rem=total-base*k;
+  parts.forEach(function(g,i){ g.n=base+(i<rem?1:0); });
+};
+Plan.prototype.applyField=function(){
+  var self=this;
+  CFG.classes.forEach(function(c){
+    if(self.o.kind==="quali"){
+      self.setTotal(c.id,"m",c.m); self.setTotal(c.id,"w",c.w);
+    }else{
+      var mix=self.groups.some(function(g){return g.cls===c.id&&g.gender==="mw";});
+      if(mix) self.setTotal(c.id,"mw",quota(c.m)+quota(c.w));
+      else { self.setTotal(c.id,"m",quota(c.m)); self.setTotal(c.id,"w",quota(c.w)); }
+    }
+  });
+};
+/* ---- Wertungsklassen ---- */
+Plan.prototype.nextRoute=function(){
+  var max=0, p=this.o.prefix;
+  this.rows.forEach(function(r){var n=parseInt(String(r.id).replace(/\D/g,""),10); if(n>max) max=n;});
+  return p+(max+1);
+};
+Plan.prototype.addClass=function(c){
+  var self=this, t0, dm=(+c.m||0)*CLIMB, dw=(+c.w||0)*CLIMB;
+  function row(allow){var id=self.nextRoute(); self.rows.push({id:id,cls:c.id,allow:allow,mode:c.mode}); return id;}
+  function grp(gender,n){var g={id:newId("g"),cls:c.id,gender:gender,n:Math.max(0,n)}; self.groups.push(g); return g;}
+  function blk(g,r,s){self.blocks.push({id:newId("b"),gid:g.id,r:r,s:Math.round(s/SNAP)*SNAP});}
+  if(this.o.kind==="quali"){
+    t0=this.o.start+15;
+    var rm=row("mw"), r1=row("m"), r2=row("w");
+    var gm=grp("m",c.m), gw=grp("w",c.w);
+    var offW=Math.max(55,dm+5), offM=Math.max(55,dw+5);
+    blk(gm,rm,t0); blk(gm,r1,Math.min(this.o.end-dm,t0+offM));
+    blk(gw,r2,t0); blk(gw,rm,Math.min(this.o.end-dw,t0+offW));
+  }else{
+    t0=this.o.start+(CFG.win.bes||25)+(CFG.win.iso||20);
+    var ra=row("w"), rb=row("m");
+    var ga=grp("w",quota(c.w)), gb=grp("m",quota(c.m));
+    blk(ga,ra,t0); blk(gb,rb,t0);
+  }
+  this.render(); this.save();
+};
+Plan.prototype.delClass=function(id){
+  var self=this;
+  var gone={}; this.groups.filter(function(g){return g.cls===id;}).forEach(function(g){gone[g.id]=1;});
+  this.blocks=this.blocks.filter(function(b){return !gone[b.gid];});
+  this.groups=this.groups.filter(function(g){return g.cls!==id;});
+  this.rows=this.rows.filter(function(r){return r.cls!==id;});
+  if(!this.rows.length) this.rows.push({id:this.o.prefix+"1",cls:(CFG.classes[0]||{}).id,allow:"mw",mode:"TR"});
+  this.sel=null; this.render(); this.save();
+};
+Plan.prototype.window=function(s,e){
+  this.o.start=s; this.o.end=e;
+  var span=Math.max(30,e-s);
+  this.o.step=span>300?60:(span>150?30:15);
+  var self=this;
+  this.blocks.forEach(function(b){
+    var d=self.dur(b);
+    b.s=Math.max(s,Math.min(e-d,b.s));
+  });
+  this.render(); this.save();
+};
+
+/* ---- Routen ---- */
+Plan.prototype.addRoute=function(cls,allow,mode){
+  var max=0;
+  this.rows.forEach(function(r){var n=parseInt(r.id.replace(/\D/g,""),10); if(n>max) max=n;});
+  var idx=this.rows.length;
+  for(var i=this.rows.length-1;i>=0;i--) if(this.rows[i].cls===cls){idx=i+1;break;}
+  this.rows.splice(idx,0,{id:this.o.prefix+(max+1),cls:cls,allow:allow,mode:mode});
+  this.render(); this.save();
+};
+Plan.prototype.delRoute=function(id){
+  if(this.blocks.some(function(b){return b.r===id;})) return false;
+  if(this.rows.length<2) return false;
+  this.rows=this.rows.filter(function(r){return r.id!==id;});
+  this.render(); this.save(); return true;
+};
+
+/* ---- Rendern ---- */
+Plan.prototype.render=function(){
+  var o=this.o, span=o.end-o.start, ticks=span/o.step, h="", self=this;
+  h+='<div class="grow gaxis"><div class="rlabel"><b style="color:var(--muted)">'+esc(o.axisLabel)+'</b></div><div class="track">';
+  for(var i=0;i<=ticks;i++) h+='<span class="t" style="left:'+((i/ticks)*100).toFixed(3)+'%">'+fmt(o.start+i*o.step)+'</span>';
+  h+='</div></div>';
+  this.rows.forEach(function(r){
+    var busy=self.blocks.some(function(b){return b.r===r.id;});
+    h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+esc(r.id)+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button></b>'+
+       '<span>'+esc(self.desc(r))+'</span></div>';
+    h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
+  });
+  this.el.innerHTML=h;
+  this.tracks={};
+  Array.prototype.forEach.call(this.el.querySelectorAll(".track[data-route]"),function(t){self.tracks[t.getAttribute("data-route")]=t;});
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rdel"),function(btn){
+    btn.onclick=function(ev){ev.stopPropagation(); self.delRoute(btn.getAttribute("data-del"));};
+  });
+  this.nodes={};
+  if(o.fixedGen) o.fixed=o.fixedGen(this);
+  (o.fixed||[]).forEach(function(f){
+    var t=self.tracks[f.r]; if(!t) return;
+    var d=document.createElement("div");
+    d.className="blk iso"; d.setAttribute("data-ac",ACOF[f.cls]); d.setAttribute("data-g","m");
+    d.innerHTML='<b>'+esc(f.lab)+'</b><span>'+fmt(f.s)+'–'+fmt(f.s+f.dur)+'</span>';
+    d.style.left=(((f.s-o.start)/span)*100).toFixed(3)+"%";
+    d.style.width=((f.dur/span)*100).toFixed(3)+"%";
+    t.appendChild(d);
+  });
+  this.blocks.forEach(function(b){self.mount(b);});
+  this.position(); this.recalc();
+};
+Plan.prototype.mount=function(b){
+  var t=this.tracks[b.r]; if(!t) return;
+  var g=this.g(b.gid); if(!g) return;
+  var d=document.createElement("div");
+  d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
+  d.setAttribute("tabindex","0"); d.setAttribute("role","button");
+  d.innerHTML='<b></b><span></span>';
+  t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
+};
+Plan.prototype.position=function(){
+  var o=this.o, span=o.end-o.start, self=this;
+  this.blocks.forEach(function(b){
+    var d=self.nodes[b.id]; if(!d) return;
+    var g=self.g(b.gid), dur=self.dur(b);
+    d.style.left=(((b.s-o.start)/span)*100).toFixed(3)+"%";
+    d.style.width=((dur/span)*100).toFixed(3)+"%";
+    d.querySelector("b").textContent=self.label(g);
+    d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" TN";
+    d.title=b.r+" · "+self.label(g)+" · "+fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" Kletternde";
+    d.classList.toggle("sel", self.sel===b.id);
+    d.classList.toggle("dim", !!self.filter && g.cls!==self.filter);
+  });
+};
+Plan.prototype.bind=function(d,b){
+  var self=this, o=this.o, drag=null;
+  function onMove(ev){
+    if(!drag) return;
+    if(Math.abs(ev.clientX-drag.x)>3||Math.abs(ev.clientY-drag.y)>3) drag.moved=true;
+    var ns=Math.round((drag.s0+(ev.clientX-drag.x)/drag.ppm)/SNAP)*SNAP;
+    ns=Math.max(o.start,Math.min(o.end-self.dur(b),ns));
+    var ch=false;
+    if(ns!==b.s){b.s=ns;ch=true;}
+    var tgt=self.rowAt(ev.clientY);
+    if(tgt&&tgt!==b.r){b.r=tgt; self.tracks[tgt].appendChild(d); ch=true;}
+    if(ch){self.position(); self.recalc();}
+    ev.preventDefault();
+  }
+  function onUp(){
+    if(!drag) return;
+    var moved=drag.moved; drag=null; d.classList.remove("dragging");
+    window.removeEventListener("pointermove",onMove);
+    window.removeEventListener("pointerup",onUp);
+    window.removeEventListener("pointercancel",onUp);
+    if(!moved) self.select(b.id); else {self.save(); if(self.sel===b.id) self.editor();}
+  }
+  d.addEventListener("pointerdown",function(ev){
+    if(ev.button!==0&&ev.pointerType==="mouse") return;
+    drag={x:ev.clientX,y:ev.clientY,s0:b.s,moved:false,
+          ppm:d.parentNode.getBoundingClientRect().width/(o.end-o.start)};
+    d.classList.add("dragging");
+    window.addEventListener("pointermove",onMove);
+    window.addEventListener("pointerup",onUp);
+    window.addEventListener("pointercancel",onUp);
+    ev.preventDefault();
+  });
+  d.addEventListener("keydown",function(ev){
+    var k=ev.key, step=(ev.shiftKey?1:SNAP);
+    if(k==="ArrowLeft"||k==="ArrowRight"){
+      ev.preventDefault();
+      b.s=Math.max(o.start,Math.min(o.end-self.dur(b), b.s+(k==="ArrowLeft"?-step:step)));
+    } else if(k==="ArrowUp"||k==="ArrowDown"){
+      ev.preventDefault();
+      var idx=self.rows.map(function(r){return r.id;}).indexOf(b.r)+(k==="ArrowUp"?-1:1);
+      if(idx<0||idx>=self.rows.length) return;
+      b.r=self.rows[idx].id; self.tracks[b.r].appendChild(d); d.focus();
+    } else if(k==="Enter"||k===" "){ev.preventDefault(); self.select(b.id); return;}
+    else return;
+    self.position(); self.recalc(); self.save(); if(self.sel===b.id) self.editor();
+  });
+};
+Plan.prototype.rowAt=function(y){
+  var hit=null, self=this;
+  Object.keys(this.tracks).forEach(function(id){
+    var r=self.tracks[id].getBoundingClientRect();
+    if(y>=r.top&&y<=r.bottom) hit=id;
+  });
+  return hit;
+};
+Plan.prototype.select=function(id){this.sel=id; this.position(); this.editor();};
+Plan.prototype.split=function(gid,nNew){
+  var g=this.g(gid); if(!g||g.n<2) return;
+  nNew=Math.max(1,Math.min(g.n-1,Math.round(nNew)));
+  var ng={id:"g"+(++this.seq), cls:g.cls, gender:g.gender, n:nNew};
+  g.n-=nNew;
+  this.groups.splice(this.groups.indexOf(g)+1,0,ng);
+  var self=this;
+  this.blocks.filter(function(b){return b.gid===gid;}).forEach(function(b){
+    var nb={id:"b"+(++self.seq), gid:ng.id, r:b.r, s:Math.min(self.o.end-nNew*CLIMB, b.s+g.n*CLIMB+5)};
+    self.blocks.push(nb); self.mount(nb);
+  });
+  this.sel=null; this.position(); this.recalc(); this.save(); this.editor();
+};
+Plan.prototype.merge=function(g0){
+  var parts=this.parts(g0); if(parts.length<2) return;
+  var keep=parts[0], self=this;
+  parts.slice(1).forEach(function(g){
+    keep.n+=g.n;
+    self.blocks.filter(function(b){return b.gid===g.id;}).forEach(function(b){
+      var d=self.nodes[b.id]; if(d&&d.parentNode) d.parentNode.removeChild(d);
+      delete self.nodes[b.id]; self.blocks.splice(self.blocks.indexOf(b),1);
+    });
+    self.groups.splice(self.groups.indexOf(g),1);
+  });
+  this.sel=null; this.position(); this.recalc(); this.save(); this.editor();
+};
+Plan.prototype.list=function(){
+  var self=this;
+  return this.blocks.map(function(b){var g=self.g(b.gid);
+    return {id:b.id,gid:g.id,r:b.r,s:b.s,e:b.s+self.dur(b),cls:g.cls,gender:g.gender,n:g.n,lab:self.label(g)};});
+};
+Plan.prototype.recalc=function(){
+  var self=this, o=this.o, list=this.list(), clash={}, warn={};
+  for(var i=0;i<list.length;i++){
+    var row=this.row(list[i].r);
+    if(row&&(row.cls!==list[i].cls||(row.allow!=="mw"&&row.allow!==list[i].gender&&list[i].gender!=="mw"))) warn[list[i].id]=1;
+    for(var j=i+1;j<list.length;j++)
+      if(list[i].r===list[j].r&&list[i].s<list[j].e&&list[j].s<list[i].e){clash[list[i].id]=1;clash[list[j].id]=1;}
+  }
+  Object.keys(this.nodes).forEach(function(k){
+    self.nodes[k].classList.toggle("clash",!!clash[k]);
+    self.nodes[k].classList.toggle("warn",!!warn[k]&&!clash[k]);
+  });
+  var ev=[]; list.forEach(function(b){ev.push(b.s);ev.push(b.e);});
+  ev.sort(function(a,b){return a-b;});
+  var maxR=0,end=o.start;
+  ev.forEach(function(t){var rs={};list.forEach(function(b){if(b.s<=t&&t<b.e)rs[b.r]=1;});
+    var c=Object.keys(rs).length; if(c>maxR)maxR=c;});
+  list.forEach(function(b){if(b.e>end)end=b.e;});
+  var maxCls=0;
+  CLASSES.forEach(function(cl){
+    var sub=list.filter(function(b){return b.cls===cl;}); if(!sub.length)return;
+    var m=0; ev.forEach(function(t){var rs={};sub.forEach(function(b){if(b.s<=t&&t<b.e)rs[b.r]=1;});
+      var c=Object.keys(rs).length; if(c>m)m=c;});
+    if(m>maxCls)maxCls=m;
+  });
+  var nc=Object.keys(clash).length, nw=Object.keys(warn).length;
+  this.stat={end:end,maxR:maxR,maxCls:maxCls,clash:nc,warn:nw,list:list};
+  document.getElementById(o.readout).innerHTML=
+    '<span>Ende</span> <b>'+fmt(end)+'</b>'+
+    '<span>gleichzeitig</span> <b>'+maxR+' Routen</b>'+
+    '<span>Routen-Teams</span> <b>'+maxR+' × 3 = '+(maxR*TEAM_PERS)+' Personen</b>'+
+    '<span>je Klasse max.</span> <b>'+maxCls+' Routen</b>'+
+    '<span class="flag'+(nc?" bad":"")+'">'+(nc?nc+(nc===1?" Doppelbelegung":" Doppelbelegungen"):"keine Doppelbelegung")+'</span>'+
+    (nw?'<span class="flag warn">'+nw+(nw===1?" Block":" Blöcke")+' auf fremder Route</span>':'');
+  if(o.laufkarte) this.laufkarte(list);
+  if(o.onchange) o.onchange(this,list);
+};
+Plan.prototype.laufkarte=function(list){
+  var self=this,by={},h="";
+  list.forEach(function(b){by[b.id]=b;});
+  this.groups.forEach(function(g){
+    var bs=self.blocks.filter(function(b){return b.gid===g.id;}).map(function(b){return by[b.id];})
+            .sort(function(a,b){return a.s-b.s;});
+    if(bs.length<2) return;
+    var p=bs[1].s-bs[0].s, ok=p>=45&&p<=65;
+    h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
+       '<td class="tm">'+bs[0].r+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
+       '<td class="tm">'+bs[1].r+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
+       '<td class="num"><span class="pill '+(ok?"ok":"bad")+'">'+p+' Min</span></td></tr>';
+  });
+  document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
+};
+Plan.prototype.editor=function(){
+  var box=document.getElementById(this.o.editor); if(!box) return;
+  var b=this.sel?this.b(this.sel):null;
+  if(!b){box.hidden=true; box.innerHTML=""; return;}
+  var g=this.g(b.gid), self=this, parts=this.parts(g);
+  var opts=this.rows.map(function(r){
+    return '<option value="'+r.id+'"'+(r.id===b.r?" selected":"")+'>'+r.id+' – '+esc(self.desc(r))+'</option>';}).join("");
+  box.hidden=false;
+  box.innerHTML=
+   '<div class="ed-head" data-ac="'+ACOF[g.cls]+'"><b>'+esc(this.label(g))+'</b> <span>'+g.n+' TN · '+b.r+' · '+fmt(b.s)+'–'+fmt(b.s+this.dur(b))+'</span>'+
+   '<button class="fbtn ed-close" type="button">Auswahl aufheben</button></div>'+
+   '<div class="ed-grid">'+
+     '<label>Route <select class="ed-route">'+opts+'</select></label>'+
+     '<label>Start <input class="ed-start" type="time" step="300" value="'+fmt(b.s)+'"></label>'+
+     '<label>Teilen: <input class="ed-n" type="number" min="1" max="'+Math.max(1,g.n-1)+'" value="'+Math.floor(g.n/2)+'"'+(g.n<2?" disabled":"")+'> TN abtrennen'+
+      ' <button class="fbtn ed-split" type="button"'+(g.n<2?" disabled":"")+'>Teilen</button></label>'+
+     (parts.length>1?'<label><button class="fbtn ed-merge" type="button">„'+esc(this.gname(g))+'" zusammenführen</button></label>':'')+
+   '</div>';
+  box.querySelector(".ed-close").onclick=function(){self.sel=null;self.position();self.editor();};
+  box.querySelector(".ed-route").onchange=function(){
+    b.r=this.value; self.tracks[b.r].appendChild(self.nodes[b.id]);
+    self.position(); self.recalc(); self.save(); self.editor();};
+  box.querySelector(".ed-start").onchange=function(){
+    var v=parseTime(this.value); if(v==null) return;
+    b.s=Math.max(self.o.start,Math.min(self.o.end-self.dur(b),Math.round(v/SNAP)*SNAP));
+    self.position(); self.recalc(); self.save(); self.editor();};
+  var sp=box.querySelector(".ed-split");
+  if(sp) sp.onclick=function(){self.split(g.id,+box.querySelector(".ed-n").value||1);};
+  var mg=box.querySelector(".ed-merge");
+  if(mg) mg.onclick=function(){self.merge(g);};
+};
+
+/* ================= Teams ================= */
+function teams(plan,list){
+  var occ={};
+  list.forEach(function(b){
+    var o=occ[b.r];
+    if(!o) occ[b.r]={s:b.s,e:b.e,items:[b]};
+    else {o.s=Math.min(o.s,b.s);o.e=Math.max(o.e,b.e);o.items.push(b);}
+  });
+  var items=plan.rows.filter(function(r){return occ[r.id];}).map(function(r){
+    var o=occ[r.id]; o.items.sort(function(a,b){return a.s-b.s;});
+    return {r:r.id,row:r,s:o.s,e:o.e,items:o.items};
+  }).sort(function(a,b){return a.s-b.s||a.e-b.e;});
+  var T=[];
+  items.forEach(function(it){
+    var pick=null;
+    for(var i=0;i<T.length;i++) if(T[i].free<=it.s && T[i].cls===it.row.cls){pick=T[i];break;}
+    if(!pick) for(var j=0;j<T.length;j++) if(T[j].free<=it.s){pick=T[j];break;}
+    if(!pick){pick={idx:T.length+1,stations:[],free:-1,cls:it.row.cls};T.push(pick);}
+    pick.stations.push(it); pick.free=it.e; pick.cls=it.row.cls;
+  });
+  return T;
+}
+function teamName(i){return "Team "+i+" · "+TEAMNAMES[(i-1)%TEAMNAMES.length];}
+var LASTQ={T:[],list:[],plan:null};
+function renderTeams(plan,list){
+  if(!plan||!list) return;
+  var T=teams(plan,list), h="";
+  LASTQ={T:T,list:list,plan:plan};
+  T.forEach(function(t){
+    var np=peopleOfTeam(t.idx).length;
+    t.stations.forEach(function(st,i){
+      var who=st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"–"+fmt(x.e)+")";}).join(", ");
+      h+='<tr data-ac="'+ACOF[st.row.cls]+'"'+(i===0?' class="tstart"':'')+'>'+
+         '<td>'+(i===0?'<strong>Team '+t.idx+'</strong> · '+esc(TEAMNAMES[(t.idx-1)%TEAMNAMES.length]):'')+'</td>'+
+         '<td class="tm">'+fmt(st.s)+'–'+fmt(st.e)+'</td>'+
+         '<td><span class="ac">'+esc(st.r)+'</span> <span style="color:var(--muted)">'+esc(plan.desc(st.row))+'</span></td>'+
+         '<td>'+esc(who)+'</td>'+
+         (i===0?'<td rowspan="'+t.stations.length+'" style="vertical-align:top" class="pcell">'+teamPeopleHtml(t.idx)+'</td>':'')+
+         '<td class="num">'+(i===0?(np?np+" / "+TEAM_PERS:TEAM_PERS):"")+'</td></tr>';
+    });
+  });
+  var named=CFG.people.filter(function(p){return p.team;}).length;
+  h+='<tr class="sum"><td>'+T.length+' Routen-Teams</td><td class="tm">—</td><td>'+plan.rows.length+' Routen gebaut</td>'+
+     '<td>je Team: Sicherung + Ergebnisdienst</td><td>'+named+' Personen namentlich zugeteilt</td>'+
+     '<td class="num">'+(T.length*TEAM_PERS)+'</td></tr>';
+  document.querySelector("#teamtable tbody").innerHTML=h;
+  document.getElementById("teamsum").textContent=T.length+" Routen-Teams à "+TEAM_PERS+" Personen = "+(T.length*TEAM_PERS)+" Personen"+
+    (CFG.people.length?" · "+named+" von "+CFG.people.length+" erfassten Personen einem Team zugeordnet":"");
+}
+
+/* ================= Wege-Diagramm ================= */
+function flowLanes(plan,list){
+  var by={}; list.forEach(function(b){by[b.id]=b;});
+  var lanes=[];
+  plan.groups.forEach(function(g){
+    var bs=plan.blocks.filter(function(b){return b.gid===g.id;}).map(function(b){return by[b.id];})
+            .sort(function(a,b){return a.s-b.s;});
+    if(bs.length) lanes.push({g:g,bs:bs,label:plan.label(g)});
+  });
+  return lanes;
+}
+function renderFlow(plan,list){
+  var W=980, LAB=168, PAD=16, X0=LAB, X1=W-PAD, LANE=48, TOP=32;
+  var t0=plan.o.start, t1=plan.o.end, span=t1-t0;
+  var X=function(t){return X0+((t-t0)/span)*(X1-X0);};
+  var lanes=flowLanes(plan,list);
+  var H=TOP+lanes.length*LANE+14;
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Wege der Startgruppen durch die Qualifikation">';
+  s+='<defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="currentColor"/></marker></defs>';
+  for(var t=Math.ceil(t0/30)*30;t<=t1;t+=30){
+    s+='<line x1="'+X(t).toFixed(1)+'" y1="'+(TOP-10)+'" x2="'+X(t).toFixed(1)+'" y2="'+(H-8)+'" stroke="var(--line)" stroke-width="1"/>';
+    s+='<text x="'+X(t).toFixed(1)+'" y="'+(TOP-16)+'" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">'+fmt(t)+'</text>';
+  }
+  lanes.forEach(function(L,i){
+    var y=TOP+i*LANE, mid=y+26, g=L.g, w=g.gender==="w";
+    s+='<g data-ac="'+ACOF[g.cls]+'" color="var(--ac)">';
+    s+='<text x="8" y="'+(mid+4)+'" font-family="var(--disp)" font-size="13" font-weight="500" fill="var(--ac)">'+esc(L.label)+'</text>';
+    s+='<text x="'+(LAB-14)+'" y="'+(mid+4)+'" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--muted)">'+g.n+' TN</text>';
+    L.bs.forEach(function(b,k){
+      var x=X(b.s), bw=Math.max(6,X(b.e)-X(b.s));
+      s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="'+bw.toFixed(1)+'" height="26" rx="3" fill="var('+(w?"--w-bg":"--m-bg")+')" stroke="var('+(w?"--w-br":"--m-br")+')"/>';
+      s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="3" height="26" fill="var(--ac)"/>';
+      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(b.r)+'</text>';
+      if(bw>108) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
+      if(k===1){
+        var p=L.bs[1].s-L.bs[0].s, ok=p>=45&&p<=65, xa=X(L.bs[0].e)+3, xb=x-4;
+        if(xb>xa+76){
+          s+='<line x1="'+xa.toFixed(1)+'" y1="'+mid+'" x2="'+xb.toFixed(1)+'" y2="'+mid+'" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
+          s+='<text x="'+((xa+xb)/2).toFixed(1)+'" y="'+(mid-6)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(ok?"--ok":"--bad")+')">Pause '+p+' Min</text>';
+        } else {
+          var x1=X(L.bs[0].s)+2, x2=x-2;
+          s+='<path d="M'+x1.toFixed(1)+','+(mid-15)+' C'+x1.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-15)+'" fill="none" stroke="var(--line-strong)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
+          s+='<text x="'+((x1+x2)/2).toFixed(1)+'" y="'+(mid-25)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(ok?"--ok":"--bad")+')">Pause '+p+' Min</text>';
+        }
+      }
+    });
+    s+='</g>';
+  });
+  s+='</svg>';
+  document.getElementById("flow").innerHTML=s;
+}
+
+/* ================= Meldezahlen-Tabelle, Kennzahlen, Finalquoten ================= */
+function classMode(plan,list,cls){
+  var bs=list.filter(function(b){return b.cls===cls;});
+  var gids={}; bs.forEach(function(b){gids[b.gid]=1;});
+  if(Object.keys(gids).length<2) return "einzeln";
+  var over=false, sep=false;
+  for(var i=0;i<bs.length;i++) for(var j=i+1;j<bs.length;j++){
+    if(bs[i].gid===bs[j].gid) continue;
+    if(bs[i].s<bs[j].e&&bs[j].s<bs[i].e) over=true; else sep=true;
+  }
+  if(over&&sep) return "teils parallel";
+  return over?"parallel":"nacheinander";
+}
+function afterCfg(replan){
+  reindex(); saveCfg();
+  if(replan!==false){ pq.applyField(); pf.applyField(); }
+  pq.render(); pf.render(); pq.save(); pf.save();
+  renderFilterBtns(); if(typeof fillAddRoute==="function") fillAddRoute();
+}
+function renderMeld(){
+  var h="", tot={m:0,w:0,n:0,min:0};
+  var qlist=(pq.stat&&pq.stat.list)||[];
+  CFG.classes.forEach(function(c){
+    var m=+c.m||0, w=+c.w||0, n=m+w;
+    var min=qlist.filter(function(b){return b.cls===c.id;}).reduce(function(a,b){return a+(b.e-b.s);},0);
+    tot.m+=m;tot.w+=w;tot.n+=n;tot.min+=min;
+    var pal=PALETTE.map(function(p,i){return '<option value="'+i+'"'+(i===(c.color||0)?" selected":"")+'>'+p.n+'</option>';}).join("");
+    h+='<tr data-ac="'+ACOF[c.id]+'">'+
+       '<td><input class="cin nm" data-c="'+c.id+'" data-k="name" value="'+esc(c.name)+'" size="6"></td>'+
+       '<td><input class="cin" data-c="'+c.id+'" data-k="lm" value="'+esc(c.lm)+'" size="9"></td>'+
+       '<td class="num"><input class="nin" type="number" min="0" max="99" data-c="'+c.id+'" data-k="m" value="'+m+'"></td>'+
+       '<td><input class="cin" data-c="'+c.id+'" data-k="lw" value="'+esc(c.lw)+'" size="9"></td>'+
+       '<td class="num"><input class="nin" type="number" min="0" max="99" data-c="'+c.id+'" data-k="w" value="'+w+'"></td>'+
+       '<td><select class="cin sel" data-c="'+c.id+'" data-k="mode"><option value="TR"'+(c.mode==="TR"?" selected":"")+'>Toprope</option>'+
+         '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
+       '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
+       '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
+       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
+  });
+  h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
+     '<td></td><td></td><td class="num">'+tot.n+'</td><td class="num">'+tot.min+'</td><td></td></tr>';
+  document.querySelector("#meldtab tbody").innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll("#meldtab .nin"),function(inp){
+    inp.onchange=function(){
+      var v=Math.max(0,Math.min(99,parseInt(this.value,10)||0)); this.value=v;
+      var c=CL(this.getAttribute("data-c")); if(!c) return;
+      c[this.getAttribute("data-k")]=v; afterCfg();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#meldtab .cin"),function(inp){
+    inp.onchange=function(){
+      var c=CL(this.getAttribute("data-c")); if(!c) return;
+      var k=this.getAttribute("data-k"), v=this.value;
+      c[k]=(k==="color")?(parseInt(v,10)||0):(String(v).trim()||c[k]);
+      afterCfg(false);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#meldtab .cdel"),function(btn){
+    btn.onclick=function(){
+      if(CFG.classes.length<2) return;
+      var id=this.getAttribute("data-c");
+      CFG.classes=CFG.classes.filter(function(x){return x.id!==id;});
+      reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
+    };
+  });
+}
+function addClass(name,lm,lw,m,w,mode){
+  name=String(name||"").trim(); if(!name) return false;
+  var id=name.replace(/[^A-Za-z0-9]/g,"")||("K"+CFG.seq);
+  if(CL(id)) id=id+(++CFG.seq);
+  var used={}; CFG.classes.forEach(function(c){used[c.color]=1;});
+  var col=0; for(var i=0;i<PALETTE.length;i++) if(!used[i]){col=i;break;}
+  var c={id:id,name:name,color:col,lm:lm||"männlich",lw:lw||"weiblich",
+         m:Math.max(0,parseInt(m,10)||0), w:Math.max(0,parseInt(w,10)||0), mode:mode||"TR"};
+  CFG.classes.push(c); reindex(); saveCfg();
+  pq.addClass(c); pf.addClass(c);
+  afterCfg(); return true;
+}
+/* ================= Zeitfenster ================= */
+function renderWin(){
+  function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}
+  set("winQs",CFG.win.qs); set("winQe",CFG.win.qe);
+  set("winFs",CFG.win.fs); set("winFe",CFG.win.fe);
+  var b=document.getElementById("winBes"), i=document.getElementById("winIso");
+  if(b) b.value=CFG.win.bes; if(i) i.value=CFG.win.iso;
+  var out=document.getElementById("winOut");
+  if(out) out.textContent="Quali "+fmt(CFG.win.qs)+"–"+fmt(CFG.win.qe)+" · Finale "+fmt(CFG.win.fs)+"–"+fmt(CFG.win.fe)+
+    " · erster Finalzug "+fmt(CFG.win.fs+(+CFG.win.bes||0)+(+CFG.win.iso||0));
+}
+function applyWin(){
+  if(CFG.win.qe<=CFG.win.qs) CFG.win.qe=CFG.win.qs+60;
+  if(CFG.win.fe<=CFG.win.fs) CFG.win.fe=CFG.win.fs+60;
+  saveCfg();
+  pq.window(CFG.win.qs,CFG.win.qe);
+  pf.window(CFG.win.fs,CFG.win.fe);
+  renderWin();
+}
+/* ================= Personal: Kategorien und Personen ================= */
+function catName(id){for(var i=0;i<CFG.cats.length;i++) if(CFG.cats[i].id===id) return CFG.cats[i].name; return "ohne Kategorie";}
+function teamOpts(sel){
+  var T=(LASTQ.T||[]), h='<option value="0"'+(!sel?" selected":"")+'>— kein Team —</option>';
+  T.forEach(function(t){ h+='<option value="'+t.idx+'"'+(+sel===t.idx?" selected":"")+'>'+esc(teamName(t.idx))+'</option>'; });
+  if(sel&&sel>T.length) h+='<option value="'+sel+'" selected>Team '+sel+' (nicht mehr vorhanden)</option>';
+  return h;
+}
+function renderCats(){
+  var body=document.querySelector("#cattab tbody"); if(!body) return;
+  var h="";
+  CFG.cats.forEach(function(k){
+    var n=CFG.people.filter(function(p){return p.cat===k.id;}).length;
+    h+='<tr><td><input class="cin katin" data-k="'+k.id+'" value="'+esc(k.name)+'"></td>'+
+       '<td class="num">'+n+'</td>'+
+       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen">×</button></td></tr>';
+  });
+  if(!CFG.cats.length) h='<tr><td colspan="3" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll(".katin"),function(i){
+    i.onchange=function(){
+      for(var j=0;j<CFG.cats.length;j++) if(CFG.cats[j].id===this.getAttribute("data-k")) CFG.cats[j].name=this.value.trim()||CFG.cats[j].name;
+      saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".katdel"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-k");
+      CFG.cats=CFG.cats.filter(function(x){return x.id!==id;});
+      CFG.people.forEach(function(p){if(p.cat===id) p.cat="";});
+      saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  var s=document.getElementById("newPcat");
+  if(s) s.innerHTML=CFG.cats.map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>';}).join("");
+}
+function renderPeople(){
+  var body=document.querySelector("#peotab tbody"); if(!body) return;
+  var h="";
+  CFG.people.slice().sort(function(a,b){
+    return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
+  }).forEach(function(p){
+    var cats=CFG.cats.map(function(k){return '<option value="'+k.id+'"'+(k.id===p.cat?" selected":"")+'>'+esc(k.name)+'</option>';}).join("");
+    h+='<tr><td><input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></td>'+
+       '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
+       '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
+       '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
+       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen">×</button></td></tr>';
+  });
+  if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  body.innerHTML=h;
+  function upd(sel,fn){
+    Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){
+      el.onchange=function(){
+        var id=this.getAttribute("data-p");
+        for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) fn(CFG.people[i],this.value);
+        saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+      };
+    });
+  }
+  upd(".pnm",function(p,v){p.name=v.trim()||p.name;});
+  upd(".pcat",function(p,v){p.cat=v;});
+  upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
+  upd(".pnote",function(p,v){p.note=v;});
+  Array.prototype.forEach.call(document.querySelectorAll(".pdel"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-p");
+      CFG.people=CFG.people.filter(function(x){return x.id!==id;});
+      saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  var box=document.getElementById("nolist");
+  if(box){
+    var free={};
+    CFG.people.filter(function(p){return !p.team;}).forEach(function(p){
+      var k=catName(p.cat); (free[k]=free[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));
+    });
+    var ks=Object.keys(free);
+    box.innerHTML=ks.length
+      ? ks.map(function(k){return '<div><b>'+esc(k)+'</b> '+esc(free[k].join(", "))+'</div>';}).join("")
+      : '<div style="color:var(--muted)">Alle erfassten Personen sind einem Team zugeordnet.</div>';
+  }
+}
+function peopleOfTeam(idx){
+  return CFG.people.filter(function(p){return +p.team===idx;});
+}
+function teamPeopleHtml(idx){
+  var ps=peopleOfTeam(idx); if(!ps.length) return '<span style="color:var(--muted)">—</span>';
+  var by={};
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+  return Object.keys(by).map(function(k){
+    return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
+}
+function renderStats(){
+  var q=pq.stat||{}, f=pf.stat||{};
+  var min=(q.list||[]).reduce(function(a,b){return a+(b.e-b.s);},0);
+  function set(id,v){var el=document.getElementById(id); if(el) el.textContent=v;}
+  set("stAth",totalAth());
+  set("stRoutes",pq.rows.length+pf.rows.length);
+  set("stMin",min);
+  set("stTeams",Math.max(q.maxR||0,f.maxR||0));
+  set("stPers",Math.max(q.maxR||0,f.maxR||0)*TEAM_PERS);
+  set("stEnd",fmt(q.end||0));
+}
+function renderFinalTab(){
+  var list=(pf.stat&&pf.stat.list)||[], T=teams(pf,list), rteam={};
+  T.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
+  var h="", sumG=0, sumF=0;
+  CFG.classes.forEach(function(cc){
+    var c=cc.id, mode=classMode(pf,list,c);
+    ["m","w"].forEach(function(gd,gi){
+      var n=+cc[gd]||0, q=quota(n); sumG+=n; sumF+=q;
+      var blk=list.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");})
+                  .sort(function(a,b){return a.s-b.s;})[0];
+      h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
+         '<td class="num">'+n+'</td><td class="num">'+(n>=20?10:6)+'</td><td class="num">'+q+'</td>'+
+         '<td>'+(blk?'<strong class="mono">'+esc(blk.r)+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
+         '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
+         '<td class="num">'+(blk&&rteam[blk.r]?rteam[blk.r]:'—')+'</td>'+
+         (gi===0?'<td rowspan="2" style="vertical-align:middle"><span class="pill '+(mode==="parallel"?"ok":"")+'">'+mode+'</span></td>':'')+
+         '</tr>';
+    });
+  });
+  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">—</td><td class="num">'+sumF+'</td>'+
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td class="num">'+T.length+'</td><td>'+T.length*TEAM_PERS+' Personen</td></tr>';
+  document.querySelector("#finaltab tbody").innerHTML=h;
+}
+
+/* ================= Instanzen ================= */
+var pq,pf;
+function afterQ(plan,list){
+  renderTeams(plan,list); renderFlow(plan,list);
+  if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
+}
+function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
+function autoStep(span){return span>300?60:(span>150?30:15);}
+pq=new Plan({mount:"gq-inner", readout:"roQ", editor:"edQ", laufkarte:"#lk", store:"kidscup-quali-v9", kind:"quali",
+  prefix:"Q", start:CFG.win.qs, end:CFG.win.qe, step:autoStep(CFG.win.qe-CFG.win.qs), axisLabel:"Quali",
+  rows:QROWS, groups:QGROUPS, blocks:QBLOCKS, onchange:afterQ});
+pf=new Plan({mount:"gf-inner", readout:"roF", editor:"edF", store:"kidscup-finale-v9", kind:"finale",
+  prefix:"F", start:CFG.win.fs, end:CFG.win.fe, step:autoStep(CFG.win.fe-CFG.win.fs), axisLabel:"Finale",
+  rows:FROWS, groups:FGROUPS, blocks:FBLOCKS, fixedGen:ffix, onchange:afterF});
+pq.applyField(); pf.applyField(); pq.render(); pf.render();
+renderWin(); renderCats(); renderPeople();
+
+document.getElementById("resetQ").onclick=function(){pq.reset();};
+document.getElementById("resetF").onclick=function(){pf.reset();};
+document.getElementById("resetField").onclick=function(){
+  CFG.classes=clone(CFG0.classes); reindex(); saveCfg();
+  try{localStorage.removeItem("kidscup-quali-v9"); localStorage.removeItem("kidscup-finale-v9");}catch(e){}
+  location.reload();
+};
+var addBox=document.getElementById("addQ");
+document.getElementById("addQtoggle").onclick=function(){addBox.hidden=!addBox.hidden; if(!addBox.hidden) fillAddRoute();};
+function fillAddRoute(){
+  var s=document.getElementById("addQcls");
+  s.innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  syncAllow();
+}
+function syncAllow(){
+  var c=CL(document.getElementById("addQcls").value)||CFG.classes[0]; if(!c) return;
+  var a=document.getElementById("addQallow"), v=a.value;
+  a.innerHTML='<option value="mw">gemischt</option><option value="m">nur '+esc(c.lm)+'</option><option value="w">nur '+esc(c.lw)+'</option>';
+  a.value=v||"mw";
+  document.getElementById("addQmode").value=c.mode||"TR";
+}
+document.getElementById("addQcls").onchange=syncAllow;
+fillAddRoute();
+document.getElementById("addQgo").onclick=function(){
+  pq.addRoute(document.getElementById("addQcls").value,document.getElementById("addQallow").value,document.getElementById("addQmode").value);
+  addBox.hidden=true;
+};
+document.getElementById("addQcancel").onclick=function(){addBox.hidden=true;};
+
+/* ---- Klasse hinzufügen ---- */
+var clsBox=document.getElementById("addCls");
+document.getElementById("addClsToggle").onclick=function(){clsBox.hidden=!clsBox.hidden;};
+document.getElementById("addClsCancel").onclick=function(){clsBox.hidden=true;};
+document.getElementById("addClsGo").onclick=function(){
+  var ok=addClass(document.getElementById("acName").value,document.getElementById("acLm").value,
+    document.getElementById("acLw").value,document.getElementById("acM").value,
+    document.getElementById("acW").value,document.getElementById("acMode").value);
+  if(ok){ clsBox.hidden=true; document.getElementById("acName").value=""; fillAddRoute(); }
+};
+
+/* ---- Zeitfenster ---- */
+["winQs","winQe","winFs","winFe"].forEach(function(id){
+  var el=document.getElementById(id);
+  el.onchange=function(){
+    var v=parseTime(this.value); if(v==null){renderWin();return;}
+    CFG.win[id.slice(3).toLowerCase()]=Math.round(v/5)*5;
+    applyWin();
+  };
+});
+["winBes","winIso"].forEach(function(id){
+  document.getElementById(id).onchange=function(){
+    CFG.win[id==="winBes"?"bes":"iso"]=Math.max(0,Math.min(180,parseInt(this.value,10)||0));
+    saveCfg(); pf.render(); pf.save(); renderWin();
+  };
+});
+document.getElementById("winReset").onclick=function(){
+  CFG.win=clone(CFG0.win); applyWin();
+};
+
+/* ---- Kategorien und Personen ---- */
+document.getElementById("addKatGo").onclick=function(){
+  var n=document.getElementById("newKat").value.trim(); if(!n) return;
+  CFG.cats.push({id:newId("k"),name:n}); document.getElementById("newKat").value="";
+  saveCfg(); renderCats(); renderPeople();
+};
+document.getElementById("addPeoGo").onclick=function(){
+  var n=document.getElementById("newPname").value.trim(); if(!n) return;
+  CFG.people.push({id:newId("p"),name:n,cat:document.getElementById("newPcat").value||"",
+    team:parseInt(document.getElementById("newPteam").value,10)||0,note:""});
+  document.getElementById("newPname").value="";
+  document.getElementById("newPteam").value="0";
+  saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+  document.getElementById("newPname").focus();
+};
+function refreshTeamSel(){
+  var s=document.getElementById("newPteam"); if(s) s.innerHTML=teamOpts(0);
+}
+
+/* ---- Rollenansicht ---- */
+var VIEWKEY="kidscup-view-v1", vbtns=Array.prototype.slice.call(document.querySelectorAll(".vbtn"));
+function setView(v){
+  document.body.setAttribute("data-view",v);
+  vbtns.forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-v")===v?"true":"false");});
+  try{localStorage.setItem(VIEWKEY,v);}catch(e){}
+  var n=document.getElementById("viewNote");
+  if(n) n.textContent=v==="alles"?"Alle Kapitel sichtbar."
+    :"Gefilterte Ansicht – nur die Kapitel, die diese Rolle braucht. Der Plan dahinter bleibt vollständig.";
+}
+vbtns.forEach(function(b){b.onclick=function(){setView(b.getAttribute("data-v"));};});
+var v0="alles"; try{v0=localStorage.getItem(VIEWKEY)||"alles";}catch(e){}
+setView(v0);
+function renderFilterBtns(){
+  var bar=document.getElementById("fbar"); if(!bar) return;
+  bar.innerHTML='<button class="fbtn" type="button" data-f="all" aria-pressed="'+(pq.filter?"false":"true")+'">Alle</button>'+
+    CFG.classes.map(function(c){
+      return '<button class="fbtn" type="button" data-f="'+esc(c.id)+'" aria-pressed="'+(pq.filter===c.id?"true":"false")+'">'+esc(c.name)+'</button>';
+    }).join("");
+  Array.prototype.forEach.call(bar.querySelectorAll(".fbtn"),function(x){
+    x.onclick=function(){
+      var v=x.getAttribute("data-f");
+      pq.filter=(v==="all")?null:v;
+      Array.prototype.forEach.call(bar.querySelectorAll(".fbtn"),function(o){
+        o.setAttribute("aria-pressed",o===x?"true":"false");});
+      pq.position();
+    };
+  });
+}
+renderFilterBtns();
+
+/* ================= Texte bearbeiten ================= */
+var TXTKEY="kidscup-texts-v1";
+function editables(){
+  var sel="h1, .dek, main h2, main h3, main h4, main p, main li, main .route-desc, main .eyebrow, header .eyebrow, footer p, .rail .step div b, .rail .step div span, .rail .step time";
+  return Array.prototype.slice.call(document.querySelectorAll(sel)).filter(function(el){
+    return !el.closest(".gantt,.tblwrap,.readout,.editor,.addbox,.toolbar,.flowwrap,.dlbar,.textbar,.legend");
+  });
+}
+function sanitize(html){
+  return String(html).replace(/<\s*script[\s\S]*?<\s*\/\s*script\s*>/gi,"")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi,"").replace(/\son\w+\s*=\s*'[^']*'/gi,"")
+    .replace(/javascript:/gi,"");
+}
+var TXT={};
+try{TXT=JSON.parse(localStorage.getItem(TXTKEY)||"{}")||{};}catch(e){TXT={};}
+function initTexts(){
+  editables().forEach(function(el,i){
+    var k="t"+i; el.setAttribute("data-ed",k);
+    if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
+  });
+}
+var txtTimer=null;
+function markText(el){
+  TXT[el.getAttribute("data-ed")]=el.innerHTML;
+  clearTimeout(txtTimer);
+  txtTimer=setTimeout(function(){try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}},400);
+}
+var editing=false;
+function setEditing(on){
+  editing=on;
+  document.body.classList.toggle("editing",on);
+  editables().forEach(function(el){ if(on) el.setAttribute("contenteditable","true"); else el.removeAttribute("contenteditable"); });
+  var b=document.getElementById("txtToggle");
+  b.setAttribute("aria-pressed",on?"true":"false");
+  b.textContent=on?"Textbearbeitung beenden":"Texte bearbeiten";
+  document.getElementById("txtHint").hidden=!on;
+}
+initTexts();
+document.addEventListener("input",function(ev){
+  var el=ev.target.closest&&ev.target.closest("[data-ed]");
+  if(el&&editing) markText(el);
+});
+document.getElementById("txtToggle").onclick=function(){setEditing(!editing);};
+document.getElementById("txtReset").onclick=function(){
+  TXT={}; try{localStorage.removeItem(TXTKEY);}catch(e){}
+  location.reload();
+};
+
+/* ================= Speicherstände ================= */
+/* Datei über einen echten Download-Link ablegen – funktioniert überall,
+   wo die Seite normal im Web liegt. Gibt false zurück, wenn es nicht geht. */
+function saveBlob(blob,name){
+  try{
+    var a=document.createElement("a");
+    if(!("download" in a)) return false;
+    var url=URL.createObjectURL(blob);
+    a.href=url; a.download=name; a.rel="noopener";
+    a.style.position="fixed"; a.style.left="-9999px";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ if(a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); },30000);
+    return true;
+  }catch(e){ return false; }
+}
+var DB=null, DBSTATE="lädt", STANDS=[], VIEWERS=[];
+var ME=""; try{ME=localStorage.getItem("kidscup-me")||"";}catch(e){}
+function meName(){return ME||"unbenannt";}
+function snapshot(){
+  return {v:9, at:new Date().toISOString(), cfg:clone(CFG), texts:clone(TXT),
+    q:{rows:clone(pq.rows),groups:clone(pq.groups),blocks:clone(pq.blocks),seq:pq.seq},
+    f:{rows:clone(pf.rows),groups:clone(pf.groups),blocks:clone(pf.blocks),seq:pf.seq}};
+}
+function applySnapshot(s){
+  if(!s||!s.cfg||!s.q||!s.f) return false;
+  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100;
+  reindex(); saveCfg();
+  TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+  pq.rows=s.q.rows; pq.groups=s.q.groups; pq.blocks=s.q.blocks; pq.seq=s.q.seq||1000; pq.sel=null;
+  pf.rows=s.f.rows; pf.groups=s.f.groups; pf.blocks=s.f.blocks; pf.seq=s.f.seq||1000; pf.sel=null;
+  pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
+  pf.o.start=CFG.win.fs; pf.o.end=CFG.win.fe; pf.o.step=autoStep(CFG.win.fe-CFG.win.fs);
+  pq.render(); pf.render(); pq.save(); pf.save();
+  renderWin(); renderCats(); renderPeople();
+  document.querySelectorAll("[data-ed]").forEach(function(el){
+    var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
+  });
+  return true;
+}
+function dstr(iso){
+  var d=new Date(iso||Date.now()); if(isNaN(d)) return "—";
+  return ("0"+d.getDate()).slice(-2)+"."+("0"+(d.getMonth()+1)).slice(-2)+"."+d.getFullYear()+
+         ", "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+}
+function standSay(msg,bad){
+  var el=document.getElementById("stMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function renderStands(){
+  var body=document.querySelector("#standtab tbody"); if(!body) return;
+  var h="";
+  STANDS.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).forEach(function(s){
+    h+='<tr><td><strong>'+esc(s.title||"ohne Titel")+'</strong>'+(s.note?'<br><span style="color:var(--muted);font-size:13px">'+esc(s.note)+'</span>':'')+'</td>'+
+       '<td>'+esc(s.author||"—")+'</td><td class="tm">'+dstr(s.at)+'</td>'+
+       '<td><button class="fbtn stload" type="button" data-id="'+esc(s.id)+'">Laden</button> '+
+       '<button class="fbtn stdel" type="button" data-id="'+esc(s.id)+'">Löschen</button></td></tr>';
+  });
+  if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-id"), s=null;
+      STANDS.forEach(function(x){if(x.id===id) s=x;});
+      if(!s) return;
+      if(applySnapshot(clone(s.state))){ standSay('Stand „'+(s.title||"")+'" geladen.'); logMe("geladen: "+(s.title||"")); }
+      else standSay("Dieser Stand lässt sich nicht laden.",true);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".stdel"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-id");
+      if(DB){ DB.doc("stands/"+id).delete().catch(function(){standSay("Löschen nicht möglich.",true);}); }
+      else { STANDS=STANDS.filter(function(x){return x.id!==id;}); saveLocalStands(); renderStands(); }
+    };
+  });
+  var st=document.getElementById("stState");
+  if(st) st.textContent=DBSTATE;
+  var md=document.getElementById("standMode");
+  if(md) md.innerHTML=DB
+    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Wer den Link hat, sieht dieselbe Liste, kann einen Stand laden, weiterarbeiten und als neuen ablegen.'
+    : 'Diese Fassung speichert die Stände <strong>in deinem Browser</strong> – sie wandern nicht automatisch zu anderen. Zum Weitergeben nimm <strong>„Als Datei sichern"</strong>; wer die Datei bekommt, öffnet sie hier über <strong>„Datei laden"</strong>.';
+}
+function renderViewers(){
+  var box=document.getElementById("vlist"); if(!box) return;
+  if(!VIEWERS.length){ box.innerHTML='<div style="color:var(--muted)">Noch keine Aktivität erfasst.</div>'; return; }
+  box.innerHTML=VIEWERS.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));})
+    .map(function(v){
+      return '<div><b>'+esc(v.name||"unbenannt")+'</b> <span class="tm">'+dstr(v.at)+'</span> '+
+             '<span style="color:var(--muted)">'+esc(v.last||"geöffnet")+
+             (v.pdf?' · PDF '+v.pdf+"×":"")+'</span></div>';
+    }).join("");
+}
+function saveLocalStands(){try{localStorage.setItem("kidscup-stands",JSON.stringify(STANDS));}catch(e){}}
+function loadLocalStands(){try{STANDS=JSON.parse(localStorage.getItem("kidscup-stands")||"[]")||[];}catch(e){STANDS=[];}}
+var pdfCount=0; try{pdfCount=parseInt(localStorage.getItem("kidscup-pdfn")||"0",10)||0;}catch(e){}
+function logMe(what){
+  if(!DB||!ME) return;
+  var key=ME.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60)||"gast";
+  DB.doc("viewers/"+key).set({name:ME, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
+}
+function saveStand(){
+  var t=document.getElementById("stTitle").value.trim()||("Stand "+dstr());
+  var n=document.getElementById("stNote").value.trim();
+  var rec={id:"s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+           title:t, note:n, author:meName(), at:new Date().toISOString(), state:snapshot()};
+  if(DB){
+    DB.doc("stands/"+rec.id).set(rec).then(function(){
+      standSay('Stand „'+t+'" gespeichert – für alle sichtbar, die den Link haben.');
+      document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
+      logMe("gespeichert: "+t);
+    }).catch(function(e){
+      standSay("Speichern fehlgeschlagen"+(e&&e.code?" ("+e.code+")":"")+" – der Stand liegt jetzt nur lokal.",true);
+      STANDS.push(rec); saveLocalStands(); renderStands();
+    });
+  } else {
+    STANDS.push(rec); saveLocalStands(); renderStands();
+    standSay('Stand „'+t+'" lokal gespeichert (nur in diesem Browser).');
+    document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
+  }
+}
+function initDb(){
+  var p=(window.claude&&window.claude.use)?window.claude.use("db"):Promise.resolve(null);
+  p.then(function(d){
+    DB=d;
+    if(!d){ DBSTATE="nur in diesem Browser gespeichert"; loadLocalStands(); renderStands(); renderViewers(); return; }
+    DBSTATE="geteilt – alle mit dem Link sehen dieselben Stände";
+    d.collection("stands").onSnapshot(function(snap){
+      STANDS=snap.docs.map(function(x){var o=x.data()||{}; o.id=x.id; return o;});
+      renderStands();
+    },function(){ DBSTATE="Verbindung unterbrochen – lokal weiterarbeiten"; renderStands(); });
+    d.collection("viewers").onSnapshot(function(snap){
+      VIEWERS=snap.docs.map(function(x){return x.data()||{};}); renderViewers();
+    },function(){});
+    renderStands(); logMe("geöffnet");
+  },function(){ DBSTATE="nicht verfügbar"; loadLocalStands(); renderStands(); });
+}
+function initStandUi(){
+  var me=document.getElementById("meName");
+  if(me){
+    me.value=ME;
+    me.onchange=function(){ ME=this.value.trim(); try{localStorage.setItem("kidscup-me",ME);}catch(e){}
+      logMe("geöffnet"); standSay(ME?("Du bist als „"+ME+"“ eingetragen."):"Name entfernt."); };
+  }
+  var sb=document.getElementById("stSave"); if(sb) sb.onclick=saveStand;
+  var ex=document.getElementById("stExport");
+  if(ex) ex.onclick=function(){
+    var data=JSON.stringify({kidscup:true, exported:new Date().toISOString(), by:meName(), state:snapshot()},null,1);
+    var name="Kidscup-Stand-"+new Date().toISOString().slice(0,10)+".json";
+    (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null)).then(function(dl){
+      if(dl&&dl.save) return dl.save({filename:name,data:data}).then(function(){standSay("Stand als Datei gespeichert.");});
+      if(saveBlob(new Blob([data],{type:"application/json"}),name)) standSay("Stand als Datei gespeichert.");
+      else standSay("Export nicht möglich – dieser Browser erlaubt keinen Download.",true);
+    }).catch(function(){standSay("Export nicht möglich.",true);});
+  };
+  var im=document.getElementById("stImport"), fi=document.getElementById("stFile");
+  if(im&&fi){
+    im.onclick=function(){fi.click();};
+    fi.onchange=function(){
+      var f=this.files&&this.files[0]; if(!f) return;
+      var rd=new FileReader();
+      rd.onload=function(){
+        try{
+          var o=JSON.parse(rd.result);
+          if(applySnapshot(o.state||o)) standSay("Stand aus der Datei geladen.");
+          else standSay("Die Datei enthält keinen gültigen Stand.",true);
+        }catch(e){ standSay("Die Datei ließ sich nicht lesen.",true); }
+      };
+      rd.readAsText(f); this.value="";
+    };
+  }
+}
+initStandUi(); initDb();
+
+/* ================= PDF-Export ================= */
+function loadJs(src){
+  return new Promise(function(res,rej){
+    var s=document.createElement("script"); s.src=src; s.async=true;
+    s.onload=function(){res();}; s.onerror=function(){rej(new Error("load"));};
+    document.head.appendChild(s);
+  });
+}
+function pdfSay(msg,bad){
+  var el=document.getElementById("pdfmsg");
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function T(el,fb){var n=document.querySelector('[data-ed="'+el+'"]'); return n?n.textContent.trim():fb;}
+function buildPDF(){
+  var jsPDF=window.jspdf&&window.jspdf.jsPDF;
+  var doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+  /* Standardschriften können nur WinAnsi – alles andere ersetzen */
+  var CP1252="€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
+  var SUB={"→":"->","←":"<-","↔":"<->","⇒":"=>","≥":">=","≤":"<=","≠":"!=","✓":"x"," ":" "};
+  function P(s){
+    s=String(s); var o="";
+    for(var i=0;i<s.length;i++){
+      var c=s.charAt(i);
+      if(s.charCodeAt(i)<256||CP1252.indexOf(c)>=0){ o+=(c===" "?" ":c); }
+      else o+=(SUB[c]!=null?SUB[c]:"-");
+    }
+    return o;
+  }
+  function PC(cls){return PDFCOL[ACOF[cls]]||PDFCOL.c7;}
+  var _text=doc.text.bind(doc), _split=doc.splitTextToSize.bind(doc);
+  doc.text=function(t,x,y,o){ return _text(Array.isArray(t)?t.map(P):P(t),x,y,o); };
+  doc.splitTextToSize=function(t,w,o){ return _split(P(t),w,o); };
+  var PW=297, PH=210, ML=12, MR=12, CW=PW-ML-MR, page=0;
+  function head(title,sub){
+    page++;
+    if(page>1) doc.addPage();
+    doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+    doc.rect(0,0,PW,17,"F");
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text(title,ML,11);
+    doc.setFont("helvetica","normal"); doc.setFontSize(8);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(sub||"",PW-MR,11,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    return 26;
+  }
+  function foot(){
+    doc.setFont("helvetica","normal"); doc.setFontSize(7);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text("4. Offener Sächsischer Kidscup 2026 · Quacke Zittau · 26.09.2026",ML,PH-6);
+    doc.text("Seite "+page,PW-MR,PH-6,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  }
+  function table(x,y,cols,rows,opt){
+    opt=opt||{}; var rh=opt.rh||6, fs=opt.fs||8;
+    doc.setFontSize(fs-1); doc.setFont("helvetica","bold");
+    doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+    var tw=cols.reduce(function(a,c){return a+c.w;},0);
+    doc.rect(x,y,tw,rh,"F");
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    var cx=x; cols.forEach(function(c){ doc.text(String(c.t),c.r?cx+c.w-1.5:cx+1.5,y+rh-2,{align:c.r?"right":"left"}); cx+=c.w; });
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    var yy=y+rh, lh=fs*1.15*0.3528;
+    doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+    rows.forEach(function(r){
+      if(r.bold) doc.setFont("helvetica","bold"); else doc.setFont("helvetica","normal");
+      var wrapped=cols.map(function(c,i){
+        var v=r.c[i]==null?"":String(r.c[i]);
+        return v===""?[""]:doc.splitTextToSize(v,c.w-3);
+      });
+      var nl=wrapped.reduce(function(a,L){return Math.max(a,L.length);},1);
+      var hh=Math.max(rh, 2.1+nl*lh);
+      if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,hh,"F"); }
+      var top=yy+(hh-nl*lh)/2+lh*0.78, cx2=x;
+      cols.forEach(function(c,i){
+        if(r.col&&r.col[i]) doc.setTextColor(r.col[i][0],r.col[i][1],r.col[i][2]);
+        doc.text(wrapped[i],c.r?cx2+c.w-1.5:cx2+1.5,top,{align:c.r?"right":"left"});
+        doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+        cx2+=c.w;
+      });
+      doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.1);
+      doc.line(x,yy+hh,x+tw,yy+hh);
+      yy+=hh;
+    });
+    return yy;
+  }
+  function gantt(x,y,w,h,plan,list,labw){
+    var t0=plan.o.start,t1=plan.o.end,span=t1-t0;
+    var X=function(t){return x+labw+((t-t0)/span)*(w-labw);};
+    var rows=plan.rows, rh=Math.min(9,(h-8)/Math.max(1,rows.length));
+    doc.setFontSize(6.5); doc.setFont("helvetica","normal");
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    for(var t=Math.ceil(t0/30)*30;t<=t1;t+=30){
+      doc.setDrawColor(228,231,226); doc.setLineWidth(.1);
+      doc.line(X(t),y+5,X(t),y+8+rows.length*rh);
+      doc.text(fmt(t),X(t),y+3,{align:"center"});
+    }
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    rows.forEach(function(r,i){
+      var yy=y+6+i*rh, C=PC(r.cls);
+      doc.setFont("helvetica","bold"); doc.setFontSize(7);
+      doc.setTextColor(C.ac[0],C.ac[1],C.ac[2]); doc.text(r.id,x,yy+rh-2.4);
+      doc.setFont("helvetica","normal"); doc.setFontSize(5.6);
+      doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+      doc.text(plan.desc(r),x+9,yy+rh-2.4,{maxWidth:labw-10});
+      doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.1);
+      doc.line(x,yy+rh,x+w,yy+rh);
+      (plan.o.fixed||[]).filter(function(fx){return fx.r===r.id;}).forEach(function(fx){
+        var bx=X(fx.s), bw=Math.max(1.2,X(fx.s+fx.dur)-X(fx.s));
+        doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.15);
+        if(doc.setLineDashPattern) doc.setLineDashPattern([.7,.7],0);
+        doc.rect(bx,yy+.6,bw,rh-1.8,"D");
+        if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
+        if(bw>16){
+          doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+          doc.setFontSize(5.6); doc.text(fx.lab,bx+1.4,yy+3.1,{maxWidth:bw-2});
+          doc.setFontSize(4.8); doc.text(fmt(fx.s)+"-"+fmt(fx.s+fx.dur),bx+1.4,yy+5.6,{maxWidth:bw-2});
+        }
+      });
+      list.filter(function(b){return b.r===r.id;}).forEach(function(b){
+        var bx=X(b.s), bw=Math.max(1.2,X(b.e)-X(b.s)), f=b.gender==="w"?C.w:C.m;
+        doc.setFillColor(f[0],f[1],f[2]); doc.setDrawColor(C.ac[0],C.ac[1],C.ac[2]); doc.setLineWidth(.15);
+        doc.rect(bx,yy+.6,bw,rh-1.8,"FD");
+        doc.setFillColor(C.ac[0],C.ac[1],C.ac[2]); doc.rect(bx,yy+.6,.7,rh-1.8,"F");
+        if(bw>18){
+          doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+          doc.setFontSize(5.6); doc.text(b.lab,bx+1.4,yy+3.1,{maxWidth:bw-2});
+          doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+          doc.setFontSize(4.8); doc.text(fmt(b.s)+"-"+fmt(b.e)+" · "+b.n+" TN",bx+1.4,yy+5.6,{maxWidth:bw-2});
+        }
+      });
+    });
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    return y+8+rows.length*rh;
+  }
+
+  var stamp=new Date(), ds=("0"+stamp.getDate()).slice(-2)+"."+("0"+(stamp.getMonth()+1)).slice(-2)+"."+stamp.getFullYear()+
+           ", "+("0"+stamp.getHours()).slice(-2)+":"+("0"+stamp.getMinutes()).slice(-2)+" Uhr";
+  var q=pq.stat, f=pf.stat, ql=q.list, fl=f.list;
+
+  /* --- Seite 1 --- */
+  var y=head("Regieplan Kids Cup – 4. Offener Sächsischer Kidscup 2026","Planstand "+ds);
+  doc.setFontSize(8); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+  doc.text("Lead, U9–U15 · Kletterhalle Quacke Zittau · Samstag, 26.09.2026",ML,y); y+=7;
+  doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  var kpis=[["Athlet*innen",totalAth()],["Routen",pq.rows.length+pf.rows.length],
+            ["Kletterminuten",ql.reduce(function(a,b){return a+(b.e-b.s);},0)],
+            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*TEAM_PERS],
+            ["Quali-Ende",fmt(q.end)],["Finale-Ende",fmt(f.end)]];
+  var kw=CW/kpis.length;
+  kpis.forEach(function(k,i){
+    doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.2);
+    doc.rect(ML+i*kw,y,kw,14);
+    doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text(String(k[1]),ML+i*kw+3,y+7.5);
+    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(String(k[0]).toUpperCase(),ML+i*kw+3,y+11.8);
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  });
+  y+=20;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Meldezahlen",ML,y); y+=2;
+  var mrows=CFG.classes.map(function(c){
+    var min=ql.filter(function(b){return b.cls===c.id;}).reduce(function(a,b){return a+(b.e-b.s);},0);
+    return {c:[c.name,c.lm+" "+(+c.m||0),c.lw+" "+(+c.w||0),(+c.m||0)+(+c.w||0),min],col:[PC(c.id).ac]};
+  });
+  mrows.push({bold:true,fill:PDFCOL.soft,c:["Summe",
+    CFG.classes.reduce(function(a,c){return a+(+c.m||0);},0),
+    CFG.classes.reduce(function(a,c){return a+(+c.w||0);},0),totalAth(),ql.reduce(function(a,b){return a+(b.e-b.s);},0)]});
+  var ey=table(ML,y,[{t:"Klasse",w:22},{t:"Gruppe 1",w:26,r:true},{t:"Gruppe 2",w:26,r:true},{t:"gesamt",w:18,r:true},{t:"Kletter-Min",w:24,r:true}],mrows,{fs:7.5});
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Tagesablauf",ML+112,y);
+  var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
+    return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
+               st.querySelector("div span").textContent.trim()]};
+  });
+  var ey2=table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
+  var y3=Math.max(ey,ey2)+9;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  doc.text("Routenübersicht",ML,y3); y3+=2;
+  function routeRows(plan,list){
+    return plan.rows.map(function(r){
+      var bs=list.filter(function(b){return b.r===r.id;});
+      var st=bs.reduce(function(a,b){return a+b.n;},0);
+      var mi=bs.reduce(function(a,b){return a+(b.e-b.s);},0);
+      var s0=bs.length?Math.min.apply(null,bs.map(function(b){return b.s;})):null;
+      var e0=bs.length?Math.max.apply(null,bs.map(function(b){return b.e;})):null;
+      return {c:[r.id,CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
+                 s0==null?"—":fmt(s0)+"-"+fmt(e0)],col:[PC(r.cls).ac]};
+    });
+  }
+  var rr=routeRows(pq,ql).concat(routeRows(pf,fl));
+  var half=Math.ceil(rr.length/2), RC=[{t:"Route",w:14},{t:"Klasse",w:16},{t:"Typ",w:26},{t:"Sicherung",w:20},
+       {t:"Starts",w:15,r:true},{t:"Min",w:13,r:true},{t:"Zeitfenster",w:26}];
+  table(ML,y3,RC,rr.slice(0,half),{rh:5.2,fs:7});
+  table(ML+140,y3,RC,rr.slice(half),{rh:5.2,fs:7});
+  foot();
+
+  /* --- Seite 2: Quali --- */
+  y=head("Qualifikation – Zeitplan","Ende "+fmt(q.end)+" · max. "+q.maxR+" Routen gleichzeitig · "+(q.maxR*TEAM_PERS)+" Personen");
+  y=gantt(ML,y,CW,110,pq,ql,44)+6;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Laufkarte der Startgruppen",ML,y); y+=2;
+  var lk=[];
+  pq.groups.forEach(function(g){
+    var bs=ql.filter(function(b){return b.gid===g.id;}).sort(function(a,b){return a.s-b.s;});
+    if(bs.length<2) return;
+    var p=bs[1].s-bs[0].s;
+    lk.push({c:[pq.label(g),g.n,bs[0].r+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),bs[1].r+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),p+" Min"],
+             col:[PC(g.cls).ac,null,null,null,(p>=45&&p<=65)?[24,96,69]:[142,47,41]]});
+  });
+  table(ML,y,[{t:"Startgruppe",w:44},{t:"TN",w:12,r:true},{t:"Route 1",w:44},{t:"Route 2",w:44},{t:"Pause",w:20,r:true}],lk,{rh:5.4,fs:7.5});
+  foot();
+
+  /* --- Seite 3: Teams --- */
+  y=head("Team-Zeitplan","Ein Routen-Team = Sicherung + Ergebnisdienst = 3 Personen");
+  var trows=[];
+  LASTQ.T.forEach(function(t){
+    var ps=peopleOfTeam(t.idx), by={};
+    ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name);});
+    var pl=Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ")||"—";
+    t.stations.forEach(function(st,i){
+      trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),st.r+"  "+pq.desc(st.row),
+        st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"-"+fmt(x.e)+")";}).join(", "),
+        i===0?pl:"", i===0?(ps.length?ps.length+" / "+TEAM_PERS:TEAM_PERS):""],
+        col:[null,null,PC(st.row.cls).ac]});
+    });
+  });
+  trows.push({bold:true,fill:PDFCOL.soft,c:[LASTQ.T.length+" Routen-Teams","—",pq.rows.length+" Routen gebaut",
+    "je Team: Sicherung + Ergebnisdienst",
+    CFG.people.filter(function(p){return p.team;}).length+" Personen zugeteilt",LASTQ.T.length*TEAM_PERS]});
+  var ty=table(ML,y,[{t:"Team",w:36},{t:"Zeit",w:22},{t:"Route",w:50},{t:"Wer klettert",w:78},
+                     {t:"Personen",w:62},{t:"Pers.",w:25,r:true}],trows,{rh:5.6,fs:7.5});
+  var frei=CFG.people.filter(function(p){return !p.team;});
+  if(frei.length){
+    ty+=7;
+    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Ohne Team-Zuordnung",ML,ty); ty+=2;
+    var byc={};
+    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+    table(ML,ty,[{t:"Kategorie",w:44},{t:"Personen",w:180}],
+      Object.keys(byc).map(function(k){return {c:[k,byc[k].join(", ")]};}),{rh:5.4,fs:7.5});
+  }
+  foot();
+
+  /* --- Seite 4: Finale --- */
+  y=head("Finale","Ende "+fmt(f.end)+" · max. "+f.maxR+" Routen gleichzeitig");
+  y=gantt(ML,y,CW,66,pf,fl,44)+6;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Finalquoten",ML,y); y+=2;
+  var frows=[], Tf=teams(pf,fl), rteam={};
+  Tf.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
+  CFG.classes.forEach(function(cc){
+    var c=cc.id, mode=classMode(pf,fl,c);
+    ["m","w"].forEach(function(gd,gi){
+      var n=+cc[gd]||0, qq=quota(n);
+      var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
+      frows.push({c:[CLn(c)+" "+gl(c,gd),n,(n>=20?10:6),qq,blk?blk.r:"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
+                     blk&&rteam[blk.r]?rteam[blk.r]:"—",gi===0?mode:""],
+                  col:[PC(c).ac]});
+    });
+  });
+  var sumG=0,sumF=0;
+  CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
+  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,"—",sumF,pf.rows.length+" Routen","—",Tf.length,
+    Tf.length*TEAM_PERS+" Personen"]});
+  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},{t:"im Finale",w:20,r:true},
+              {t:"Route",w:20},{t:"Zeit",w:28},{t:"Team",w:16,r:true},{t:"Ablauf",w:34}],frows,{rh:5.4,fs:7.5});
+  foot();
+
+  /* --- Seite 5: Wege --- */
+  y=head("Wege der Startgruppen","Eine Zeile je Startgruppe · Pfeil = Pause zwischen den Runden");
+  var lanes=flowLanes(pq,ql), t0=pq.o.start,t1=pq.o.end,span=t1-t0;
+  var lx=ML+42, lw=CW-42, LX=function(t){return lx+((t-t0)/span)*lw;};
+  doc.setFontSize(6.5); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+  for(var tt=Math.ceil(t0/30)*30;tt<=t1;tt+=30){
+    doc.setDrawColor(228,231,226); doc.setLineWidth(.1);
+    doc.line(LX(tt),y+3,LX(tt),y+6+lanes.length*13);
+    doc.text(fmt(tt),LX(tt),y+1.5,{align:"center"});
+  }
+  lanes.forEach(function(L,i){
+    var yy=y+5+i*13, mid=yy+6, C=PC(L.g.cls), w=L.g.gender==="w";
+    doc.setFont("helvetica","bold"); doc.setFontSize(7.5);
+    doc.setTextColor(C.ac[0],C.ac[1],C.ac[2]); doc.text(L.label,ML,mid+1);
+    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(L.g.n+" TN",lx-2,mid+1,{align:"right"});
+    L.bs.forEach(function(b,k){
+      var bx=LX(b.s), bw=Math.max(1.4,LX(b.e)-LX(b.s)), fcol=w?C.w:C.m;
+      doc.setFillColor(fcol[0],fcol[1],fcol[2]); doc.setDrawColor(C.ac[0],C.ac[1],C.ac[2]); doc.setLineWidth(.15);
+      doc.rect(bx,mid-4,bw,8,"FD");
+      doc.setFillColor(C.ac[0],C.ac[1],C.ac[2]); doc.rect(bx,mid-4,.7,8,"F");
+      if(bw>16){
+        doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setFontSize(6);
+        doc.text(b.r,bx+1.4,mid-.6,{maxWidth:bw-2});
+        doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setFontSize(5);
+        doc.text(fmt(b.s)+"-"+fmt(b.e),bx+1.4,mid+2.8,{maxWidth:bw-2});
+      }
+      if(k===1){
+        var p=L.bs[1].s-L.bs[0].s, ok=p>=45&&p<=65;
+        var xa=LX(L.bs[0].e)+.8, xb=bx-.8;
+        doc.setDrawColor(150,158,150); doc.setLineWidth(.25);
+        if(xb>xa+22){ doc.line(xa,mid,xb,mid); doc.setFontSize(5.4);
+          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+p+" Min",(xa+xb)/2,mid-1.2,{align:"center"}); }
+        else { doc.line(LX(L.bs[0].s)+.6,mid-5.4,bx-.6,mid-5.4); doc.setFontSize(5.4);
+          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+p+" Min",(LX(L.bs[0].s)+bx)/2,mid-6.6,{align:"center"}); }
+        doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      }
+    });
+  });
+  foot();
+
+  /* --- Seite 6: Routenbau, Hinweise, offene Punkte (mit deinen Texten) --- */
+  function secItems(id){
+    var out=[], root=document.getElementById(id);
+    if(!root) return out;
+    Array.prototype.forEach.call(root.querySelectorAll("h3,h4,p,li"),function(el){
+      if(el.classList.contains("hint")||el.classList.contains("eyebrow")) return;
+      if(el.closest(".toolbar,.dlbar,.textbar,.tblwrap,.gantt,.editor,.addbox,.readout")) return;
+      var t=el.textContent.replace(/\s+/g," ").trim();
+      if(t) out.push({k:(el.tagName==="H3"||el.tagName==="H4")?"h":(el.tagName==="LI"?"li":"p"), t:t});
+    });
+    return out;
+  }
+  function secTitle(id){
+    var el=document.querySelector("#"+id+" h2");
+    return el?el.textContent.replace(/\s+/g," ").trim():id;
+  }
+  y=head("Routenbau und offene Punkte","Die Texte aus dem Plan – inklusive deiner Änderungen");
+  var colW=(CW-10)/2, cx0=[ML,ML+colW+10], ci=0, cy=y, TOP=y, BOT=PH-14;
+  function put(kind,txt){
+    var fs2=kind==="h"?8.5:7.4, lead=kind==="h"?3.4:3.1;
+    doc.setFont("helvetica",kind==="h"?"bold":"normal"); doc.setFontSize(fs2);
+    doc.setTextColor.apply(doc,kind==="p"||kind==="li"?PDFCOL.ink:PDFCOL.ink);
+    var ind=kind==="li"?3.2:0;
+    var L=doc.splitTextToSize((kind==="li"?"· ":"")+txt,colW-ind);
+    var need=L.length*lead+(kind==="h"?2.6:1.8);
+    if(cy+need>BOT){ ci++; if(ci>1) return false; cy=TOP; }
+    if(kind==="h") cy+=2.2;
+    doc.text(L,cx0[ci]+ind,cy+lead*0.78,{lineHeightFactor:lead/(fs2*0.3528)});
+    cy+=L.length*lead+(kind==="h"?1.2:1.8);
+    return true;
+  }
+  ["routenbau","offen"].forEach(function(id){
+    put("h",secTitle(id));
+    secItems(id).forEach(function(it){ put(it.k,it.t); });
+    cy+=2;
+  });
+  foot();
+  return doc;
+}
+var busy=false;
+document.getElementById("pdfbtn").onclick=function(){
+  if(busy) return; busy=true;
+  var btn=this, old=btn.textContent;
+  btn.textContent="PDF wird erstellt …"; pdfSay("");
+  (window.jspdf&&window.jspdf.jsPDF ? Promise.resolve()
+    : loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"))
+  .then(function(){
+    if(!(window.jspdf&&window.jspdf.jsPDF)) throw new Error("jspdf");
+    var doc=buildPDF(), blob=doc.output("blob");
+    return (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null))
+      .then(function(dl){
+        if(dl&&dl.save) return dl.save({filename:"Regieplan-Kidscup-2026.pdf",data:blob})
+          .then(function(){pdfSay("PDF gespeichert.");
+            pdfCount++; try{localStorage.setItem("kidscup-pdfn",String(pdfCount));}catch(e){}
+            logMe("PDF heruntergeladen");});
+        if(saveBlob(blob,"Regieplan-Kidscup-2026.pdf")){
+          pdfCount++; try{localStorage.setItem("kidscup-pdfn",String(pdfCount));}catch(e){}
+          pdfSay("PDF heruntergeladen."); return;
+        }
+        var url=URL.createObjectURL(blob), w=window.open(url,"_blank");
+        if(!w) throw new Error("popup");
+        setTimeout(function(){URL.revokeObjectURL(url);},60000);
+        pdfSay("PDF in neuem Tab geöffnet – dort speichern.");
+      });
+  })
+  .catch(function(err){
+    var c=err&&err.code;
+    if(c==="declined") pdfSay("Speichern abgebrochen.");
+    else if(c==="rate_limited") pdfSay("Gerade läuft schon eine Abfrage – kurz warten.",true);
+    else { pdfSay("Der PDF-Export ist hier nicht verfügbar. Öffne die Seite in einem eigenen Tab und drucke mit Strg + P / Cmd + P als PDF.",true);
+           try{window.print();}catch(e){} }
+  })
+  .then(function(){ btn.textContent=old; busy=false; });
+};
+document.getElementById("printbtn").onclick=function(){ try{window.print();}catch(e){} };
+})();
+</script>
+
+</body>
+</html>
