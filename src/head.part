@@ -252,6 +252,29 @@ body[data-view="teams"] main section:not([data-views~="teams"]),
 body[data-view="sport"] main section:not([data-views~="sport"]){display:none}
 body:not([data-view="alles"]) .textbar{display:none}
 
+/* ---------- Login / Freigabe ---------- */
+body:not([data-auth="ok"]) main{display:none}
+#authWrap{padding:26px 0}
+#authWrap .note{margin:0 0 14px}
+
+/* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
+   Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
+body[data-cat]:not([data-cat="orga"]) main section input,
+body[data-cat]:not([data-cat="orga"]) main section select,
+body[data-cat]:not([data-cat="orga"]) main section button,
+body[data-cat]:not([data-cat="orga"]) main section .rdel,
+body[data-cat]:not([data-cat="orga"]) main section .blk{
+  pointer-events:none; opacity:.55; cursor:default;
+}
+body[data-cat]:not([data-cat="orga"]) main section #pdfbtn,
+body[data-cat]:not([data-cat="orga"]) main section #printbtn,
+body[data-cat]:not([data-cat="orga"]) main section#admin input,
+body[data-cat]:not([data-cat="orga"]) main section#admin select,
+body[data-cat]:not([data-cat="orga"]) main section#admin button{
+  pointer-events:auto; opacity:1; cursor:pointer;
+}
+body[data-cat]:not([data-cat="orga"]):not([data-cat="routenbau"]) .textbar{display:none}
+
 /* ---------- Konfigurationsfelder ---------- */
 .cin{font-family:var(--serif); font-size:14px; padding:4px 6px; border-radius:2px; max-width:100%;
   border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
@@ -304,7 +327,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
-  #staende{display:none !important}
+  #staende,#admin,#authWrap{display:none !important}
   .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -352,6 +375,59 @@ body.editing{caret-color:var(--ink)}
     </div>
   </div>
 </header>
+
+<div class="wrap" id="authWrap">
+  <div class="stbar" id="userbar" hidden>
+    <span class="lbl mono">Angemeldet als <strong id="ubName"></strong> · <span id="ubCat"></span></span>
+    <span style="flex:1"></span>
+    <button class="fbtn" id="btnLogout" type="button">Abmelden</button>
+  </div>
+
+  <div class="vbar" id="authBar" hidden>
+    <span class="lbl">Zugang</span>
+    <button class="fbtn" id="tabLogin" type="button" aria-pressed="true">Anmelden</button>
+    <button class="fbtn" id="tabRegister" type="button" aria-pressed="false">Registrieren</button>
+    <p>Diese Seite ist nur für freigegebene Personen sichtbar. Melde dich an oder registriere dich neu.</p>
+  </div>
+
+  <div class="addbox" id="loginBox" hidden>
+    <div class="cfgrow">
+      <label>E-Mail <input class="cin" id="liEmail" type="email" autocomplete="username" size="22"></label>
+      <label>Passwort <input class="cin" id="liPass" type="password" autocomplete="current-password" size="16"></label>
+      <label><button class="fbtn big" id="liGo" type="button">Anmelden</button></label>
+    </div>
+    <p class="pdfmsg" id="liMsg" role="status"></p>
+  </div>
+
+  <div class="addbox" id="registerBox" hidden>
+    <div class="cfgrow">
+      <label>Name <input class="cin" id="reName" type="text" autocomplete="name" size="18"></label>
+      <label>E-Mail <input class="cin" id="reEmail" type="email" autocomplete="username" size="22"></label>
+      <label>Passwort <input class="cin" id="rePass" type="password" autocomplete="new-password" size="16"></label>
+      <label>Kategorie
+        <select class="cin sel" id="reCat">
+          <option value="orga">Orga-Team</option>
+          <option value="sicherung">Sicherung</option>
+          <option value="ergebnisdienst">Ergebnisdienst</option>
+          <option value="routenbau">Routenbau</option>
+          <option value="buffet">Buffet</option>
+        </select>
+      </label>
+      <label><button class="fbtn big" id="reGo" type="button">Registrieren</button></label>
+    </div>
+    <p class="hint" style="margin:12px 0 0">Nach dem Absenden muss die Orga deine Anmeldung freigeben, bevor du den Plan siehst.</p>
+    <p class="pdfmsg" id="reMsg" role="status"></p>
+  </div>
+
+  <div class="note" id="pendingNote" hidden style="border-left-color:var(--warn)">
+    <h4>Warten auf Freigabe</h4>
+    <p>Deine Anmeldung ist eingegangen. Sobald die Orga sie freigibt, siehst du den Plan – ein erneuter Besuch dieser Seite genügt, du musst dich nicht neu anmelden.</p>
+  </div>
+  <div class="note" id="rejectedNote" hidden style="border-left-color:var(--bad)">
+    <h4>Zugang abgelehnt</h4>
+    <p>Für diesen Account wurde kein Zugriff freigegeben. Wende dich an die Orga, falls das ein Irrtum ist.</p>
+  </div>
+</div>
 
 <main>
 
@@ -729,6 +805,22 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
+<!-- ============ ADMIN ============ -->
+<section id="admin" data-views="orga" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Nur für Admins</p>
+      <h2>Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</h2>
+      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie und Admin-Rechte lassen sich jederzeit ändern.</p>
+    </div>
+    <div class="tblwrap"><table id="admintab">
+      <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="pdfmsg" id="adminMsg" role="status"></p>
+  </div>
+</section>
+
 <!-- ============ SPEICHERSTÄNDE ============ -->
 <section id="staende" data-views="orga bau teams sport">
   <div class="wrap">
@@ -740,8 +832,6 @@ body.editing{caret-color:var(--ink)}
     <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
 
     <div class="stbar">
-      <label class="lbl" for="meName" style="font-family:var(--disp);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)">Ich bin</label>
-      <span class="grow2"><input type="text" id="meName" placeholder="dein Name – erscheint an deinen Ständen"></span>
       <span class="lbl mono" id="stState" style="color:var(--muted);font-size:12.5px"></span>
     </div>
 

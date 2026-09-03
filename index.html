@@ -14,6 +14,15 @@ body{margin:0}
 img{max-width:100%}
 [hidden]{display:none !important}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* Supabase-Projekteinstellungen (Dashboard → Project Settings → API).
+   Der anon key ist absichtlich öffentlich im Client sichtbar – die eigentliche
+   Absicherung passiert über Row-Level-Security-Policies in der Datenbank
+   (siehe supabase/schema.sql), nicht über Geheimhaltung dieses Keys. */
+window.SUPABASE_URL = "https://lkwwbqrqevtxczgjwcmn.supabase.co";
+window.SUPABASE_ANON_KEY = "sb_publishable_sQXelgboln7pcrQ3d3p4gg_dKm8TvXg";
+</script>
 <style>
 :root{
   --bg:#F2F4F0; --surface:#FFFFFF; --surface-2:#E9ECE6; --sunken:#EDEFEA;
@@ -266,6 +275,29 @@ body[data-view="teams"] main section:not([data-views~="teams"]),
 body[data-view="sport"] main section:not([data-views~="sport"]){display:none}
 body:not([data-view="alles"]) .textbar{display:none}
 
+/* ---------- Login / Freigabe ---------- */
+body:not([data-auth="ok"]) main{display:none}
+#authWrap{padding:26px 0}
+#authWrap .note{margin:0 0 14px}
+
+/* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
+   Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
+body[data-cat]:not([data-cat="orga"]) main section input,
+body[data-cat]:not([data-cat="orga"]) main section select,
+body[data-cat]:not([data-cat="orga"]) main section button,
+body[data-cat]:not([data-cat="orga"]) main section .rdel,
+body[data-cat]:not([data-cat="orga"]) main section .blk{
+  pointer-events:none; opacity:.55; cursor:default;
+}
+body[data-cat]:not([data-cat="orga"]) main section #pdfbtn,
+body[data-cat]:not([data-cat="orga"]) main section #printbtn,
+body[data-cat]:not([data-cat="orga"]) main section#admin input,
+body[data-cat]:not([data-cat="orga"]) main section#admin select,
+body[data-cat]:not([data-cat="orga"]) main section#admin button{
+  pointer-events:auto; opacity:1; cursor:pointer;
+}
+body[data-cat]:not([data-cat="orga"]):not([data-cat="routenbau"]) .textbar{display:none}
+
 /* ---------- Konfigurationsfelder ---------- */
 .cin{font-family:var(--serif); font-size:14px; padding:4px 6px; border-radius:2px; max-width:100%;
   border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
@@ -318,7 +350,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
-  #staende{display:none !important}
+  #staende,#admin,#authWrap{display:none !important}
   .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -368,6 +400,59 @@ body.editing{caret-color:var(--ink)}
     </div>
   </div>
 </header>
+
+<div class="wrap" id="authWrap">
+  <div class="stbar" id="userbar" hidden>
+    <span class="lbl mono">Angemeldet als <strong id="ubName"></strong> · <span id="ubCat"></span></span>
+    <span style="flex:1"></span>
+    <button class="fbtn" id="btnLogout" type="button">Abmelden</button>
+  </div>
+
+  <div class="vbar" id="authBar" hidden>
+    <span class="lbl">Zugang</span>
+    <button class="fbtn" id="tabLogin" type="button" aria-pressed="true">Anmelden</button>
+    <button class="fbtn" id="tabRegister" type="button" aria-pressed="false">Registrieren</button>
+    <p>Diese Seite ist nur für freigegebene Personen sichtbar. Melde dich an oder registriere dich neu.</p>
+  </div>
+
+  <div class="addbox" id="loginBox" hidden>
+    <div class="cfgrow">
+      <label>E-Mail <input class="cin" id="liEmail" type="email" autocomplete="username" size="22"></label>
+      <label>Passwort <input class="cin" id="liPass" type="password" autocomplete="current-password" size="16"></label>
+      <label><button class="fbtn big" id="liGo" type="button">Anmelden</button></label>
+    </div>
+    <p class="pdfmsg" id="liMsg" role="status"></p>
+  </div>
+
+  <div class="addbox" id="registerBox" hidden>
+    <div class="cfgrow">
+      <label>Name <input class="cin" id="reName" type="text" autocomplete="name" size="18"></label>
+      <label>E-Mail <input class="cin" id="reEmail" type="email" autocomplete="username" size="22"></label>
+      <label>Passwort <input class="cin" id="rePass" type="password" autocomplete="new-password" size="16"></label>
+      <label>Kategorie
+        <select class="cin sel" id="reCat">
+          <option value="orga">Orga-Team</option>
+          <option value="sicherung">Sicherung</option>
+          <option value="ergebnisdienst">Ergebnisdienst</option>
+          <option value="routenbau">Routenbau</option>
+          <option value="buffet">Buffet</option>
+        </select>
+      </label>
+      <label><button class="fbtn big" id="reGo" type="button">Registrieren</button></label>
+    </div>
+    <p class="hint" style="margin:12px 0 0">Nach dem Absenden muss die Orga deine Anmeldung freigeben, bevor du den Plan siehst.</p>
+    <p class="pdfmsg" id="reMsg" role="status"></p>
+  </div>
+
+  <div class="note" id="pendingNote" hidden style="border-left-color:var(--warn)">
+    <h4>Warten auf Freigabe</h4>
+    <p>Deine Anmeldung ist eingegangen. Sobald die Orga sie freigibt, siehst du den Plan – ein erneuter Besuch dieser Seite genügt, du musst dich nicht neu anmelden.</p>
+  </div>
+  <div class="note" id="rejectedNote" hidden style="border-left-color:var(--bad)">
+    <h4>Zugang abgelehnt</h4>
+    <p>Für diesen Account wurde kein Zugriff freigegeben. Wende dich an die Orga, falls das ein Irrtum ist.</p>
+  </div>
+</div>
 
 <main>
 
@@ -745,6 +830,22 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
+<!-- ============ ADMIN ============ -->
+<section id="admin" data-views="orga" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Nur für Admins</p>
+      <h2>Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</h2>
+      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie und Admin-Rechte lassen sich jederzeit ändern.</p>
+    </div>
+    <div class="tblwrap"><table id="admintab">
+      <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="pdfmsg" id="adminMsg" role="status"></p>
+  </div>
+</section>
+
 <!-- ============ SPEICHERSTÄNDE ============ -->
 <section id="staende" data-views="orga bau teams sport">
   <div class="wrap">
@@ -756,8 +857,6 @@ body.editing{caret-color:var(--ink)}
     <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
 
     <div class="stbar">
-      <label class="lbl" for="meName" style="font-family:var(--disp);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)">Ich bin</label>
-      <span class="grow2"><input type="text" id="meName" placeholder="dein Name – erscheint an deinen Ständen"></span>
       <span class="lbl mono" id="stState" style="color:var(--muted);font-size:12.5px"></span>
     </div>
 
@@ -853,7 +952,7 @@ function CL(id){for(var i=0;i<CFG.classes.length;i++) if(CFG.classes[i].id===id)
 function CLn(id){return CNAME[id]||id;}
 function gl(id,g){return (LABS[id]&&LABS[id][g])||GTXT[g]||g;}
 function newId(p){return p+(++CFG.seq);}
-function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG));}catch(e){}}
+function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG));}catch(e){} pushState("cfg",CFG);}
 try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
   if(_c&&_c.classes&&_c.classes.length){
     CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
@@ -941,7 +1040,9 @@ Plan.prototype.gname=function(g){return CLn(g.cls)+" "+gl(g.cls,g.gender);};
 Plan.prototype.label=function(g){var p=this.parts(g), n=this.gname(g);return p.length<2?n:n+" "+(p.indexOf(g)+1);};
 Plan.prototype.desc=function(r){return CLn(r.cls)+" · "+allowTxt(r)+" · "+r.mode;};
 Plan.prototype.save=function(){
-  try{localStorage.setItem(this.o.store,JSON.stringify({rows:this.rows,groups:this.groups,blocks:this.blocks,seq:this.seq}));}catch(e){}
+  var st={rows:this.rows,groups:this.groups,blocks:this.blocks,seq:this.seq};
+  try{localStorage.setItem(this.o.store,JSON.stringify(st));}catch(e){}
+  pushState(this.o.kind,st);
 };
 Plan.prototype.restore=function(){
   this.rows=clone(this.base.rows); this.groups=clone(this.base.groups); this.blocks=clone(this.base.blocks);
@@ -1746,9 +1847,14 @@ renderFilterBtns();
 var TXTKEY="kidscup-texts-v1";
 function editables(){
   var sel="h1, .dek, main h2, main h3, main h4, main p, main li, main .route-desc, main .eyebrow, header .eyebrow, footer p, .rail .step div b, .rail .step div span, .rail .step time";
-  return Array.prototype.slice.call(document.querySelectorAll(sel)).filter(function(el){
+  var list=Array.prototype.slice.call(document.querySelectorAll(sel)).filter(function(el){
     return !el.closest(".gantt,.tblwrap,.readout,.editor,.addbox,.toolbar,.flowwrap,.dlbar,.textbar,.legend");
   });
+  /* Routenbau darf nur die Texte in "Routenplan" und "Routenbau" bearbeiten */
+  if(PROFILE&&PROFILE.category==="routenbau"){
+    list=list.filter(function(el){ return !!el.closest("#routenplan,#routenbau"); });
+  }
+  return list;
 }
 function sanitize(html){
   return String(html).replace(/<\s*script[\s\S]*?<\s*\/\s*script\s*>/gi,"")
@@ -1767,7 +1873,10 @@ var txtTimer=null;
 function markText(el){
   TXT[el.getAttribute("data-ed")]=el.innerHTML;
   clearTimeout(txtTimer);
-  txtTimer=setTimeout(function(){try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}},400);
+  txtTimer=setTimeout(function(){
+    try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+    pushState("texts",TXT);
+  },400);
 }
 var editing=false;
 function setEditing(on){
@@ -1790,6 +1899,191 @@ document.getElementById("txtReset").onclick=function(){
   location.reload();
 };
 
+/* ================= Login und Freigabe (Supabase) ================= */
+var sbClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY &&
+                 window.SUPABASE_URL.indexOf("DEIN-PROJEKT")<0)
+  ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
+var SESSION=null, PROFILE=null, authTab="login";
+var CATVIEW={orga:"alles", routenbau:"bau", sicherung:"teams", ergebnisdienst:"teams", buffet:"teams"};
+var CATLABEL={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
+
+function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; n.textContent=msg||""; n.className="pdfmsg"+(bad?" bad":""); }
+
+function setAuthState(state){
+  document.body.setAttribute("data-auth",state);
+  document.getElementById("userbar").hidden = state!=="ok";
+  document.getElementById("authBar").hidden = state!=="locked";
+  document.getElementById("loginBox").hidden = state!=="locked" || authTab!=="login";
+  document.getElementById("registerBox").hidden = state!=="locked" || authTab!=="register";
+  document.getElementById("pendingNote").hidden = state!=="pending";
+  document.getElementById("rejectedNote").hidden = state!=="rejected";
+}
+function showAuthTab(t){
+  authTab=t;
+  document.getElementById("tabLogin").setAttribute("aria-pressed",t==="login"?"true":"false");
+  document.getElementById("tabRegister").setAttribute("aria-pressed",t==="register"?"true":"false");
+  setAuthState(document.body.getAttribute("data-auth")||"locked");
+}
+document.getElementById("tabLogin").onclick=function(){showAuthTab("login");};
+document.getElementById("tabRegister").onclick=function(){showAuthTab("register");};
+
+function doRegister(){
+  if(!sbClient){ authSay("reMsg","Supabase ist nicht konfiguriert (src/config.part ausfüllen).",true); return; }
+  var name=document.getElementById("reName").value.trim();
+  var email=document.getElementById("reEmail").value.trim();
+  var pass=document.getElementById("rePass").value;
+  var cat=document.getElementById("reCat").value;
+  if(!name||!email||pass.length<6){ authSay("reMsg","Name, E-Mail und ein Passwort mit mindestens 6 Zeichen ausfüllen.",true); return; }
+  authSay("reMsg","Registriere …");
+  sbClient.auth.signUp({email:email,password:pass}).then(function(r){
+    if(r.error){ authSay("reMsg",r.error.message,true); return; }
+    var uid=r.data.user&&r.data.user.id;
+    if(!uid){ authSay("reMsg","Registrierung eingegangen – falls eine Bestätigungsmail kommt, den Link öffnen und dich danach anmelden.",false); return; }
+    sbClient.from("profiles").insert({id:uid, email:email, full_name:name, category:cat}).then(function(r2){
+      if(r2.error){ authSay("reMsg",r2.error.message,true); return; }
+      authSay("reMsg","Registriert – warte auf Freigabe durch die Orga.");
+      refreshSession();
+    });
+  });
+}
+document.getElementById("reGo").onclick=doRegister;
+
+function doLogin(){
+  if(!sbClient){ authSay("liMsg","Supabase ist nicht konfiguriert (src/config.part ausfüllen).",true); return; }
+  var email=document.getElementById("liEmail").value.trim(), pass=document.getElementById("liPass").value;
+  if(!email||!pass){ authSay("liMsg","E-Mail und Passwort eingeben.",true); return; }
+  authSay("liMsg","Melde an …");
+  sbClient.auth.signInWithPassword({email:email,password:pass}).then(function(r){
+    if(r.error){ authSay("liMsg",r.error.message,true); return; }
+    authSay("liMsg","");
+    refreshSession();
+  });
+}
+document.getElementById("liGo").onclick=doLogin;
+
+function doLogout(){
+  if(!sbClient) return;
+  sbClient.auth.signOut().then(function(){ PROFILE=null; SESSION=null; refreshSession(); });
+}
+document.getElementById("btnLogout").onclick=doLogout;
+
+function applyCategoryUI(){
+  if(!PROFILE) return;
+  document.body.setAttribute("data-cat",PROFILE.category);
+  document.getElementById("ubName").textContent=PROFILE.full_name;
+  document.getElementById("ubCat").textContent=CATLABEL[PROFILE.category]||PROFILE.category;
+  var hadView=false; try{hadView=!!localStorage.getItem(VIEWKEY);}catch(e){}
+  if(!hadView) setView(CATVIEW[PROFILE.category]||"alles");
+  var admin=document.getElementById("admin");
+  if(admin) admin.hidden=!PROFILE.is_admin;
+  if(PROFILE.is_admin) loadAdmin();
+}
+
+function refreshSession(){
+  if(!sbClient){ setAuthState("locked"); return; }
+  sbClient.auth.getSession().then(function(r){
+    SESSION=(r.data&&r.data.session)||null;
+    if(!SESSION){ PROFILE=null; setAuthState("locked"); return; }
+    sbClient.from("profiles").select("*").eq("id",SESSION.user.id).maybeSingle().then(function(r2){
+      if(r2.error||!r2.data){ setAuthState("locked"); return; }
+      PROFILE=r2.data;
+      if(PROFILE.status==="pending"){ setAuthState("pending"); return; }
+      if(PROFILE.status==="rejected"){ setAuthState("rejected"); return; }
+      applyCategoryUI();
+      setAuthState("ok");
+      initDb(); pullState(); subscribePlanState();
+    });
+  });
+}
+
+/* ---- Admin-Dashboard: Anmeldungen freigeben, Kategorie/Admin-Rechte pflegen ---- */
+var ADMINROWS=[];
+function loadAdmin(){
+  if(!sbClient||!PROFILE||!PROFILE.is_admin) return;
+  sbClient.from("profiles").select("*").order("created_at",{ascending:false}).then(function(r){
+    if(r.error){ authSay("adminMsg",r.error.message,true); return; }
+    ADMINROWS=r.data||[]; renderAdmin();
+  });
+}
+function renderAdmin(){
+  var body=document.querySelector("#admintab tbody"); if(!body) return;
+  var h="";
+  ADMINROWS.forEach(function(p){
+    h+='<tr><td>'+esc(p.full_name)+(p.is_admin?' <span class="pill ok">Admin</span>':'')+'</td>'+
+       '<td>'+esc(p.email)+'</td>'+
+       '<td><select class="cin sel admcat" data-id="'+esc(p.id)+'">'+
+         Object.keys(CATLABEL).map(function(c){return '<option value="'+c+'"'+(c===p.category?" selected":"")+'>'+CATLABEL[c]+'</option>';}).join("")+
+       '</select></td>'+
+       '<td><span class="pill '+(p.status==="approved"?"ok":(p.status==="rejected"?"bad":""))+'">'+esc(p.status)+'</span></td>'+
+       '<td class="tm">'+dstr(p.created_at)+'</td>'+
+       '<td>'+
+         (p.status!=="approved"?'<button class="fbtn admapprove" type="button" data-id="'+esc(p.id)+'">Freigeben</button> ':'')+
+         (p.status!=="rejected"?'<button class="fbtn admreject" type="button" data-id="'+esc(p.id)+'">Ablehnen</button> ':'')+
+         '<button class="fbtn admtoggle" type="button" data-id="'+esc(p.id)+'">'+(p.is_admin?"Admin entziehen":"Admin machen")+'</button>'+
+       '</td></tr>';
+  });
+  if(!ADMINROWS.length) h='<tr><td colspan="6" style="color:var(--muted)">Noch keine Anmeldungen.</td></tr>';
+  body.innerHTML=h;
+  function upd(id,patch){
+    sbClient.from("profiles").update(patch).eq("id",id).then(function(r){
+      if(r.error){ authSay("adminMsg",r.error.message,true); return; }
+      authSay("adminMsg","Gespeichert.");
+      loadAdmin();
+    });
+  }
+  Array.prototype.forEach.call(body.querySelectorAll(".admapprove"),function(b){
+    b.onclick=function(){ upd(this.getAttribute("data-id"),{status:"approved",approved_at:new Date().toISOString(),approved_by:PROFILE.id}); };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".admreject"),function(b){
+    b.onclick=function(){ upd(this.getAttribute("data-id"),{status:"rejected"}); };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".admtoggle"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-id");
+      var p=ADMINROWS.filter(function(x){return x.id===id;})[0];
+      upd(id,{is_admin: !(p&&p.is_admin)});
+    };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".admcat"),function(s){
+    s.onchange=function(){ upd(this.getAttribute("data-id"),{category:this.value}); };
+  });
+}
+
+/* ---- Plan-Zustand mit Supabase abgleichen (ersetzt localStorage als Quelle der Wahrheit) ---- */
+function pushState(key,data){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
+  sbClient.from("plan_state").upsert({key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
+    .then(function(r){ if(r.error) console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); });
+}
+function pullState(){
+  if(!sbClient) return;
+  sbClient.from("plan_state").select("key,data").then(function(r){
+    if(r.error||!r.data) return;
+    var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
+    if(by.cfg&&by.quali&&by.finale){
+      applySnapshot({cfg:by.cfg, texts:by.texts||{}, q:by.quali, f:by.finale});
+    } else {
+      /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
+      pushState("cfg",CFG);
+      pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
+      pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
+      pushState("texts",TXT);
+    }
+  });
+}
+var planSub=null;
+function subscribePlanState(){
+  if(!sbClient||planSub) return;
+  planSub=sbClient.channel("plan_state-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"plan_state"},function(){ pullState(); })
+    .subscribe();
+}
+
+function initAuth(){
+  if(!sbClient){ setAuthState("locked"); authSay("liMsg","Supabase ist nicht konfiguriert – src/config.part ausfüllen.",true); return; }
+  sbClient.auth.onAuthStateChange(function(){ refreshSession(); });
+}
+
 /* ================= Speicherstände ================= */
 /* Datei über einen echten Download-Link ablegen – funktioniert überall,
    wo die Seite normal im Web liegt. Gibt false zurück, wenn es nicht geht. */
@@ -1806,8 +2100,7 @@ function saveBlob(blob,name){
   }catch(e){ return false; }
 }
 var DB=null, DBSTATE="lädt", STANDS=[], VIEWERS=[];
-var ME=""; try{ME=localStorage.getItem("kidscup-me")||"";}catch(e){}
-function meName(){return ME||"unbenannt";}
+function meName(){return (PROFILE&&PROFILE.full_name)||"unbenannt";}
 function snapshot(){
   return {v:9, at:new Date().toISOString(), cfg:clone(CFG), texts:clone(TXT),
     q:{rows:clone(pq.rows),groups:clone(pq.groups),blocks:clone(pq.blocks),seq:pq.seq},
@@ -1869,7 +2162,7 @@ function renderStands(){
   if(st) st.textContent=DBSTATE;
   var md=document.getElementById("standMode");
   if(md) md.innerHTML=DB
-    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Wer den Link hat, sieht dieselbe Liste, kann einen Stand laden, weiterarbeiten und als neuen ablegen.'
+    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Alle freigegebenen Personen sehen dieselbe Liste. Speichern, Laden und Löschen kann nur das Orga-Team.'
     : 'Diese Fassung speichert die Stände <strong>in deinem Browser</strong> – sie wandern nicht automatisch zu anderen. Zum Weitergeben nimm <strong>„Als Datei sichern"</strong>; wer die Datei bekommt, öffnet sie hier über <strong>„Datei laden"</strong>.';
 }
 function renderViewers(){
@@ -1886,9 +2179,8 @@ function saveLocalStands(){try{localStorage.setItem("kidscup-stands",JSON.string
 function loadLocalStands(){try{STANDS=JSON.parse(localStorage.getItem("kidscup-stands")||"[]")||[];}catch(e){STANDS=[];}}
 var pdfCount=0; try{pdfCount=parseInt(localStorage.getItem("kidscup-pdfn")||"0",10)||0;}catch(e){}
 function logMe(what){
-  if(!DB||!ME) return;
-  var key=ME.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60)||"gast";
-  DB.doc("viewers/"+key).set({name:ME, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
+  if(!DB||!PROFILE) return;
+  DB.doc("viewers/"+PROFILE.id).set({name:PROFILE.full_name, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
 }
 function saveStand(){
   var t=document.getElementById("stTitle").value.trim()||("Stand "+dstr());
@@ -1910,29 +2202,59 @@ function saveStand(){
     document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
   }
 }
+function makeSupabaseDB(){
+  function parts(path){ var p=path.split("/"); return {table:p[0], id:p[1]}; }
+  return {
+    collection:function(name){
+      return {
+        onSnapshot:function(cb,errCb){
+          function pull(){
+            sbClient.from(name).select("*").then(function(r){
+              if(r.error){ if(errCb) errCb(r.error); return; }
+              cb({docs:(r.data||[]).map(function(row){
+                return {id:(name==="viewers"?row.key:row.id), data:function(){return row;}};
+              })});
+            });
+          }
+          pull();
+          sbClient.channel(name+"-changes")
+            .on("postgres_changes",{event:"*",schema:"public",table:name},pull)
+            .subscribe();
+        }
+      };
+    },
+    doc:function(path){
+      var d=parts(path);
+      return {
+        set:function(obj){
+          var row={}; for(var k in obj) row[k]=obj[k];
+          if(d.table==="viewers") row.key=d.id; else row.id=d.id;
+          return sbClient.from(d.table).upsert(row).then(function(r){ if(r.error) throw r.error; });
+        },
+        delete:function(){
+          var col=(d.table==="viewers")?"key":"id", q={}; q[col]=d.id;
+          return sbClient.from(d.table).delete().match(q).then(function(r){ if(r.error) throw r.error; });
+        }
+      };
+    }
+  };
+}
 function initDb(){
-  var p=(window.claude&&window.claude.use)?window.claude.use("db"):Promise.resolve(null);
-  p.then(function(d){
-    DB=d;
-    if(!d){ DBSTATE="nur in diesem Browser gespeichert"; loadLocalStands(); renderStands(); renderViewers(); return; }
-    DBSTATE="geteilt – alle mit dem Link sehen dieselben Stände";
-    d.collection("stands").onSnapshot(function(snap){
-      STANDS=snap.docs.map(function(x){var o=x.data()||{}; o.id=x.id; return o;});
-      renderStands();
-    },function(){ DBSTATE="Verbindung unterbrochen – lokal weiterarbeiten"; renderStands(); });
-    d.collection("viewers").onSnapshot(function(snap){
-      VIEWERS=snap.docs.map(function(x){return x.data()||{};}); renderViewers();
-    },function(){});
-    renderStands(); logMe("geöffnet");
-  },function(){ DBSTATE="nicht verfügbar"; loadLocalStands(); renderStands(); });
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"){
+    DBSTATE="nicht verfügbar"; loadLocalStands(); renderStands(); return;
+  }
+  DB=makeSupabaseDB();
+  DBSTATE="geteilt – alle Freigegebenen sehen dieselben Stände";
+  DB.collection("stands").onSnapshot(function(snap){
+    STANDS=snap.docs.map(function(x){var o=x.data()||{}; o.id=x.id; return o;});
+    renderStands();
+  },function(){ DBSTATE="Verbindung unterbrochen – lokal weiterarbeiten"; renderStands(); });
+  DB.collection("viewers").onSnapshot(function(snap){
+    VIEWERS=snap.docs.map(function(x){return x.data()||{};}); renderViewers();
+  },function(){});
+  renderStands(); logMe("geöffnet");
 }
 function initStandUi(){
-  var me=document.getElementById("meName");
-  if(me){
-    me.value=ME;
-    me.onchange=function(){ ME=this.value.trim(); try{localStorage.setItem("kidscup-me",ME);}catch(e){}
-      logMe("geöffnet"); standSay(ME?("Du bist als „"+ME+"“ eingetragen."):"Name entfernt."); };
-  }
   var sb=document.getElementById("stSave"); if(sb) sb.onclick=saveStand;
   var ex=document.getElementById("stExport");
   if(ex) ex.onclick=function(){
@@ -1961,7 +2283,7 @@ function initStandUi(){
     };
   }
 }
-initStandUi(); initDb();
+initStandUi(); initAuth();
 
 /* ================= PDF-Export ================= */
 function loadJs(src){

@@ -1,3 +1,886 @@
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* Supabase-Projekteinstellungen (Dashboard → Project Settings → API).
+   Der anon key ist absichtlich öffentlich im Client sichtbar – die eigentliche
+   Absicherung passiert über Row-Level-Security-Policies in der Datenbank
+   (siehe supabase/schema.sql), nicht über Geheimhaltung dieses Keys. */
+window.SUPABASE_URL = "https://lkwwbqrqevtxczgjwcmn.supabase.co";
+window.SUPABASE_ANON_KEY = "sb_publishable_sQXelgboln7pcrQ3d3p4gg_dKm8TvXg";
+</script>
+<title>Regieplan Kids Cup Sachsen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#F2F4F0; --surface:#FFFFFF; --surface-2:#E9ECE6; --sunken:#EDEFEA;
+  --ink:#141815; --ink-2:#3F4642; --muted:#6C756F;
+  --line:#D9DED6; --line-strong:#B4BCB2;
+  --c0:#B87708;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
+  --c1:#1F7A55; --c1-m-bg:#EDF7F2; --c1-m-br:#C4E0D3; --c1-w-bg:#CBE7D9; --c1-w-br:#8FC3A9;
+  --c2:#2559A6; --c2-m-bg:#EEF4FC; --c2-m-br:#C7D9F0; --c2-w-bg:#CFE0F4; --c2-w-br:#98BAE1;
+  --c3:#A93B34; --c3-m-bg:#FDF0EE; --c3-m-br:#EDCBC6; --c3-w-bg:#F2D3CE; --c3-w-br:#DBA199;
+  --c4:#763E96; --c4-m-bg:#F7F1FB; --c4-m-br:#DFCDEC; --c4-w-bg:#E3D3F0; --c4-w-br:#BFA3D6;
+  --c5:#0D7480; --c5-m-bg:#EAF7F8; --c5-m-br:#BFDFE3; --c5-w-bg:#C6E7EA; --c5-w-br:#88C0C7;
+  --c6:#83592C; --c6-m-bg:#FAF4EB; --c6-m-br:#E2D3BC; --c6-w-bg:#ECDCC4; --c6-w-br:#C9AE83;
+  --c7:#4A5666; --c7-m-bg:#F1F3F6; --c7-m-br:#D3D9E1; --c7-w-bg:#D6DCE4; --c7-w-br:#AAB4C1;
+  --ok:#1F7A55; --warn:#B87708; --bad:#A93B34; --grid:#D9DED6;
+  --ring:#141815;
+  --shadow:0 1px 2px rgba(20,24,21,.05), 0 8px 24px -18px rgba(20,24,21,.35);
+  --serif:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --disp:"Oswald","Arial Narrow",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121513; --surface:#1A1E1B; --surface-2:#232823; --sunken:#161A17;
+    --ink:#E9EDE7; --ink-2:#BCC4BE; --muted:#8B958E;
+    --line:#2C322E; --line-strong:#454E48;
+    --c0:#E0A63C;  --c0-m-bg:#2A2110; --c0-m-br:#4A3A18; --c0-w-bg:#3E2E10; --c0-w-br:#715620;
+    --c1:#4FBB89; --c1-m-bg:#0E2B20; --c1-m-br:#1C4B38; --c1-w-bg:#134532; --c1-w-br:#2A7355;
+    --c2:#6C9FE0; --c2-m-bg:#13202F; --c2-m-br:#223A5B; --c2-w-bg:#1B3150; --c2-w-br:#345880;
+    --c3:#E5766C; --c3-m-bg:#2E1C1A; --c3-m-br:#4D2C28; --c3-w-bg:#46261F; --c3-w-br:#754038;
+    --c4:#B48BD8; --c4-m-bg:#241830; --c4-m-br:#3E2A52; --c4-w-bg:#33204A; --c4-w-br:#553977;
+    --c5:#49B7C4; --c5-m-bg:#0E2A2E; --c5-m-br:#1B484F; --c5-w-bg:#134048; --c5-w-br:#276C77;
+    --c6:#C79A63; --c6-m-bg:#291F13; --c6-m-br:#48371F; --c6-w-bg:#3B2B16; --c6-w-br:#6B5029;
+    --c7:#9AA8BB; --c7-m-bg:#1B2029; --c7-m-br:#333C49; --c7-w-bg:#252D3A; --c7-w-br:#4A5768;
+    --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#2C322E;
+    --ring:#E9EDE7;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121513; --surface:#1A1E1B; --surface-2:#232823; --sunken:#161A17;
+  --ink:#E9EDE7; --ink-2:#BCC4BE; --muted:#8B958E;
+  --line:#2C322E; --line-strong:#454E48;
+  --c0:#E0A63C;  --c0-m-bg:#2A2110; --c0-m-br:#4A3A18; --c0-w-bg:#3E2E10; --c0-w-br:#715620;
+  --c1:#4FBB89; --c1-m-bg:#0E2B20; --c1-m-br:#1C4B38; --c1-w-bg:#134532; --c1-w-br:#2A7355;
+  --c2:#6C9FE0; --c2-m-bg:#13202F; --c2-m-br:#223A5B; --c2-w-bg:#1B3150; --c2-w-br:#345880;
+  --c3:#E5766C; --c3-m-bg:#2E1C1A; --c3-m-br:#4D2C28; --c3-w-bg:#46261F; --c3-w-br:#754038;
+  --c4:#B48BD8; --c4-m-bg:#241830; --c4-m-br:#3E2A52; --c4-w-bg:#33204A; --c4-w-br:#553977;
+  --c5:#49B7C4; --c5-m-bg:#0E2A2E; --c5-m-br:#1B484F; --c5-w-bg:#134048; --c5-w-br:#276C77;
+  --c6:#C79A63; --c6-m-bg:#291F13; --c6-m-br:#48371F; --c6-w-bg:#3B2B16; --c6-w-br:#6B5029;
+  --c7:#9AA8BB; --c7-m-bg:#1B2029; --c7-m-br:#333C49; --c7-w-bg:#252D3A; --c7-w-br:#4A5768;
+  --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#2C322E;
+  --ring:#E9EDE7;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1140px; margin:0 auto; padding:0 24px}
+@media (max-width:640px){ .wrap{padding:0 16px} }
+
+.masthead{background:var(--surface); border-bottom:1px solid var(--line); padding:44px 0 0}
+.eyebrow{font-family:var(--disp); font-weight:500; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:0 0 10px}
+h1{font-family:var(--disp); font-weight:600; letter-spacing:-.005em; font-size:clamp(34px,5.2vw,54px); line-height:1.03; margin:0; text-wrap:balance}
+.dek{font-size:clamp(16px,2vw,19px); color:var(--ink-2); max-width:62ch; margin:16px 0 0}
+.dek strong{color:var(--ink); font-weight:600}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:1px; background:var(--line); border-top:1px solid var(--line); margin-top:34px}
+.stat{background:var(--surface); padding:16px 4px 18px}
+.stat b{display:block; font-family:var(--mono); font-weight:500; font-size:23px; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.stat span{display:block; font-family:var(--disp); font-size:11px; font-weight:400; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-top:3px}
+
+section{padding:52px 0 4px}
+section + section{border-top:1px solid var(--line)}
+.sec-head{margin:0 0 26px}
+.sec-head p.eyebrow{margin-bottom:6px}
+h2{font-family:var(--disp); font-weight:500; font-size:clamp(22px,3vw,30px); line-height:1.15; margin:0; text-wrap:balance}
+h3{font-family:var(--disp); font-weight:500; font-size:17px; margin:0 0 10px}
+h4{font-family:var(--disp); font-weight:500; font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:0 0 8px}
+p{margin:0 0 14px; max-width:70ch}
+.lede{color:var(--ink-2); max-width:68ch}
+ul,ol{margin:0 0 14px; padding-left:20px; max-width:70ch}
+li{margin-bottom:6px}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+.cards{display:grid; gap:14px; margin:0 0 18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(228px,1fr))}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:18px 18px 16px; box-shadow:var(--shadow)}
+.card p:last-child,.card ul:last-child{margin-bottom:0}
+.note{background:var(--sunken); border:1px solid var(--line); border-left:3px solid var(--line-strong); border-radius:2px; padding:16px 18px; margin:0 0 18px}
+.note h4{color:var(--ink); letter-spacing:.07em}
+.note p:last-child,.note ul:last-child,.note ol:last-child{margin-bottom:0}
+
+[data-ac="c0"]{--ac:var(--c0);  --m-bg:var(--c0-m-bg);  --m-br:var(--c0-m-br);  --w-bg:var(--c0-w-bg);  --w-br:var(--c0-w-br)}
+[data-ac="c1"]{--ac:var(--c1);--m-bg:var(--c1-m-bg); --m-br:var(--c1-m-br); --w-bg:var(--c1-w-bg); --w-br:var(--c1-w-br)}
+[data-ac="c2"]{--ac:var(--c2);--m-bg:var(--c2-m-bg); --m-br:var(--c2-m-br); --w-bg:var(--c2-w-bg); --w-br:var(--c2-w-br)}
+[data-ac="c3"]{--ac:var(--c3);--m-bg:var(--c3-m-bg); --m-br:var(--c3-m-br); --w-bg:var(--c3-w-bg); --w-br:var(--c3-w-br)}
+[data-ac="c4"]{--ac:var(--c4);--m-bg:var(--c4-m-bg);--m-br:var(--c4-m-br);--w-bg:var(--c4-w-bg);--w-br:var(--c4-w-br)}
+[data-ac="c5"]{--ac:var(--c5);--m-bg:var(--c5-m-bg);--m-br:var(--c5-m-br);--w-bg:var(--c5-w-bg);--w-br:var(--c5-w-br)}
+[data-ac="c6"]{--ac:var(--c6);--m-bg:var(--c6-m-bg);--m-br:var(--c6-m-br);--w-bg:var(--c6-w-bg);--w-br:var(--c6-w-br)}
+[data-ac="c7"]{--ac:var(--c7);--m-bg:var(--c7-m-bg);--m-br:var(--c7-m-br);--w-bg:var(--c7-w-bg);--w-br:var(--c7-w-br)}
+[data-ac="mix"]{--ac:var(--muted);--m-bg:var(--surface-2);--m-br:var(--line-strong);--w-bg:var(--surface-2);--w-br:var(--line-strong)}
+
+.tag{display:inline-flex; align-items:center; gap:6px; font-family:var(--disp); font-size:11px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:2px; color:var(--ac); background:var(--m-bg); border:1px solid var(--m-br)}
+.tag.w{background:var(--w-bg); border-color:var(--w-br)}
+.pill{display:inline-block; font-family:var(--disp); font-size:10.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:2px 7px; border-radius:2px; border:1px solid var(--line-strong); color:var(--muted); white-space:nowrap}
+.pill.bad{color:var(--bad); border-color:var(--bad)}
+.pill.ok{color:var(--ok); border-color:var(--ok)}
+
+.routes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(234px,1fr))}
+.route{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--ac); border-radius:3px; padding:14px 15px 13px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px}
+.route-id{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.route-id b{font-family:var(--disp); font-weight:600; font-size:21px; color:var(--ac)}
+.route-who{font-family:var(--disp); font-size:14px; font-weight:400; color:var(--ink)}
+.route-meta{display:flex; flex-wrap:wrap; gap:6px 10px; font-family:var(--mono); font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.route-desc{font-size:14px; color:var(--ink-2); margin:0}
+
+/* ---------- Gantt ---------- */
+.toolbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 14px}
+.toolbar .lbl{font-family:var(--disp); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-right:2px}
+.fbtn{font-family:var(--disp); font-size:12.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:5px 12px; border-radius:2px; cursor:pointer; background:var(--surface); color:var(--ink-2); border:1px solid var(--line-strong)}
+.fbtn:hover{border-color:var(--ink-2); color:var(--ink)}
+.fbtn[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.fbtn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.readout{display:flex; flex-wrap:wrap; gap:6px 18px; align-items:baseline; padding:10px 14px; margin:0 0 12px;
+  background:var(--sunken); border:1px solid var(--line); border-radius:3px; font-size:13.5px}
+.readout b{font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--ink)}
+.readout span{color:var(--muted)}
+.readout .flag{font-family:var(--disp); letter-spacing:.06em; text-transform:uppercase; font-size:11.5px; padding:2px 8px; border-radius:2px; border:1px solid var(--ok); color:var(--ok)}
+.readout .flag.bad{border-color:var(--bad); color:var(--bad)}
+
+.gantt{background:var(--surface); border:1px solid var(--line); border-radius:3px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:14px}
+.gantt-scroll{overflow-x:auto}
+.gantt-inner{min-width:860px; padding:0 0 6px}
+.grow{display:grid; grid-template-columns:186px 1fr; align-items:stretch}
+.grow + .grow{border-top:1px solid var(--line)}
+.gaxis{border-bottom:1px solid var(--line-strong); background:var(--surface-2)}
+.rlabel{padding:8px 12px; border-right:1px solid var(--line); display:flex; flex-direction:column; justify-content:center; gap:1px}
+.rlabel b{font-family:var(--disp); font-weight:600; font-size:14px; letter-spacing:.04em; color:var(--ac)}
+.rlabel span{font-size:11.5px; color:var(--muted); line-height:1.3}
+.track{position:relative; min-height:40px; background-image:repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px var(--tick))}
+.gaxis .rlabel{border-right-color:var(--line-strong)}
+.gaxis .track{min-height:26px; background-image:none}
+.gaxis .track .t{position:absolute; top:6px; transform:translateX(-50%); font-family:var(--mono); font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+.gaxis .track .t:first-child{transform:none}
+.gaxis .track .t:last-child{transform:translateX(-100%)}
+
+.blk{position:absolute; top:5px; bottom:5px; border-radius:2px; padding:2px 6px; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:center; cursor:grab; touch-action:none;
+  background:var(--m-bg); border:1px solid var(--m-br); border-left:3px solid var(--ac);
+  transition:opacity .18s ease, box-shadow .12s ease;}
+.blk[data-g="w"]{background:var(--w-bg); border-color:var(--w-br)}
+.blk[data-fixed="1"]{cursor:default}
+.blk:hover{box-shadow:0 0 0 1px var(--ink-2) inset}
+.blk:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+.blk.dragging{cursor:grabbing; box-shadow:0 4px 14px -4px rgba(0,0,0,.4); z-index:5}
+.blk.clash{outline:2px solid var(--bad); outline-offset:-1px}
+.blk.warn{outline:2px dashed var(--warn); outline-offset:-1px}
+.blk.sel{outline:2px solid var(--ink); outline-offset:-1px; box-shadow:0 2px 10px -3px rgba(0,0,0,.35)}
+.editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:3px; box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
+.ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
+.ed-head b{font-family:var(--disp); font-weight:600; font-size:17px; color:var(--ac)}
+.ed-head span{font-family:var(--mono); font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.ed-head .fbtn{margin-left:auto}
+.ed-grid{display:flex; flex-wrap:wrap; gap:10px 22px; align-items:center}
+.ed-grid label{display:flex; align-items:center; gap:7px; font-family:var(--disp); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.ed-grid select,.ed-grid input{font-family:var(--mono); font-size:13.5px; padding:5px 7px; border-radius:2px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.ed-grid input[type="number"]{width:70px}
+.ed-grid select:focus-visible,.ed-grid input:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+.readout .flag.warn{border-color:var(--warn); color:var(--warn)}
+.rlabel b{display:flex; align-items:center; gap:6px}
+.rdel{margin-left:auto; font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
+  border:1px solid transparent; border-radius:2px; background:transparent; color:var(--muted); cursor:pointer; padding:0}
+.grow:hover .rdel:not(:disabled),.rdel:focus-visible{border-color:var(--line-strong); color:var(--bad)}
+.rdel:disabled{opacity:0; cursor:default}
+.grow:hover .rdel:disabled{opacity:.35}
+.rdel:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+.addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:3px; padding:14px 16px; margin:0 0 14px}
+.flowwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:3px; box-shadow:var(--shadow); padding:8px 0 4px}
+.flowwrap svg{display:block; min-width:980px}
+tbody tr.tstart td{border-top:1px solid var(--line-strong)}
+.blk b{font-family:var(--disp); font-weight:500; font-size:12px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.blk span{font-family:var(--mono); font-size:10px; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+.blk.iso{background:transparent; border-style:dashed; border-left-style:dashed; border-left-width:1px; border-color:var(--line-strong)}
+.blk.dim{opacity:.14}
+.legend{display:flex; flex-wrap:wrap; gap:8px 18px; margin:0 0 14px; font-size:13px; color:var(--ink-2)}
+.legend div{display:flex; align-items:center; gap:7px}
+.sw{width:26px; height:13px; border-radius:2px; border:1px solid var(--m-br); background:var(--m-bg); border-left:3px solid var(--ac)}
+.sw.w{background:var(--w-bg); border-color:var(--w-br); border-left-color:var(--ac)}
+.hint{font-size:13px; color:var(--muted); margin:-4px 0 22px}
+
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:3px; background:var(--surface); box-shadow:var(--shadow); margin:0 0 18px}
+table{border-collapse:collapse; width:100%; min-width:540px; font-size:14.5px}
+th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--line); vertical-align:baseline}
+thead th{font-family:var(--disp); font-weight:500; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); background:var(--surface-2); border-bottom:1px solid var(--line-strong); white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+td.tm{font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+tbody tr.sum td{background:var(--surface-2); font-weight:600; border-top:1px solid var(--line-strong)}
+td .ac{font-family:var(--disp); font-weight:600; color:var(--ac); letter-spacing:.03em}
+
+.rail{display:grid; margin:0 0 18px}
+.rail .step{display:grid; grid-template-columns:76px 1fr; gap:14px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line)}
+.rail .step:last-child{border-bottom:none}
+.rail .step time{font-family:var(--mono); font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums}
+.rail .step div b{font-family:var(--disp); font-weight:500; font-size:15px; display:block}
+.rail .step div span{font-size:13.5px; color:var(--muted)}
+.rail .step.q{border-left:3px solid var(--line-strong); padding-left:12px; margin-left:-15px}
+footer{border-top:1px solid var(--line); margin-top:48px; padding:26px 0 40px; font-size:13px; color:var(--muted)}
+footer p{max-width:74ch; margin-bottom:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+
+/* ---------- Download-Leiste ---------- */
+.dlbar{display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px; margin:26px 0 8px;
+  background:var(--surface); border:1px solid var(--line-strong); border-radius:3px; padding:18px 20px; box-shadow:var(--shadow)}
+.dlbar .fbtn.big{font-size:14px; padding:10px 20px; background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.dlbar .fbtn.big:hover{opacity:.88}
+.dlbar p{margin:0; font-size:13.5px; color:var(--muted); max-width:62ch}
+.dlbar .pdfmsg{flex-basis:100%; font-family:var(--mono); font-size:12.5px; color:var(--ok)}
+.dlbar .pdfmsg:empty{display:none}
+.dlbar .pdfmsg.bad{color:var(--bad)}
+.printonly{display:none}
+
+/* ---------- Meldezahlen-Eingabe ---------- */
+.nin{width:64px; font-family:var(--mono); font-size:14px; font-variant-numeric:tabular-nums; text-align:right;
+  padding:4px 6px; border-radius:2px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.nin:hover{border-color:var(--ink-2)}
+.nin:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+#meldtab td .ac{font-size:15px}
+#meldtab{min-width:840px}
+#peotab{min-width:660px}
+#cattab{min-width:320px}
+#standtab{min-width:600px}
+
+/* ---------- Textbearbeitung ---------- */
+.textbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:22px 0 0;
+  background:var(--sunken); border:1px solid var(--line); border-radius:3px; padding:12px 16px}
+.textbar p{margin:0; flex-basis:100%; font-size:13px; color:var(--muted); max-width:80ch}
+/* ---------- Rollenansicht ---------- */
+.vbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:18px 0 0;
+  background:var(--surface); border:1px solid var(--line-strong); border-radius:3px; padding:12px 16px; box-shadow:var(--shadow)}
+.vbar .lbl{font-family:var(--disp); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-right:4px}
+.vbar p{flex-basis:100%; margin:0; font-size:12.5px; color:var(--muted)}
+body[data-view="orga"]  main section:not([data-views~="orga"]),
+body[data-view="bau"]   main section:not([data-views~="bau"]),
+body[data-view="teams"] main section:not([data-views~="teams"]),
+body[data-view="sport"] main section:not([data-views~="sport"]){display:none}
+body:not([data-view="alles"]) .textbar{display:none}
+
+/* ---------- Login / Freigabe ---------- */
+body:not([data-auth="ok"]) main{display:none}
+#authWrap{padding:26px 0}
+#authWrap .note{margin:0 0 14px}
+
+/* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
+   Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
+body[data-cat]:not([data-cat="orga"]) main section input,
+body[data-cat]:not([data-cat="orga"]) main section select,
+body[data-cat]:not([data-cat="orga"]) main section button,
+body[data-cat]:not([data-cat="orga"]) main section .rdel,
+body[data-cat]:not([data-cat="orga"]) main section .blk{
+  pointer-events:none; opacity:.55; cursor:default;
+}
+body[data-cat]:not([data-cat="orga"]) main section #pdfbtn,
+body[data-cat]:not([data-cat="orga"]) main section #printbtn,
+body[data-cat]:not([data-cat="orga"]) main section#admin input,
+body[data-cat]:not([data-cat="orga"]) main section#admin select,
+body[data-cat]:not([data-cat="orga"]) main section#admin button{
+  pointer-events:auto; opacity:1; cursor:pointer;
+}
+body[data-cat]:not([data-cat="orga"]):not([data-cat="routenbau"]) .textbar{display:none}
+
+/* ---------- Konfigurationsfelder ---------- */
+.cin{font-family:var(--serif); font-size:14px; padding:4px 6px; border-radius:2px; max-width:100%;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.cin.sel{font-size:13px; padding:4px 4px}
+.cin:hover{border-color:var(--ink-2)}
+.cin:focus-visible,.tin:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+#meldtab .nm{font-family:var(--disp); font-weight:600; color:var(--ac)}
+.tin{font-family:var(--mono); font-size:13.5px; padding:4px 6px; border-radius:2px; width:100px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.cfgbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:3px; padding:14px 16px; margin:0 0 16px}
+.cfgbox h4{margin-bottom:10px}
+.cfgrow{display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center}
+.cfgrow label{display:flex; align-items:center; gap:7px; font-family:var(--disp); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.pgrp{display:inline-block; margin-right:12px; font-size:13.5px}
+.pgrp b{font-family:var(--disp); font-weight:500; color:var(--muted); font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; margin-right:4px}
+td.pcell{font-size:13.5px; line-height:1.5}
+#nolist,#vlist{font-size:13.5px; line-height:1.7}
+#nolist b,#vlist b{font-family:var(--disp); font-weight:500}
+#vlist .tm{font-family:var(--mono); font-size:12px; color:var(--muted)}
+.stbar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin:0 0 14px}
+.stbar .grow2{flex:1 1 220px}
+.stbar input[type="text"]{width:100%; font-family:var(--serif); font-size:14px; padding:6px 8px; border-radius:2px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+.pdfmsg:empty{display:none}
+.pdfmsg{font-family:var(--mono); font-size:12.5px; color:var(--ok); margin:0 0 12px}
+.pdfmsg.bad{color:var(--bad)}
+body.editing [data-ed]{outline:1px dashed var(--line-strong); outline-offset:3px; border-radius:2px}
+body.editing [data-ed]:hover{outline-color:var(--ink-2)}
+body.editing [data-ed]:focus{outline:2px solid var(--ring); outline-offset:3px; background:var(--surface)}
+body.editing{caret-color:var(--ink)}
+
+/* ---------- Druck / PDF ---------- */
+@media print{
+  @page{size:A4 landscape; margin:11mm}
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"]{
+    --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F0F2EE; --sunken:#F5F6F3;
+    --ink:#141815; --ink-2:#3F4642; --muted:#5F6863;
+    --line:#D2D7CE; --line-strong:#A9B1A7;
+    --c0:#8C5A06;  --c0-m-bg:#FBF3E2; --c0-m-br:#DFD0AC; --c0-w-bg:#EEDDB2; --c0-w-br:#C9AC72;
+    --c1:#186045; --c1-m-bg:#EAF5EF; --c1-m-br:#BADAC9; --c1-w-bg:#C4E3D4; --c1-w-br:#85BCA1;
+    --c2:#1D4A8C; --c2-m-bg:#EBF2FB; --c2-m-br:#BFD4EE; --c2-w-bg:#C9DCF2; --c2-w-br:#8DB2DD;
+    --c3:#8E2F29; --c3-m-bg:#FCEDEB; --c3-m-br:#E7C3BE; --c3-w-bg:#EFCCC7; --c3-w-br:#D4978F;
+    --c4:#5E3079; --c4-m-bg:#F5EEFA; --c4-m-br:#D9C4E8; --c4-w-bg:#DFCCEE; --c4-w-br:#B99BD1;
+    --c5:#0A5C66; --c5-m-bg:#E7F5F6; --c5-m-br:#B8DBDF; --c5-w-bg:#C1E4E7; --c5-w-br:#81BCC3;
+    --c6:#6A4722; --c6-m-bg:#F8F2E8; --c6-m-br:#DECFB6; --c6-w-bg:#E9D8BF; --c6-w-br:#C4A87C;
+    --c7:#3B4553; --c7-m-bg:#EEF1F4; --c7-m-br:#CFD6DE; --c7-w-bg:#D2D9E1; --c7-w-br:#A5AFBD;
+    --ok:#186045; --warn:#8C5A06; --bad:#8E2F29; --grid:#EEF0EC;
+    --shadow:none; color-scheme:light;
+  }
+  html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  .wrap{max-width:none; padding:0}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
+  #staende,#admin,#authWrap{display:none !important}
+  .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
+  .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+  body.editing [data-ed]{outline:none !important}
+  .printonly{display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin:0 0 10px}
+  .masthead{padding-top:0; border-bottom:1px solid var(--line-strong)}
+  h1{font-size:30px}
+  .dek{font-size:14px; max-width:none}
+  .stats{margin-top:16px}
+  .stat b{font-size:18px}
+  section{padding:16px 0 0}
+  section + section{border-top:none}
+  #quali,#personal,#routenplan,#finale,#routenbau,#offen,#wege{break-before:page}
+  #melde{padding-top:6px}
+  h2{font-size:20px}
+  .lede,p{font-size:13px; max-width:none}
+  .gantt-scroll,.tblwrap,.flowwrap{overflow:visible !important}
+  .gantt-inner{min-width:0 !important}
+  .flowwrap svg{min-width:0 !important; width:100% !important; height:auto !important}
+  .gantt,.tblwrap,.flowwrap,.card,.note,.route,.readout{break-inside:avoid; box-shadow:none}
+  .grow,tr,.rail .step{break-inside:avoid}
+  table{font-size:11.5px; min-width:0}
+  th,td{padding:5px 8px}
+  .blk b{font-size:10.5px}
+  .blk span{font-size:8.5px}
+  .track{min-height:34px; background-image:none !important}
+  .routes{grid-template-columns:repeat(4,1fr)}
+  .route-desc{font-size:11.5px}
+  footer{margin-top:18px; break-inside:avoid}
+}
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
+    <p class="printonly" id="stamp"></p>
+    <h1>Regieplan Kids Cup</h1>
+    <p class="dek">Elf Qualirouten, sieben Finalrouten. Jede Altersklasse braucht <strong>höchstens zwei Routen gleichzeitig</strong> – die U9 sogar nur eine. Der Plan ist ein Werkzeug, kein Ausdruck: <strong>Wertungsklassen, Meldezahlen und Zeitfenster ändern, Balken verschieben, Personal eintragen</strong> – Endzeiten, Pausen und Personalbedarf rechnen sich sofort neu. Oben wählst du die Ansicht für deine Rolle, unten sicherst du Zwischenstände und gibst sie weiter.</p>
+    <div class="stats">
+      <div class="stat"><b id="stAth">67</b><span>Athlet*innen</span></div>
+      <div class="stat"><b id="stRoutes">18</b><span>Routen</span></div>
+      <div class="stat"><b id="stMin">804</b><span>Kletterminuten</span></div>
+      <div class="stat"><b id="stTeams">7</b><span>Routen-Teams</span></div>
+      <div class="stat"><b id="stPers">21</b><span>Personen im Peak</span></div>
+      <div class="stat"><b id="stEnd">12:59</b><span>Quali-Ende</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="authWrap">
+  <div class="stbar" id="userbar" hidden>
+    <span class="lbl mono">Angemeldet als <strong id="ubName"></strong> · <span id="ubCat"></span></span>
+    <span style="flex:1"></span>
+    <button class="fbtn" id="btnLogout" type="button">Abmelden</button>
+  </div>
+
+  <div class="vbar" id="authBar" hidden>
+    <span class="lbl">Zugang</span>
+    <button class="fbtn" id="tabLogin" type="button" aria-pressed="true">Anmelden</button>
+    <button class="fbtn" id="tabRegister" type="button" aria-pressed="false">Registrieren</button>
+    <p>Diese Seite ist nur für freigegebene Personen sichtbar. Melde dich an oder registriere dich neu.</p>
+  </div>
+
+  <div class="addbox" id="loginBox" hidden>
+    <div class="cfgrow">
+      <label>E-Mail <input class="cin" id="liEmail" type="email" autocomplete="username" size="22"></label>
+      <label>Passwort <input class="cin" id="liPass" type="password" autocomplete="current-password" size="16"></label>
+      <label><button class="fbtn big" id="liGo" type="button">Anmelden</button></label>
+    </div>
+    <p class="pdfmsg" id="liMsg" role="status"></p>
+  </div>
+
+  <div class="addbox" id="registerBox" hidden>
+    <div class="cfgrow">
+      <label>Name <input class="cin" id="reName" type="text" autocomplete="name" size="18"></label>
+      <label>E-Mail <input class="cin" id="reEmail" type="email" autocomplete="username" size="22"></label>
+      <label>Passwort <input class="cin" id="rePass" type="password" autocomplete="new-password" size="16"></label>
+      <label>Kategorie
+        <select class="cin sel" id="reCat">
+          <option value="orga">Orga-Team</option>
+          <option value="sicherung">Sicherung</option>
+          <option value="ergebnisdienst">Ergebnisdienst</option>
+          <option value="routenbau">Routenbau</option>
+          <option value="buffet">Buffet</option>
+        </select>
+      </label>
+      <label><button class="fbtn big" id="reGo" type="button">Registrieren</button></label>
+    </div>
+    <p class="hint" style="margin:12px 0 0">Nach dem Absenden muss die Orga deine Anmeldung freigeben, bevor du den Plan siehst.</p>
+    <p class="pdfmsg" id="reMsg" role="status"></p>
+  </div>
+
+  <div class="note" id="pendingNote" hidden style="border-left-color:var(--warn)">
+    <h4>Warten auf Freigabe</h4>
+    <p>Deine Anmeldung ist eingegangen. Sobald die Orga sie freigibt, siehst du den Plan – ein erneuter Besuch dieser Seite genügt, du musst dich nicht neu anmelden.</p>
+  </div>
+  <div class="note" id="rejectedNote" hidden style="border-left-color:var(--bad)">
+    <h4>Zugang abgelehnt</h4>
+    <p>Für diesen Account wurde kein Zugriff freigegeben. Wende dich an die Orga, falls das ein Irrtum ist.</p>
+  </div>
+</div>
+
+<main>
+
+<div class="wrap">
+  <div class="vbar">
+    <span class="lbl">Ansicht für</span>
+    <button class="fbtn vbtn" type="button" data-v="alles" aria-pressed="true">Alles</button>
+    <button class="fbtn vbtn" type="button" data-v="orga">Orga-Team</button>
+    <button class="fbtn vbtn" type="button" data-v="bau">Routenbau</button>
+    <button class="fbtn vbtn" type="button" data-v="teams">Routen-Teams / Sicherung</button>
+    <button class="fbtn vbtn" type="button" data-v="sport">Trainer*innen &amp; Athlet*innen</button>
+    <p id="viewNote">Alle Kapitel sichtbar.</p>
+  </div>
+  <div class="textbar">
+    <button class="fbtn" id="txtToggle" type="button" aria-pressed="false">Texte bearbeiten</button>
+    <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
+    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
+  </div>
+</div>
+
+<!-- ============ WERTUNGSKLASSEN ============ -->
+<section id="melde" data-views="orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
+      <h2>Klassen, Gruppen, Zahlen – alles frei einstellbar</h2>
+      <p class="lede">Diese Tabelle ist der Ursprung des ganzen Plans. Klassennamen und Gruppenbezeichnungen sind frei: aus U15 männlich/weiblich wird bei Bedarf U21 Herren/Damen. Jede Änderung verlängert oder verkürzt sofort die Balken im Zeitplan, verschiebt die Endzeiten und passt Laufkarte, Team-Zeitplan, Wegediagramm und Finalquoten an.</p>
+    </div>
+    <div class="tblwrap"><table id="meldtab">
+      <thead><tr><th>Klasse</th><th>Gruppe 1</th><th class="num">TN</th><th>Gruppe 2</th><th class="num">TN</th>
+        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="toolbar">
+      <button class="fbtn" id="addClsToggle" type="button">+ Wertungsklasse</button>
+      <button class="fbtn" id="resetField" type="button">Klassen zurücksetzen</button>
+      <span class="lbl" style="margin-left:2px">zurück auf U9 · U11 · U13 · U15</span>
+    </div>
+
+    <div class="addbox" id="addCls" hidden>
+      <div class="cfgrow">
+        <label>Name <input class="cin" id="acName" placeholder="U17" size="7"></label>
+        <label>Gruppe 1 <input class="cin" id="acLm" value="männlich" size="9"></label>
+        <label>TN <input class="nin" id="acM" type="number" min="0" max="99" value="0"></label>
+        <label>Gruppe 2 <input class="cin" id="acLw" value="weiblich" size="9"></label>
+        <label>TN <input class="nin" id="acW" type="number" min="0" max="99" value="0"></label>
+        <label>Sicherung <select class="cin sel" id="acMode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
+        <label><button class="fbtn" id="addClsGo" type="button">Klasse anlegen</button></label>
+        <label><button class="fbtn" id="addClsCancel" type="button">Abbrechen</button></label>
+      </div>
+      <p class="hint" style="margin:12px 0 0">Eine neue Klasse bekommt automatisch drei Qualirouten (gemischt, Gruppe 1, Gruppe 2) mit einem Karussell in derselben Logik wie U13 und U15, dazu zwei Finalrouten. Danach lässt sich alles wie gewohnt verschieben, teilen oder wieder löschen.</p>
+    </div>
+
+    <h3>Zeitfenster des Wettkampfs</h3>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Quali von <input class="tin" id="winQs" type="time" step="300"></label>
+        <label>bis <input class="tin" id="winQe" type="time" step="300"></label>
+        <label>Finale von <input class="tin" id="winFs" type="time" step="300"></label>
+        <label>bis <input class="tin" id="winFe" type="time" step="300"></label>
+        <label>Besichtigung <input class="nin" id="winBes" type="number" min="0" max="180" step="5"> Min</label>
+        <label>ISO <input class="nin" id="winIso" type="number" min="0" max="180" step="5"> Min</label>
+        <label><button class="fbtn" id="winReset" type="button">Zurücksetzen</button></label>
+      </div>
+      <p class="hint" style="margin:12px 0 0"><span class="mono" id="winOut"></span> · Die Zeitachsen beider Zeitpläne folgen diesen Werten; Besichtigung und ISO beginnen automatisch mit dem Finalfenster. Balken, die aus dem Fenster fallen würden, rücken an den Rand.</p>
+    </div>
+
+    <p class="hint">Rechenwert: 6 Minuten pro Athlet*in und Route. Die Finalquote folgt automatisch: ab 20 Gemeldeten in einer Wertung 10 Plätze, darunter 6 – und nie mehr Plätze als Gemeldete.</p>
+  </div>
+</section>
+
+<!-- ============ TAGESABLAUF ============ -->
+<section id="tag" data-views="orga teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Tagesablauf</p>
+      <h2>Von der Registrierung bis zur Siegerehrung</h2>
+    </div>
+    <div class="rail">
+      <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
+      <div class="step" data-ac="mix"><time>09:15</time><div><b>Technical Meeting</b><span>bis 10:00 · laut Ausschreibung</span></div></div>
+      <div class="step" data-ac="mix"><time>10:00</time><div><b>Aufwärmen</b><span>30 Minuten zwischen Meeting und erstem Start</span></div></div>
+      <div class="step q" data-ac="mix"><time>10:30</time><div><b>Start Qualifikation</b><span>Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen</span></div></div>
+      <div class="step q" data-ac="mix"><time>12:36</time><div><b>U11 fertig</b><span>danach U9 12:45, U15 12:48</span></div></div>
+      <div class="step q" data-ac="mix"><time>12:59</time><div><b>Quali zu Ende</b><span>U13 als letzte Klasse</span></div></div>
+      <div class="step" data-ac="mix"><time>13:00</time><div><b>Auswertung und Aushang</b><span>30 Minuten bis zur Besichtigung</span></div></div>
+      <div class="step" data-ac="mix"><time>13:30</time><div><b>Besichtigung der Finalrouten</b><span>25 Minuten, alle Finalist*innen gemeinsam</span></div></div>
+      <div class="step" data-ac="mix"><time>13:55</time><div><b>ISO-Raum</b><span>20 Minuten: Athlet*innen werden in Startreihenfolge aufgestellt</span></div></div>
+      <div class="step" data-ac="mix"><time>14:15</time><div><b>Start Finale</b><span>Alle Routen parallel – U9 durchgehend, U11 und U15 je weiblich vor männlich, U13 parallel</span></div></div>
+      <div class="step" data-ac="mix"><time>15:29</time><div><b>Letzter Zug des Tages</b><span>eine Minute vor der ausgeschriebenen Wettkampfzeit</span></div></div>
+      <div class="step" data-ac="mix"><time>15:45</time><div><b>Siegerehrung</b><span>acht Wertungen, Medaillen und Urkunden Platz 1 bis 3</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUALI ============ -->
+<section id="quali" data-views="orga teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Zeitplan Qualifikation</p>
+      <h2>Jede Klasse mit zwei Routen-Teams</h2>
+      <p class="lede">Alle vier Altersklassen starten um 10:30. Innerhalb einer Klasse laufen die drei Routen so versetzt, dass <strong>nie mehr als zwei gleichzeitig besetzt sind</strong> – das Team der frei werdenden Route wandert zur nächsten. Bei der U9 reicht sogar ein Team für beide Routen. Ein Routen-Team sind drei Personen: Sicherung plus Ergebnisdienst. Helle Balken sind die Jungs, dunkle die Mädchen.</p>
+    </div>
+
+    <div class="legend">
+      <div data-ac="c1"><span class="sw"></span> männlich (hell)</div>
+      <div data-ac="c1"><span class="sw w"></span> weiblich (dunkel)</div>
+      <div style="color:var(--muted)">Farbe = Altersklasse · Balken ziehen (auch nach oben/unten auf eine andere Route) · anklicken zum Teilen · Pfeiltasten bewegen und wechseln die Route</div>
+    </div>
+
+    <div class="toolbar">
+      <span class="lbl">Filter</span>
+      <span id="fbar" style="display:contents"></span>
+      <span style="flex:1"></span>
+      <button class="fbtn" id="addQtoggle">+ Route</button>
+      <button class="fbtn" id="resetQ">Zurücksetzen</button>
+    </div>
+
+    <div class="addbox" id="addQ" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse
+          <select id="addQcls"><option>U9</option><option>U11</option><option selected>U13</option><option>U15</option></select></label>
+        <label>Typ
+          <select id="addQallow"><option value="mw">gemischt</option><option value="m">nur männlich</option><option value="w">nur weiblich</option></select></label>
+        <label>Sicherung
+          <select id="addQmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
+        <label><button class="fbtn" id="addQgo" type="button">Route anlegen</button></label>
+        <label><button class="fbtn" id="addQcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
+    <div class="readout" id="roQ"></div>
+    <div class="editor" id="edQ" hidden></div>
+    <div class="gantt" id="gq" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gq-inner"></div></div></div>
+    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
+
+    <h3>Laufkarte der Startgruppen</h3>
+    <div class="tblwrap"><table id="lk">
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Route 2</th><th class="num">Pause</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
+    <div class="cards g2">
+      <div class="card">
+        <h4>Wie die Klassen ihre drei Routen abarbeiten</h4>
+        <ul style="font-size:14.5px">
+          <li><strong>U11:</strong> Mädchen starten auf ihrer eigenen Route Q5, die Jungs gleichzeitig auf der gemischten Q3. Sobald Q3 frei ist, gehen die Mädchen dort hoch; wenn Q5 frei wird, wandert das Team auf die Jungenroute Q4.</li>
+          <li><strong>U13:</strong> genauso – Jungs auf Q6, Mädchen auf Q8, danach Mädchen auf Q6 und zuletzt die Jungs auf Q7.</li>
+          <li><strong>U15:</strong> Jungs eröffnen die gemischte Q9, 15 Minuten später gehen die Mädchen dort hoch; parallel läuft die Jungenroute Q10, danach die Mädchenroute Q11.</li>
+          <li><strong>U9:</strong> Q1 von 10:30 bis 11:30, 15 Minuten Pause, dann Q2 – ein einziges Team für beide Routen.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Startreihenfolge</h4>
+        <ul style="font-size:14.5px">
+          <li>Auf den gemischten Routen klettern <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken.</li>
+          <li>Innerhalb einer Gruppe nach Ranking sortieren und in umgekehrter Reihenfolge starten: die Stärksten zuletzt.</li>
+          <li><strong>Dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich.</li>
+          <li>Individuelle Startzeit = Blockbeginn + Startnummer × 6 Minuten.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note" style="border-left-color:var(--warn)">
+      <h4>Der Preis für zwei Teams pro Klasse</h4>
+      <p>Wenn nur zwei Routen gleichzeitig laufen dürfen, muss eine der beiden Wertungsgruppen auf ihre zweite Route warten, bis eine Route frei wird. Das trifft jeweils die Jungs: <strong class="mono">U11 78 Min</strong>, <strong class="mono">U13 101 Min</strong> Pause statt der angepeilten 45 bis 60. Bei der U9 sind es 75 Minuten, weil du die 15-Minuten-Pause zwischen Q1 und Q2 gesetzt hast. Nur die U15 bleibt mit 45 Minuten im Zielkorridor.</p>
+      <p style="margin-top:10px">Wenn du das für die U13 nicht willst: <strong>ein drittes Team von 11:25 bis 12:13</strong> genügt. Dann klettern die Jungs Q7 direkt nach ihrer Pause (55 Minuten statt 101) und die Quali endet trotzdem 12:59. Verschieb dazu einfach den Balken „Q7 U13 männlich" nach links – die Anzeige über dem Plan zeigt dir sofort, was das kostet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PERSONAL ============ -->
+<section id="personal" data-views="orga teams">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Personal</p>
+      <h2>Der Team-Zeitplan entsteht aus dem Plan</h2>
+      <p class="lede">Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
+    </div>
+
+    <div class="readout"><span>Bedarf</span> <b id="teamsum">—</b></div>
+
+    <div class="tblwrap"><table id="teamtable">
+      <thead><tr><th>Team</th><th>Zeit</th><th>Route</th><th>Wer klettert</th><th>Personen</th><th class="num">Pers.</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
+    <h3>Kategorien</h3>
+    <p class="lede">Lege fest, welche Rollen es am Wettkampftag gibt – Sicherung, Ergebnisdienst, Routenbau, Orga, Buffet, was auch immer du brauchst.</p>
+    <div class="tblwrap" style="max-width:520px"><table id="cattab">
+      <thead><tr><th>Kategorie</th><th class="num">Personen</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Neue Kategorie <input class="cin" id="newKat" placeholder="z. B. Routenschiri" size="20"></label>
+        <label><button class="fbtn" id="addKatGo" type="button">Kategorie anlegen</button></label>
+      </div>
+    </div>
+
+    <h3>Personen und ihre Teams</h3>
+    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
+    <div class="tblwrap"><table id="peotab">
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Name <input class="cin" id="newPname" placeholder="z. B. Lara Wächter" size="20"></label>
+        <label>Kategorie <select class="cin sel" id="newPcat"></select></label>
+        <label>Team <select class="cin sel" id="newPteam"></select></label>
+        <label><button class="fbtn" id="addPeoGo" type="button">Person hinzufügen</button></label>
+      </div>
+    </div>
+
+    <h4>Ohne Team-Zuordnung</h4>
+    <div id="nolist" style="margin:0 0 22px"></div>
+
+    <div class="cards g3">
+      <div class="card"><h4>Wie die Zuteilung entsteht</h4><p style="font-size:14.5px;margin-bottom:0">Die Routen werden nach Startzeit sortiert und der Reihe nach vergeben. Ein Team, das frei wird, übernimmt bevorzugt die nächste Route <em>derselben Altersklasse</em> – so bleibt jedes Team bei „seinen" Kindern.</p></div>
+      <div class="card"><h4>Der Peak dauert zehn Minuten</h4><p style="font-size:14.5px;margin-bottom:0">Sieben gleichzeitige Routen gibt es nur 11:23–11:30 und 12:00–12:03. Zieh den U13-Mädchen-Block auf Q6 auf 11:32 und den U15-Mädchen-Block auf Q11 auf 12:05: dann sind es <strong>6 Teams = 18 Personen</strong>, die Quali endet 13:08 statt 12:59.</p></div>
+      <div class="card"><h4>Dazu fix</h4><p style="font-size:14.5px;margin-bottom:0">Meldebüro, zentrale Auswertung, ISO-Aufsicht ab 13:55 und Moderation kommen zu den Routen-Teams hinzu.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROUTENPLAN ============ -->
+<section id="routenplan" data-views="orga bau">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Routenplan</p>
+      <h2>Elf Qualirouten – U11 neu mit eigener M- und W-Route</h2>
+      <p class="lede">Die U11 hat jetzt dieselbe Struktur wie U13 und U15: eine gemischte, eine reine Männer- und eine reine Frauenroute. Dadurch verschiebt sich die Nummerierung gegenüber der letzten Fassung – die Zuordnung steht auf jeder Karte.</p>
+    </div>
+
+    <div class="routes" style="margin-bottom:22px">
+      <div class="route" data-ac="c0"><div class="route-id"><b>Q1</b><span class="route-who">U9 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>10:30–11:30</span></div>
+        <p class="route-desc">Einstiegsniveau. Zone für alle zehn erreichbar, Top nur für die Spitze.</p></div>
+      <div class="route" data-ac="c0"><div class="route-id"><b>Q2</b><span class="route-who">U9 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>11:45–12:45</span></div>
+        <p class="route-desc">Gleiches Niveau, anderes Bewegungsthema. Startet 15 Minuten nach Q1.</p></div>
+      <div class="route" data-ac="c1"><div class="route-id"><b>Q3</b><span class="route-who">U11 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>20 Starts</span><span>120 Min</span><span>10:30–12:36</span></div>
+        <p class="route-desc">Läuft mit einer kurzen Unterbrechung durch: erst die 7 Jungs, dann die 13 Mädchen.</p></div>
+      <div class="route" data-ac="c1"><div class="route-id"><b>Q4</b><span class="route-who">U11 · Toprope</span></div>
+        <span class="tag">nur männlich</span>
+        <div class="route-meta"><span>7 Starts</span><span>42 Min</span><span>11:48–12:30</span></div>
+        <p class="route-desc">Neu. Wird erst gebraucht, wenn Q5 frei ist – dasselbe Team wechselt hinüber.</p></div>
+      <div class="route" data-ac="c1"><div class="route-id"><b>Q5</b><span class="route-who">U11 · Toprope</span></div>
+        <span class="tag w">nur weiblich</span>
+        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–11:48</span></div>
+        <p class="route-desc">Neu. Eröffnet den Tag zusammen mit Q3 – 13 Mädchen sind das zweitgrößte Feld.</p></div>
+      <div class="route" data-ac="c2"><div class="route-id"><b>Q6</b><span class="route-who">U13 · Toprope</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>24 Starts</span><span>144 Min</span><span>10:30–12:59</span></div>
+        <p class="route-desc">Meistgekletterte Route des Tages: erst die 8 Jungs, dann die 16 Mädchen.</p></div>
+      <div class="route" data-ac="c2"><div class="route-id"><b>Q7</b><span class="route-who">U13 · Toprope</span></div>
+        <span class="tag">nur männlich</span>
+        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:11–12:59</span></div>
+        <p class="route-desc">Startet erst, wenn Q8 frei ist. Letzte Route des Tages, gemeinsam mit Q6.</p></div>
+      <div class="route" data-ac="c2"><div class="route-id"><b>Q8</b><span class="route-who">U13 · Toprope</span></div>
+        <span class="tag w">nur weiblich</span>
+        <div class="route-meta"><span>16 Starts</span><span>96 Min</span><span>10:30–12:06</span></div>
+        <p class="route-desc">Größtes Einzelfeld im Wettkampf – hier zählt Differenzierung am meisten.</p></div>
+      <div class="route" data-ac="c3"><div class="route-id"><b>Q9</b><span class="route-who">U15 · Vorstieg</span></div>
+        <span class="tag">gemischt M + W</span>
+        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–12:03</span></div>
+        <p class="route-desc">Jungs ab 10:30, nach 15 Minuten Pause die Mädchen. Muss beide Gruppen spreizen.</p></div>
+      <div class="route" data-ac="c3"><div class="route-id"><b>Q10</b><span class="route-who">U15 · Vorstieg</span></div>
+        <span class="tag">nur männlich</span>
+        <div class="route-meta"><span>5 Starts</span><span>30 Min</span><span>11:15–11:45</span></div>
+        <p class="route-desc">Härteste Route im Haus, kürzester Einsatz des Tages.</p></div>
+      <div class="route" data-ac="c3"><div class="route-id"><b>Q11</b><span class="route-who">U15 · Vorstieg</span></div>
+        <span class="tag w">nur weiblich</span>
+        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:00–12:48</span></div>
+        <p class="route-desc">Startet 15 Minuten nach Q10, eigenständiges Thema gegenüber Q9.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINALE ============ -->
+<section id="finale" data-views="orga teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Finale · 14:15 – 15:29</p>
+      <h2>Besichtigung, ISO, dann alles parallel</h2>
+      <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
+    </div>
+
+    <div class="toolbar">
+      <span class="lbl">Finale</span>
+      <button class="fbtn" id="resetF">Zurücksetzen</button>
+    </div>
+    <div class="readout" id="roF"></div>
+    <div class="editor" id="edF" hidden></div>
+    <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
+    <p class="hint">Besichtigung und ISO sind fixiert; die Kletterblöcke lassen sich verschieben und auf andere Finalrouten ziehen.</p>
+
+    <h3>Finalquoten</h3>
+    <div class="tblwrap"><table id="finaltab">
+      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th class="num">im Finale</th><th>Route</th><th>Zeit</th><th class="num">Team</th><th>Ablauf</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+  </div>
+</section>
+
+<!-- ============ ROUTENBAU ============ -->
+<section id="routenbau" data-views="bau orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Routenbau · Paul Ballsuweit</p>
+      <h2>18 Routen stehen am Freitag</h2>
+    </div>
+    <div class="cards g3">
+      <div class="card"><h4>1 · Demovideos nur für die Quali</h4><p style="font-size:14.5px;margin-bottom:0">Die Videos am Vorabend betreffen die <strong>elf Qualirouten</strong>. Die sieben Finalrouten müssen ungesehen bleiben: kein Video, und am Wettkampftag bis 13:30 abgehängt oder abgetrennt.</p></div>
+      <div class="card"><h4>2 · Belastung einplanen</h4><p style="font-size:14.5px;margin-bottom:0">Q6 wird 24-mal geklettert, Q3 20-mal, Q8 16-mal, Q5 13-mal. Griffe fest anziehen, nicht zu fingerlastig – Q6 läuft zweieinhalb Stunden fast ohne Unterbrechung.</p></div>
+      <div class="card"><h4>3 · Toprope oder Vorstieg</h4><p style="font-size:14.5px;margin-bottom:0">Q1–Q8 und F1–F5 sind Toprope (U9, U11, U13), Q9–Q11 und F6/F7 Vorstieg (U15). Umlenkungen und Exen entsprechend vorbereiten.</p></div>
+    </div>
+    <div class="cards g2">
+      <div class="card"><h4>Prioritäten aus deiner Skizze</h4>
+        <ul style="font-size:14.5px">
+          <li>Ungewöhnliche Bewegungsprobleme statt Kraftkletterei</li>
+          <li>Differenzierung über die gesamte Routenlänge</li>
+          <li>Herausfordernd <em>und</em> komplex</li>
+          <li>Zone und Top als echte Hürde, nicht als Formsache</li>
+        </ul></div>
+      <div class="card"><h4>Die drei gemischten Routen Q3, Q6 und Q9</h4>
+        <ul style="font-size:14.5px">
+          <li><strong>Kein Wandsprung.</strong> Wird es an einer Stelle plötzlich hart, fällt das halbe Feld am selben Zug und die Wertung ist wertlos.</li>
+          <li><strong>Beide Wertungsgruppen müssen sich spreizen</strong> – in der U13 sind 16 von 24 Gemeldeten Mädchen, in der U11 13 von 20.</li>
+          <li><strong>Zone im mittleren Drittel</strong>, Top so, dass ihn nur wenige halten.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OFFENE PUNKTE ============ -->
+<section id="offen" data-views="orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Offene Punkte</p>
+      <h2>Was noch zu entscheiden ist</h2>
+    </div>
+    <div class="note" style="border-left-color:var(--warn)">
+      <h4>Drei Dinge für die Ausschreibung</h4>
+      <ol>
+        <li><strong>Lange Pausen für die Jungs.</strong> U13 101 Minuten, U11 78 Minuten – Folge der Zwei-Team-Regel. Entweder so lassen und im Zeitplan ankündigen, damit sich die Athleten neu aufwärmen können, oder je Klasse ein drittes Team für rund 45 Minuten einplanen.</li>
+        <li><strong>Beobachtung in der Quali ausdrücklich erlauben.</strong> Die Demovideos machen die Quali faktisch zum Flash-Format; weil Wertungsgruppen dieselbe Route nacheinander klettern, sollte Zuschauen explizit erlaubt sein. Das Finale bleibt on-sight mit Isolation.</li>
+        <li><strong>Bezug der Finalquote.</strong> Hier je Wertungsgruppe angewendet. Zählt stattdessen die Gesamtzahl der Altersklasse, ändert sich nur die U13 (24 &gt; 20 → Quote 10): dann 8 Jungs und 10 Mädchen im Finale, F4 dauert 60 statt 36 Minuten.</li>
+      </ol>
+    </div>
+    <div class="note">
+      <h4>Nachmeldungen bis zum 20.09.</h4>
+      <p>Jede zusätzliche Person verlängert einen Block um 6 Minuten. Bis zur ausgeschriebenen Besichtigung um 13:30 liegen nach dem Quali-Ende 31 Minuten Reserve – das trägt etwa fünf Nachmeldungen, ohne dass sich am Ablauf etwas ändert. Schieb die Balken einfach selbst nach hinten, die Anzeige rechnet mit.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WEGE ============ -->
+<section id="wege" data-views="teams sport orga">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Wege der Startgruppen</p>
+      <h2>Wer geht wann von welcher Route auf welche</h2>
+      <p class="lede">Dieselben Daten wie oben, nur andersherum sortiert: eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
+    </div>
+    <div class="flowwrap" id="flow"></div>
+    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
+
+  </div>
+</section>
+
+<!-- ============ ADMIN ============ -->
+<section id="admin" data-views="orga" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Nur für Admins</p>
+      <h2>Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</h2>
+      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie und Admin-Rechte lassen sich jederzeit ändern.</p>
+    </div>
+    <div class="tblwrap"><table id="admintab">
+      <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="pdfmsg" id="adminMsg" role="status"></p>
+  </div>
+</section>
+
+<!-- ============ SPEICHERSTÄNDE ============ -->
+<section id="staende" data-views="orga bau teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Speicherstände</p>
+      <h2>Zwischenstände sichern und weitergeben</h2>
+      <p class="lede">Jeder Stand friert den kompletten Plan ein: Klassen, Meldezahlen, Zeitfenster, alle Balken, Personal und die bearbeiteten Texte. Unten steht, wer zuletzt hier war und was er oder sie gemacht hat.</p>
+    </div>
+    <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
+
+    <div class="stbar">
+      <span class="lbl mono" id="stState" style="color:var(--muted);font-size:12.5px"></span>
+    </div>
+
+    <div class="stbar">
+      <span class="grow2"><input type="text" id="stTitle" placeholder="Titel des Standes, z. B. „Entwurf für Rainer“"></span>
+      <span class="grow2"><input type="text" id="stNote" placeholder="Notiz, optional"></span>
+      <button class="fbtn big" id="stSave" type="button">Stand speichern</button>
+      <button class="fbtn" id="stExport" type="button">Als Datei sichern</button>
+      <button class="fbtn" id="stImport" type="button">Datei laden</button>
+      <input type="file" id="stFile" accept="application/json,.json" hidden>
+    </div>
+    <p class="pdfmsg" id="stMsg" role="status"></p>
+
+    <div class="tblwrap"><table id="standtab">
+      <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
+    <h4>Wer war zuletzt hier</h4>
+    <div id="vlist" style="margin:0 0 8px"></div>
+    <p class="hint">Die Liste führt nur Namen, die die Leute selbst eintragen – sie ersetzt keine Anwesenheitskontrolle, zeigt dir aber, ob dein Stand angekommen ist. <strong>Als Datei sichern</strong> legt denselben Stand als JSON auf deine Festplatte: praktisch für alle, die den Link nicht öffnen können, oder als Sicherungskopie vor einer größeren Umstellung.</p>
+
+    <div class="dlbar">
+      <button class="fbtn big" id="pdfbtn" type="button">PDF herunterladen</button>
+      <button class="fbtn" id="printbtn" type="button">Drucken</button>
+      <p><strong>PDF herunterladen</strong> baut die Datei direkt hier im Browser: sechs Seiten im Querformat – Kennzahlen, Meldezahlen, Tagesablauf und Routenübersicht · Quali-Zeitplan mit Laufkarte · Team-Zeitplan · Finale mit Quoten · Wegediagramm · Routenbau und offene Punkte. Immer mit dem Stand, den der Plan gerade hat, samt deiner geänderten Meldezahlen und Texte. <strong>Drucken</strong> öffnet stattdessen den Druckdialog des Browsers.</p>
+      <p class="pdfmsg" id="pdfmsg" role="status"></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Grundlage: Ausschreibung 4. Offener Sächsischer Kidscup 2026 (Lead, U9–U15, Quacke Zittau, 26.09.2026) und Meldeliste mit 67 Athlet*innen (U9 4/6, U11 7/13, U13 8/16, U15 5/8). Planwert 6 Minuten pro Athlet*in und Route inklusive Einbinden und Transfer.</p>
+    <p>Geprüft auf Routen-Doppelbelegung, Pausenzeiten, gleichzeitige Routen je Klasse und Endzeiten: 0 Konflikte, 804 Kletterminuten, jede Klasse mit höchstens zwei Routen gleichzeitig, Quali-Ende 12:59.</p>
+  </div>
+</footer>
+
 <script>
 (function(){
 "use strict";
