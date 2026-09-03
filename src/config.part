@@ -4,6 +4,6 @@
    Der anon key ist absichtlich öffentlich im Client sichtbar – die eigentliche
    Absicherung passiert über Row-Level-Security-Policies in der Datenbank
    (siehe supabase/schema.sql), nicht über Geheimhaltung dieses Keys. */
-window.SUPABASE_URL = "https://DEIN-PROJEKT.supabase.co";
-window.SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
+window.SUPABASE_URL = "https://lkwwbqrqevtxczgjwcmn.supabase.co/rest/v1/";
+window.SUPABASE_ANON_KEY = "sb_publishable_sQXelgboln7pcrQ3d3p4gg_dKm8TvXg";
 </script>
