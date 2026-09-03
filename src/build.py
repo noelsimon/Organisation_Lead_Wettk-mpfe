@@ -8,9 +8,10 @@
 import io, os, re, sys
 
 P = os.path.dirname(os.path.abspath(__file__))
+config = io.open(os.path.join(P, "config.part"), encoding="utf-8").read()
 head = io.open(os.path.join(P, "head.part"), encoding="utf-8").read()
 script = io.open(os.path.join(P, "script.part"), encoding="utf-8").read()
-body = head + script
+body = config + head + script
 
 # --- Artifact-Fragment -------------------------------------------------
 assert "<!doctype" not in body.lower(), "Fragment darf keinen doctype haben"
