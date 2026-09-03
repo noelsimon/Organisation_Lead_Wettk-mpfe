@@ -1927,8 +1927,8 @@ function doRegister(){
       if(r2.error){ authSay("reMsg",r2.error.message,true); return; }
       authSay("reMsg","Registriert – warte auf Freigabe durch die Orga.");
       refreshSession();
-    });
-  });
+    }).catch(function(err){ authSay("reMsg","Profil anlegen fehlgeschlagen: "+((err&&err.message)||err),true); });
+  }).catch(function(err){ authSay("reMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 document.getElementById("reGo").onclick=doRegister;
 
@@ -1939,15 +1939,16 @@ function doLogin(){
   authSay("liMsg","Melde an …");
   sbClient.auth.signInWithPassword({email:email,password:pass}).then(function(r){
     if(r.error){ authSay("liMsg",r.error.message,true); return; }
-    authSay("liMsg","");
+    authSay("liMsg","Angemeldet – lade Profil …");
     refreshSession();
-  });
+  }).catch(function(err){ authSay("liMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 document.getElementById("liGo").onclick=doLogin;
 
 function doLogout(){
   if(!sbClient) return;
-  sbClient.auth.signOut().then(function(){ PROFILE=null; SESSION=null; refreshSession(); });
+  sbClient.auth.signOut().then(function(){ PROFILE=null; SESSION=null; refreshSession(); })
+    .catch(function(err){ authSay("liMsg","Abmelden fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 document.getElementById("btnLogout").onclick=doLogout;
 
@@ -1966,18 +1967,20 @@ function applyCategoryUI(){
 function refreshSession(){
   if(!sbClient){ setAuthState("locked"); return; }
   sbClient.auth.getSession().then(function(r){
+    if(r.error){ authSay("liMsg","Sitzung konnte nicht geladen werden: "+r.error.message,true); setAuthState("locked"); return; }
     SESSION=(r.data&&r.data.session)||null;
     if(!SESSION){ PROFILE=null; setAuthState("locked"); return; }
     sbClient.from("profiles").select("*").eq("id",SESSION.user.id).maybeSingle().then(function(r2){
-      if(r2.error||!r2.data){ setAuthState("locked"); return; }
+      if(r2.error){ authSay("liMsg","Profil konnte nicht geladen werden: "+r2.error.message,true); setAuthState("locked"); return; }
+      if(!r2.data){ authSay("liMsg","Kein Profil zu diesem Account gefunden – neu registrieren?",true); setAuthState("locked"); return; }
       PROFILE=r2.data;
       if(PROFILE.status==="pending"){ setAuthState("pending"); return; }
       if(PROFILE.status==="rejected"){ setAuthState("rejected"); return; }
       applyCategoryUI();
       setAuthState("ok");
       initDb(); pullState(); subscribePlanState();
-    });
-  });
+    }).catch(function(err){ authSay("liMsg","Profil-Abfrage fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
+  }).catch(function(err){ authSay("liMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
 }
 
 /* ---- Admin-Dashboard: Anmeldungen freigeben, Kategorie/Admin-Rechte pflegen ---- */
@@ -1987,7 +1990,7 @@ function loadAdmin(){
   sbClient.from("profiles").select("*").order("created_at",{ascending:false}).then(function(r){
     if(r.error){ authSay("adminMsg",r.error.message,true); return; }
     ADMINROWS=r.data||[]; renderAdmin();
-  });
+  }).catch(function(err){ authSay("adminMsg","Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 function renderAdmin(){
   var body=document.querySelector("#admintab tbody"); if(!body) return;
@@ -2013,7 +2016,7 @@ function renderAdmin(){
       if(r.error){ authSay("adminMsg",r.error.message,true); return; }
       authSay("adminMsg","Gespeichert.");
       loadAdmin();
-    });
+    }).catch(function(err){ authSay("adminMsg","Speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
   }
   Array.prototype.forEach.call(body.querySelectorAll(".admapprove"),function(b){
     b.onclick=function(){ upd(this.getAttribute("data-id"),{status:"approved",approved_at:new Date().toISOString(),approved_by:PROFILE.id}); };
@@ -2053,7 +2056,7 @@ function pullState(){
       pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
       pushState("texts",TXT);
     }
-  });
+  }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
 }
 var planSub=null;
 function subscribePlanState(){
