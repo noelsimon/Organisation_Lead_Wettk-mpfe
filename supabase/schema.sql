@@ -155,10 +155,25 @@ create table public.tasks (
   status      task_status not null default 'open',
   created_by  uuid references public.profiles(id),
   created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
   done_at     timestamptz,
   done_by     uuid references public.profiles(id)
 );
 alter table public.tasks enable row level security;
+
+-- updated_at automatisch pflegen, damit die Oberfläche neue Aktivität
+-- (Statusänderung etc.) erkennen kann, ohne jede Änderung einzeln zu tracken.
+create or replace function public.touch_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+drop trigger if exists tasks_touch_updated_at on public.tasks;
+create trigger tasks_touch_updated_at
+  before update on public.tasks
+  for each row execute function public.touch_updated_at();
 
 create table public.task_assignees (
   task_id    uuid not null references public.tasks(id) on delete cascade,

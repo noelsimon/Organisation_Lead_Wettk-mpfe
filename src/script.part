@@ -1190,8 +1190,26 @@ function subscribePlanState(){
 var TASKS=[], APPROVEDPROFILES=[];
 var PRIOLABEL={niedrig:"niedrig", mittel:"mittel", hoch:"hoch"};
 var CATSHORT={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
+var taskFilter={cat:"", person:"", status:""}, taskView="list";
+var TASKSEENKEY="kidscup-taskseen", TASKSEEN={};
+try{TASKSEEN=JSON.parse(localStorage.getItem(TASKSEENKEY)||"{}")||{};}catch(e){TASKSEEN={};}
 
 function taskSay(msg,bad){ authSay("tkMsg",msg,bad); }
+
+/* letzte Aktivität = neuste von: zuletzt geändert, letzter Kommentar */
+function taskActivity(t){
+  var last=t.updated_at||t.created_at;
+  (t.task_comments||[]).forEach(function(c){ if(c.created_at>last) last=c.created_at; });
+  return last;
+}
+function isTaskNew(t){ var seen=TASKSEEN[t.id]; return !seen || taskActivity(t)>seen; }
+function markTasksSeen(){
+  TASKS.forEach(function(t){ TASKSEEN[t.id]=taskActivity(t); });
+  try{localStorage.setItem(TASKSEENKEY,JSON.stringify(TASKSEEN));}catch(e){}
+  renderTasks();
+}
+var taskBoxEl=document.getElementById("taskBox");
+if(taskBoxEl) taskBoxEl.addEventListener("toggle",function(){ if(this.open) markTasksSeen(); });
 
 function loadTasks(){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
@@ -1204,7 +1222,7 @@ function loadTasks(){
       TASKS.forEach(function(t){
         (t.task_comments||[]).sort(function(a,b){return String(a.created_at).localeCompare(String(b.created_at));});
       });
-      renderTasks();
+      if(taskBoxEl&&taskBoxEl.open) markTasksSeen(); else renderTasks();
     }).catch(function(err){ console.warn("Aufgaben laden fehlgeschlagen:",err); });
 }
 var taskSub=null;
@@ -1227,37 +1245,73 @@ function loadAssigneeOptions(){
   });
 }
 
+function taskCardHtml(t,isOrga){
+  var names=(t.task_assignees||[]).map(function(a){return a.profiles&&a.profiles.full_name;}).filter(Boolean).join(", ")||"—";
+  var comments=(t.task_comments||[]).map(function(c){
+    return '<div class="task-comment"><b>'+esc((c.profiles&&c.profiles.full_name)||"?")+'</b> <span class="tm">'+dstr(c.created_at)+'</span><br>'+esc(c.body)+'</div>';
+  }).join("");
+  return '<div class="task-card'+(isTaskNew(t)?" is-new":"")+'" data-id="'+esc(t.id)+'">'+
+     '<div class="task-card-head"><b>'+esc(t.title)+'</b>'+
+     (isTaskNew(t)?'<span class="pill new">neu</span>':'')+
+     '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
+     (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
+     '<span class="pill'+(t.status==="done"?" status-done":"")+'">'+(t.status==="done"?"erledigt":"offen")+'</span>'+
+     '</div>'+
+     (t.description?'<p>'+esc(t.description)+'</p>':'')+
+     '<p class="hint">Zugewiesen: '+esc(names)+'</p>'+
+     '<div class="task-comments">'+comments+'</div>'+
+     '<div class="cfgrow">'+
+       '<input class="cin" type="text" placeholder="Notiz …" data-comment-input="'+esc(t.id)+'" size="26">'+
+       '<button class="fbtn" data-comment-send="'+esc(t.id)+'" type="button">Senden</button>'+
+       '<button class="fbtn" data-toggle-done="'+esc(t.id)+'" type="button">'+(t.status==="done"?"Wieder öffnen":"Erledigt")+'</button>'+
+       (isOrga?'<button class="fbtn rdel-tk" data-task-del="'+esc(t.id)+'" type="button" title="Aufgabe löschen">×</button>':'')+
+     '</div></div>';
+}
+function populatePersonFilter(){
+  var sel=document.getElementById("tkfPerson"); if(!sel) return;
+  var seen={}, names=[];
+  TASKS.forEach(function(t){ (t.task_assignees||[]).forEach(function(a){
+    var n=a.profiles&&a.profiles.full_name; if(n&&!seen[n]){ seen[n]=1; names.push(n); }
+  }); });
+  names.sort();
+  var cur=sel.value;
+  sel.innerHTML='<option value="">alle</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join("");
+  if(names.indexOf(cur)>=0) sel.value=cur;
+}
 function renderTasks(){
   var box=document.getElementById("taskList"); if(!box) return;
+  populatePersonFilter();
   var openN=TASKS.filter(function(t){return t.status==="open";}).length;
+  var newN=TASKS.filter(isTaskNew).length;
   var badge=document.getElementById("taskBadge");
-  if(badge) badge.textContent=openN+" offen"+(TASKS.length?" · "+TASKS.length+" gesamt":"");
+  if(badge) badge.textContent=openN+" offen"+(newN?" · "+newN+" neu":"")+(TASKS.length?" · "+TASKS.length+" gesamt":"");
   var isOrga=!!(PROFILE&&PROFILE.category==="orga");
   var toolbar=document.getElementById("taskToolbar"); if(toolbar) toolbar.hidden=!isOrga;
-  document.getElementById("taskEmpty").hidden=!!TASKS.length;
-  var h="";
-  TASKS.forEach(function(t){
-    var names=(t.task_assignees||[]).map(function(a){return a.profiles&&a.profiles.full_name;}).filter(Boolean).join(", ")||"—";
-    var comments=(t.task_comments||[]).map(function(c){
-      return '<div class="task-comment"><b>'+esc((c.profiles&&c.profiles.full_name)||"?")+'</b> <span class="tm">'+dstr(c.created_at)+'</span><br>'+esc(c.body)+'</div>';
-    }).join("");
-    h+='<div class="task-card" data-id="'+esc(t.id)+'">'+
-       '<div class="task-card-head"><b>'+esc(t.title)+'</b>'+
-       '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
-       (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
-       '<span class="pill'+(t.status==="done"?" status-done":"")+'">'+(t.status==="done"?"erledigt":"offen")+'</span>'+
-       '</div>'+
-       (t.description?'<p>'+esc(t.description)+'</p>':'')+
-       '<p class="hint">Zugewiesen: '+esc(names)+'</p>'+
-       '<div class="task-comments">'+comments+'</div>'+
-       '<div class="cfgrow">'+
-         '<input class="cin" type="text" placeholder="Notiz …" data-comment-input="'+esc(t.id)+'" size="26">'+
-         '<button class="fbtn" data-comment-send="'+esc(t.id)+'" type="button">Senden</button>'+
-         '<button class="fbtn" data-toggle-done="'+esc(t.id)+'" type="button">'+(t.status==="done"?"Wieder öffnen":"Erledigt")+'</button>'+
-         (isOrga?'<button class="fbtn rdel-tk" data-task-del="'+esc(t.id)+'" type="button" title="Aufgabe löschen">×</button>':'')+
-       '</div></div>';
+
+  var filtered=TASKS.filter(function(t){
+    if(taskFilter.cat&&t.category!==taskFilter.cat) return false;
+    if(taskFilter.status&&t.status!==taskFilter.status) return false;
+    if(taskFilter.person&&!(t.task_assignees||[]).some(function(a){return a.profiles&&a.profiles.full_name===taskFilter.person;})) return false;
+    return true;
   });
-  box.innerHTML=h;
+  document.getElementById("taskEmpty").hidden=!!filtered.length;
+
+  if(taskView==="cols"){
+    var order=["orga","sicherung","ergebnisdienst","routenbau","buffet","_none"];
+    var byCat={}; order.forEach(function(k){byCat[k]=[];});
+    filtered.forEach(function(t){ (byCat[t.category||"_none"]||(byCat._none)).push(t); });
+    var h='<div id="taskCols">';
+    order.forEach(function(k){
+      var list=byCat[k]; if(!list||!list.length) return;
+      h+='<div class="task-col"><h4>'+(k==="_none"?"Ohne Kategorie":esc(CATSHORT[k]))+' <span class="pill">'+list.length+'</span></h4>'+
+         list.map(function(t){return taskCardHtml(t,isOrga);}).join("")+'</div>';
+    });
+    h+='</div>';
+    box.innerHTML=h;
+  } else {
+    box.innerHTML=filtered.map(function(t){return taskCardHtml(t,isOrga);}).join("");
+  }
+
   Array.prototype.forEach.call(box.querySelectorAll("[data-comment-send]"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-comment-send");
@@ -1323,6 +1377,18 @@ document.getElementById("tkCreateToggle").onclick=function(){
 };
 document.getElementById("tkCancel").onclick=resetTaskForm;
 document.getElementById("tkGo").onclick=createTask;
+
+document.getElementById("tkfCat").onchange=function(){ taskFilter.cat=this.value; renderTasks(); };
+document.getElementById("tkfPerson").onchange=function(){ taskFilter.person=this.value; renderTasks(); };
+document.getElementById("tkfStatus").onchange=function(){ taskFilter.status=this.value; renderTasks(); };
+function setTaskView(v){
+  taskView=v;
+  document.getElementById("tkViewList").setAttribute("aria-pressed",v==="list"?"true":"false");
+  document.getElementById("tkViewCols").setAttribute("aria-pressed",v==="cols"?"true":"false");
+  renderTasks();
+}
+document.getElementById("tkViewList").onclick=function(){ setTaskView("list"); };
+document.getElementById("tkViewCols").onclick=function(){ setTaskView("cols"); };
 
 function initAuth(){
   if(!sbClient){ setAuthState("locked"); authSay("liMsg","Supabase ist nicht konfiguriert – src/config.part ausfüllen.",true); return; }

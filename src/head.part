@@ -1,5 +1,5 @@
 <title>Regieplan Kids Cup Sachsen</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Poppins:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
 :root{
   --bg:#F2F4F0; --surface:#FFFFFF; --surface-2:#E9ECE6; --sunken:#EDEFEA;
@@ -16,8 +16,8 @@
   --ok:#1F7A55; --warn:#B87708; --bad:#A93B34; --grid:#D9DED6;
   --ring:#141815;
   --shadow:0 1px 2px rgba(20,24,21,.05), 0 8px 24px -18px rgba(20,24,21,.35);
-  --serif:"Source Sans 3","Segoe UI",system-ui,sans-serif;
-  --disp:"Oswald","Arial Narrow",system-ui,sans-serif;
+  --serif:"Poppins","Segoe UI",system-ui,sans-serif;
+  --disp:"Poppins","Arial Narrow",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
   color-scheme:light;
 }
@@ -279,6 +279,12 @@ body:not([data-auth="ok"]) main{display:none}
 .pill.prio-hoch{color:var(--bad); border-color:var(--bad)}
 .pill.prio-niedrig{color:var(--muted)}
 .pill.status-done{color:var(--ok); border-color:var(--ok)}
+.task-card.is-new{border-left:3px solid var(--warn)}
+.pill.new{color:var(--warn); border-color:var(--warn)}
+#taskCols{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start}
+.task-col{flex:1 1 240px; min-width:220px}
+.task-col h4{display:flex; align-items:center; gap:6px}
+.task-col .task-card{margin-bottom:10px}
 
 /* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
    Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
@@ -510,8 +516,34 @@ body.editing{caret-color:var(--ink)}
         <p class="hint" style="margin:10px 0 0">Mehrfachauswahl mit Strg/Cmd-Klick.</p>
         <p class="pdfmsg" id="tkMsg" role="status"></p>
       </div>
+      <div class="cfgrow" id="taskFilters" style="margin:4px 0 14px">
+        <label>Kategorie
+          <select class="cin sel" id="tkfCat">
+            <option value="">alle</option>
+            <option value="orga">Orga-Team</option>
+            <option value="sicherung">Sicherung</option>
+            <option value="ergebnisdienst">Ergebnisdienst</option>
+            <option value="routenbau">Routenbau</option>
+            <option value="buffet">Buffet</option>
+          </select>
+        </label>
+        <label>Person
+          <select class="cin sel" id="tkfPerson"><option value="">alle</option></select>
+        </label>
+        <label>Status
+          <select class="cin sel" id="tkfStatus">
+            <option value="">alle</option>
+            <option value="open">offen</option>
+            <option value="done">erledigt</option>
+          </select>
+        </label>
+        <span style="flex:1"></span>
+        <span class="lbl" style="margin-right:2px">Ansicht</span>
+        <button class="fbtn" id="tkViewList" type="button" aria-pressed="true">Liste</button>
+        <button class="fbtn" id="tkViewCols" type="button" aria-pressed="false">Spalten</button>
+      </div>
       <div id="taskList"></div>
-      <p class="hint" id="taskEmpty" hidden>Keine Aufgaben.</p>
+      <p class="hint" id="taskEmpty" hidden>Keine Aufgaben, die zu den Filtern passen.</p>
     </div>
   </details>
 </div>
