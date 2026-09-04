@@ -1389,6 +1389,11 @@ function markOneSeen(id){
   try{localStorage.setItem(TASKSEENKEY,JSON.stringify(TASKSEEN));}catch(e){}
   renderTasks();
 }
+function markOneUnseen(id){
+  delete TASKSEEN[id];
+  try{localStorage.setItem(TASKSEENKEY,JSON.stringify(TASKSEEN));}catch(e){}
+  renderTasks();
+}
 var taskBoxEl=document.getElementById("taskBox");
 
 function loadTasks(){
@@ -1451,6 +1456,7 @@ function taskCardHtml(t,isOrga){
        '<input class="cin" type="text" placeholder="Notiz …" data-comment-input="'+esc(t.id)+'" size="26">'+
        '<button class="fbtn" data-comment-send="'+esc(t.id)+'" type="button">Senden</button>'+
        '<button class="fbtn" data-toggle-done="'+esc(t.id)+'" type="button">'+(t.status==="done"?"Wieder öffnen":"Erledigt")+'</button>'+
+       (isTaskNew(t)?'':'<button class="fbtn" data-mark-unseen="'+esc(t.id)+'" type="button">Als ungelesen markieren</button>')+
        (isOrga?'<button class="fbtn rdel-tk" data-task-del="'+esc(t.id)+'" type="button" title="Aufgabe löschen">×</button>':'')+
      '</div></div>';
 }
@@ -1502,6 +1508,9 @@ function renderTasks(){
 
   Array.prototype.forEach.call(box.querySelectorAll("[data-mark-seen]"),function(b){
     b.onclick=function(){ markOneSeen(this.getAttribute("data-mark-seen")); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll("[data-mark-unseen]"),function(b){
+    b.onclick=function(){ markOneUnseen(this.getAttribute("data-mark-unseen")); };
   });
   Array.prototype.forEach.call(box.querySelectorAll("[data-comment-send]"),function(b){
     b.onclick=function(){
