@@ -302,8 +302,10 @@ body:not([data-auth="ok"]) main{display:none}
 .pill.prio-hoch{color:var(--bad); border-color:var(--bad)}
 .pill.prio-niedrig{color:var(--muted)}
 .pill.status-done{color:var(--ok); border-color:var(--ok)}
-.task-card.is-new{border-left:3px solid var(--warn)}
-.pill.new{color:var(--warn); border-color:var(--warn)}
+.task-card.is-new{border-left:3px solid var(--bad)}
+.dot-new{display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--bad); cursor:pointer; flex:0 0 auto}
+.dot-new:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.task-card-head .dot-new{margin-right:-2px}
 #taskCols{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start}
 .task-col{flex:1 1 240px; min-width:220px}
 .task-col h4{display:flex; align-items:center; gap:6px}
@@ -394,7 +396,7 @@ body.editing{caret-color:var(--ink)}
   .stat b{font-size:18px}
   section{padding:16px 0 0}
   section + section{border-top:none}
-  #quali,#personal,#routenplan,#finale,#routenbau,#offen,#wege{break-before:page}
+  #quali,#personal,#routenplan,#finale,#routenbau,#wege{break-before:page}
   #melde{padding-top:6px}
   h2{font-size:20px}
   .lede,p{font-size:13px; max-width:none}
@@ -514,13 +516,14 @@ body.editing{caret-color:var(--ink)}
 
 <div class="wrap">
   <details id="taskBox" class="task-box">
-    <summary class="task-summary"><span>Aufgaben</span><span class="pill" id="taskBadge">–</span></summary>
+    <summary class="task-summary"><span>Aufgaben</span><span class="dot-new" id="taskSummaryDot" hidden title="Neue Aktivität"></span><span class="pill" id="taskBadge">–</span></summary>
     <div class="task-body">
       <div class="toolbar" id="taskToolbar" hidden>
         <button class="fbtn" id="tkCreateToggle" type="button">+ Aufgabe</button>
       </div>
       <div class="addbox" id="taskCreateBox" hidden>
         <div class="cfgrow">
+          <label id="tkCompWrap" hidden>Wettkampf <select class="cin sel" id="tkComp"></select></label>
           <label>Titel <input class="cin" id="tkTitle" size="22"></label>
           <label>Beschreibung <input class="cin" id="tkDesc" size="28"></label>
           <label>Kategorie
@@ -794,56 +797,11 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Routenplan</p>
-      <h2>Elf Qualirouten – U11 neu mit eigener M- und W-Route</h2>
-      <p class="lede">Die U11 hat jetzt dieselbe Struktur wie U13 und U15: eine gemischte, eine reine Männer- und eine reine Frauenroute. Dadurch verschiebt sich die Nummerierung gegenüber der letzten Fassung – die Zuordnung steht auf jeder Karte.</p>
+      <h2>Alle Qualirouten im Überblick</h2>
+      <p class="lede">Entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
     </div>
 
-    <div class="routes" style="margin-bottom:22px">
-      <div class="route" data-ac="c0"><div class="route-id"><b>Q1</b><span class="route-who">U9 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>10:30–11:30</span></div>
-        <p class="route-desc">Einstiegsniveau. Zone für alle zehn erreichbar, Top nur für die Spitze.</p></div>
-      <div class="route" data-ac="c0"><div class="route-id"><b>Q2</b><span class="route-who">U9 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>11:45–12:45</span></div>
-        <p class="route-desc">Gleiches Niveau, anderes Bewegungsthema. Startet 15 Minuten nach Q1.</p></div>
-      <div class="route" data-ac="c1"><div class="route-id"><b>Q3</b><span class="route-who">U11 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>20 Starts</span><span>120 Min</span><span>10:30–12:36</span></div>
-        <p class="route-desc">Läuft mit einer kurzen Unterbrechung durch: erst die 7 Jungs, dann die 13 Mädchen.</p></div>
-      <div class="route" data-ac="c1"><div class="route-id"><b>Q4</b><span class="route-who">U11 · Toprope</span></div>
-        <span class="tag">nur männlich</span>
-        <div class="route-meta"><span>7 Starts</span><span>42 Min</span><span>11:48–12:30</span></div>
-        <p class="route-desc">Neu. Wird erst gebraucht, wenn Q5 frei ist – dasselbe Team wechselt hinüber.</p></div>
-      <div class="route" data-ac="c1"><div class="route-id"><b>Q5</b><span class="route-who">U11 · Toprope</span></div>
-        <span class="tag w">nur weiblich</span>
-        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–11:48</span></div>
-        <p class="route-desc">Neu. Eröffnet den Tag zusammen mit Q3 – 13 Mädchen sind das zweitgrößte Feld.</p></div>
-      <div class="route" data-ac="c2"><div class="route-id"><b>Q6</b><span class="route-who">U13 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>24 Starts</span><span>144 Min</span><span>10:30–12:59</span></div>
-        <p class="route-desc">Meistgekletterte Route des Tages: erst die 8 Jungs, dann die 16 Mädchen.</p></div>
-      <div class="route" data-ac="c2"><div class="route-id"><b>Q7</b><span class="route-who">U13 · Toprope</span></div>
-        <span class="tag">nur männlich</span>
-        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:11–12:59</span></div>
-        <p class="route-desc">Startet erst, wenn Q8 frei ist. Letzte Route des Tages, gemeinsam mit Q6.</p></div>
-      <div class="route" data-ac="c2"><div class="route-id"><b>Q8</b><span class="route-who">U13 · Toprope</span></div>
-        <span class="tag w">nur weiblich</span>
-        <div class="route-meta"><span>16 Starts</span><span>96 Min</span><span>10:30–12:06</span></div>
-        <p class="route-desc">Größtes Einzelfeld im Wettkampf – hier zählt Differenzierung am meisten.</p></div>
-      <div class="route" data-ac="c3"><div class="route-id"><b>Q9</b><span class="route-who">U15 · Vorstieg</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–12:03</span></div>
-        <p class="route-desc">Jungs ab 10:30, nach 15 Minuten Pause die Mädchen. Muss beide Gruppen spreizen.</p></div>
-      <div class="route" data-ac="c3"><div class="route-id"><b>Q10</b><span class="route-who">U15 · Vorstieg</span></div>
-        <span class="tag">nur männlich</span>
-        <div class="route-meta"><span>5 Starts</span><span>30 Min</span><span>11:15–11:45</span></div>
-        <p class="route-desc">Härteste Route im Haus, kürzester Einsatz des Tages.</p></div>
-      <div class="route" data-ac="c3"><div class="route-id"><b>Q11</b><span class="route-who">U15 · Vorstieg</span></div>
-        <span class="tag w">nur weiblich</span>
-        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:00–12:48</span></div>
-        <p class="route-desc">Startet 15 Minuten nach Q10, eigenständiges Thema gegenüber Q9.</p></div>
-    </div>
+    <div class="routes" style="margin-bottom:22px"></div>
   </div>
 </section>
 
@@ -900,28 +858,6 @@ body.editing{caret-color:var(--ink)}
           <li><strong>Beide Wertungsgruppen müssen sich spreizen</strong> – in der U13 sind 16 von 24 Gemeldeten Mädchen, in der U11 13 von 20.</li>
           <li><strong>Zone im mittleren Drittel</strong>, Top so, dass ihn nur wenige halten.</li>
         </ul></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ OFFENE PUNKTE ============ -->
-<section id="offen" data-views="orga">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Offene Punkte</p>
-      <h2>Was noch zu entscheiden ist</h2>
-    </div>
-    <div class="note" style="border-left-color:var(--warn)">
-      <h4>Drei Dinge für die Ausschreibung</h4>
-      <ol>
-        <li><strong>Lange Pausen für die Jungs.</strong> U13 101 Minuten, U11 78 Minuten – Folge der Zwei-Team-Regel. Entweder so lassen und im Zeitplan ankündigen, damit sich die Athleten neu aufwärmen können, oder je Klasse ein drittes Team für rund 45 Minuten einplanen.</li>
-        <li><strong>Beobachtung in der Quali ausdrücklich erlauben.</strong> Die Demovideos machen die Quali faktisch zum Flash-Format; weil Wertungsgruppen dieselbe Route nacheinander klettern, sollte Zuschauen explizit erlaubt sein. Das Finale bleibt on-sight mit Isolation.</li>
-        <li><strong>Bezug der Finalquote.</strong> Hier je Wertungsgruppe angewendet. Zählt stattdessen die Gesamtzahl der Altersklasse, ändert sich nur die U13 (24 &gt; 20 → Quote 10): dann 8 Jungs und 10 Mädchen im Finale, F4 dauert 60 statt 36 Minuten.</li>
-      </ol>
-    </div>
-    <div class="note">
-      <h4>Nachmeldungen bis zum 20.09.</h4>
-      <p>Jede zusätzliche Person verlängert einen Block um 6 Minuten. Bis zur ausgeschriebenen Besichtigung um 13:30 liegen nach dem Quali-Ende 31 Minuten Reserve – das trägt etwa fünf Nachmeldungen, ohne dass sich am Ablauf etwas ändert. Schieb die Balken einfach selbst nach hinten, die Anzeige rechnet mit.</p>
     </div>
   </div>
 </section>
@@ -1863,10 +1799,29 @@ function renderFinalTab(){
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 
+function renderRoutePlan(plan,list){
+  var box=document.querySelector("#routenplan .routes"); if(!box) return;
+  var h="";
+  plan.rows.forEach(function(r){
+    var uses=list.filter(function(b){return b.r===r.id;});
+    var starts=uses.reduce(function(s,b){return s+b.n;},0);
+    var mins=starts*CLIMB;
+    var lo=uses.length?Math.min.apply(null,uses.map(function(b){return b.s;})):null;
+    var hi=uses.length?Math.max.apply(null,uses.map(function(b){return b.e;})):null;
+    h+='<div class="route" data-ac="'+esc(ACOF[r.cls]||"c7")+'"><div class="route-id"><b>'+esc(r.id)+'</b>'+
+       '<span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></div>'+
+       '<span class="tag'+(r.allow==="w"?" w":"")+'">'+esc(allowTxt(r))+'</span>'+
+       '<div class="route-meta"><span>'+starts+' Starts</span><span>'+mins+' Min</span>'+
+         (uses.length?'<span>'+fmt(lo)+'–'+fmt(hi)+'</span>':'<span>noch nicht eingeplant</span>')+
+       '</div></div>';
+  });
+  box.innerHTML=h||'<p class="hint">Noch keine Routen angelegt.</p>';
+}
+
 /* ================= Instanzen ================= */
 var pq,pf;
 function afterQ(plan,list){
-  renderTeams(plan,list); renderFlow(plan,list);
+  renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
   if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
 }
 function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
@@ -2409,13 +2364,13 @@ function taskActivity(t){
   return last;
 }
 function isTaskNew(t){ var seen=TASKSEEN[t.id]; return !seen || taskActivity(t)>seen; }
-function markTasksSeen(){
-  TASKS.forEach(function(t){ TASKSEEN[t.id]=taskActivity(t); });
+function markOneSeen(id){
+  var t=TASKS.filter(function(x){return x.id===id;})[0]; if(!t) return;
+  TASKSEEN[id]=taskActivity(t);
   try{localStorage.setItem(TASKSEENKEY,JSON.stringify(TASKSEEN));}catch(e){}
   renderTasks();
 }
 var taskBoxEl=document.getElementById("taskBox");
-if(taskBoxEl) taskBoxEl.addEventListener("toggle",function(){ if(this.open) markTasksSeen(); });
 
 function loadTasks(){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
@@ -2429,7 +2384,7 @@ function loadTasks(){
       TASKS.forEach(function(t){
         (t.task_comments||[]).sort(function(a,b){return String(a.created_at).localeCompare(String(b.created_at));});
       });
-      if(taskBoxEl&&taskBoxEl.open) markTasksSeen(); else renderTasks();
+      renderTasks();
     }).catch(function(err){ console.warn("Aufgaben laden fehlgeschlagen:",err); });
 }
 var taskSub=null;
@@ -2445,9 +2400,9 @@ function subscribeTasks(){
     .subscribe();
 }
 
-function loadAssigneeOptions(){
-  if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!CURRENT_COMP) return;
-  sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",CURRENT_COMP.id).then(function(r){
+function loadAssigneeOptions(compId){
+  if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!compId) return;
+  sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",compId).then(function(r){
     if(r.error) return;
     APPROVEDPROFILES=(r.data||[]).map(function(x){return x.profiles;})
       .filter(function(p){return p&&p.status==="approved";})
@@ -2463,8 +2418,9 @@ function taskCardHtml(t,isOrga){
     return '<div class="task-comment"><b>'+esc((c.profiles&&c.profiles.full_name)||"?")+'</b> <span class="tm">'+dstr(c.created_at)+'</span><br>'+esc(c.body)+'</div>';
   }).join("");
   return '<div class="task-card'+(isTaskNew(t)?" is-new":"")+'" data-id="'+esc(t.id)+'">'+
-     '<div class="task-card-head"><b>'+esc(t.title)+'</b>'+
-     (isTaskNew(t)?'<span class="pill new">neu</span>':'')+
+     '<div class="task-card-head">'+
+     (isTaskNew(t)?'<span class="dot-new" data-mark-seen="'+esc(t.id)+'" role="button" tabindex="0" title="Als gesehen markieren"></span>':'')+
+     '<b>'+esc(t.title)+'</b>'+
      '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
      (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
      '<span class="pill'+(t.status==="done"?" status-done":"")+'">'+(t.status==="done"?"erledigt":"offen")+'</span>'+
@@ -2497,6 +2453,7 @@ function renderTasks(){
   var newN=TASKS.filter(isTaskNew).length;
   var badge=document.getElementById("taskBadge");
   if(badge) badge.textContent=openN+" offen"+(newN?" · "+newN+" neu":"")+(TASKS.length?" · "+TASKS.length+" gesamt":"");
+  var sdot=document.getElementById("taskSummaryDot"); if(sdot) sdot.hidden=!newN;
   var isOrga=!!(PROFILE&&PROFILE.category==="orga");
   var toolbar=document.getElementById("taskToolbar"); if(toolbar) toolbar.hidden=!isOrga;
 
@@ -2524,6 +2481,10 @@ function renderTasks(){
     box.innerHTML=filtered.map(function(t){return taskCardHtml(t,isOrga);}).join("");
   }
 
+  Array.prototype.forEach.call(box.querySelectorAll("[data-mark-seen]"),function(d){
+    d.onclick=function(ev){ ev.stopPropagation(); markOneSeen(this.getAttribute("data-mark-seen")); };
+    d.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); markOneSeen(this.getAttribute("data-mark-seen")); } };
+  });
   Array.prototype.forEach.call(box.querySelectorAll("[data-comment-send]"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-comment-send");
@@ -2556,7 +2517,9 @@ function renderTasks(){
 }
 
 function createTask(){
-  if(!sbClient||!PROFILE||!CURRENT_COMP) return;
+  if(!sbClient||!PROFILE) return;
+  var compId=document.getElementById("tkComp").value||(CURRENT_COMP&&CURRENT_COMP.id);
+  if(!compId){ taskSay("Kein Wettkampf ausgewählt.",true); return; }
   var title=document.getElementById("tkTitle").value.trim();
   var desc=document.getElementById("tkDesc").value.trim();
   var cat=document.getElementById("tkCat").value||null;
@@ -2565,7 +2528,7 @@ function createTask(){
   var ids=Array.prototype.filter.call(sel.options,function(o){return o.selected;}).map(function(o){return o.value;});
   if(!title){ taskSay("Titel eingeben.",true); return; }
   taskSay("Lege an …");
-  sbClient.from("tasks").insert({competition_id:CURRENT_COMP.id, title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
+  sbClient.from("tasks").insert({competition_id:compId, title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
     .select().single().then(function(r){
       if(r.error){ taskSay(r.error.message,true); return; }
       var taskId=r.data.id;
@@ -2585,8 +2548,19 @@ function resetTaskForm(){
 document.getElementById("tkCreateToggle").onclick=function(){
   var box=document.getElementById("taskCreateBox");
   box.hidden=!box.hidden;
-  if(!box.hidden) loadAssigneeOptions();
+  if(!box.hidden){
+    var wrap=document.getElementById("tkCompWrap"), csel=document.getElementById("tkComp");
+    if(MYCOMPS.length>1){
+      wrap.hidden=false;
+      csel.innerHTML=MYCOMPS.map(function(c){return '<option value="'+esc(c.id)+'"'+(CURRENT_COMP&&c.id===CURRENT_COMP.id?" selected":"")+'>'+esc(c.name)+'</option>';}).join("");
+    } else {
+      wrap.hidden=true;
+      csel.innerHTML=CURRENT_COMP?'<option value="'+esc(CURRENT_COMP.id)+'" selected>'+esc(CURRENT_COMP.name)+'</option>':"";
+    }
+    loadAssigneeOptions(csel.value||(CURRENT_COMP&&CURRENT_COMP.id));
+  }
 };
+document.getElementById("tkComp").onchange=function(){ loadAssigneeOptions(this.value); };
 document.getElementById("tkCancel").onclick=resetTaskForm;
 document.getElementById("tkGo").onclick=createTask;
 
@@ -2664,17 +2638,21 @@ function standSay(msg,bad){
 }
 function renderStands(){
   var body=document.querySelector("#standtab tbody"); if(!body) return;
+  var isAdmin=!!(PROFILE&&PROFILE.is_admin);
   var h="";
   STANDS.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).forEach(function(s){
     h+='<tr><td><strong>'+esc(s.title||"ohne Titel")+'</strong>'+(s.note?'<br><span style="color:var(--muted);font-size:13px">'+esc(s.note)+'</span>':'')+'</td>'+
        '<td>'+esc(s.author||"—")+'</td><td class="tm">'+dstr(s.at)+'</td>'+
-       '<td><button class="fbtn stload" type="button" data-id="'+esc(s.id)+'">Laden</button> '+
-       '<button class="fbtn stdel" type="button" data-id="'+esc(s.id)+'">Löschen</button></td></tr>';
+       '<td>'+(isAdmin
+         ?'<button class="fbtn stload" type="button" data-id="'+esc(s.id)+'">Laden</button> '+
+          '<button class="fbtn stdel" type="button" data-id="'+esc(s.id)+'">Löschen</button>'
+         :'<span style="color:var(--muted)">nur Admin</span>')+'</td></tr>';
   });
   if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
   body.innerHTML=h;
   Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
     b.onclick=function(){
+      if(!isAdmin) return;
       var id=this.getAttribute("data-id"), s=null;
       STANDS.forEach(function(x){if(x.id===id) s=x;});
       if(!s) return;
@@ -2684,6 +2662,7 @@ function renderStands(){
   });
   Array.prototype.forEach.call(document.querySelectorAll(".stdel"),function(b){
     b.onclick=function(){
+      if(!isAdmin) return;
       var id=this.getAttribute("data-id");
       if(DB){ DB.doc("stands/"+id).delete().catch(function(){standSay("Löschen nicht möglich.",true);}); }
       else { STANDS=STANDS.filter(function(x){return x.id!==id;}); saveLocalStands(); renderStands(); }
@@ -2693,7 +2672,7 @@ function renderStands(){
   if(st) st.textContent=DBSTATE;
   var md=document.getElementById("standMode");
   if(md) md.innerHTML=DB
-    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Alle freigegebenen Personen sehen dieselbe Liste. Speichern, Laden und Löschen kann nur das Orga-Team.'
+    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Alle freigegebenen Personen sehen dieselbe Liste. Speichern kann das Orga-Team, Laden und Löschen nur ein Admin.'
     : 'Diese Fassung speichert die Stände <strong>in deinem Browser</strong> – sie wandern nicht automatisch zu anderen. Zum Weitergeben nimm <strong>„Als Datei sichern"</strong>; wer die Datei bekommt, öffnet sie hier über <strong>„Datei laden"</strong>.';
 }
 function renderViewers(){
@@ -3134,7 +3113,7 @@ function buildPDF(){
   });
   foot();
 
-  /* --- Seite 6: Routenbau, Hinweise, offene Punkte (mit deinen Texten) --- */
+  /* --- Seite 6: Routenbau (mit deinen Texten) --- */
   function secItems(id){
     var out=[], root=document.getElementById(id);
     if(!root) return out;
@@ -3150,7 +3129,7 @@ function buildPDF(){
     var el=document.querySelector("#"+id+" h2");
     return el?el.textContent.replace(/\s+/g," ").trim():id;
   }
-  y=head("Routenbau und offene Punkte","Die Texte aus dem Plan – inklusive deiner Änderungen");
+  y=head("Routenbau","Die Texte aus dem Plan – inklusive deiner Änderungen");
   var colW=(CW-10)/2, cx0=[ML,ML+colW+10], ci=0, cy=y, TOP=y, BOT=PH-14;
   function put(kind,txt){
     var fs2=kind==="h"?8.5:7.4, lead=kind==="h"?3.4:3.1;
@@ -3165,7 +3144,7 @@ function buildPDF(){
     cy+=L.length*lead+(kind==="h"?1.2:1.8);
     return true;
   }
-  ["routenbau","offen"].forEach(function(id){
+  ["routenbau"].forEach(function(id){
     put("h",secTitle(id));
     secItems(id).forEach(function(it){ put(it.k,it.t); });
     cy+=2;

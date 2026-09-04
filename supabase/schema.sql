@@ -206,10 +206,20 @@ create table public.stands (
 alter table public.stands enable row level security;
 create policy "stands: Mitglieder oder Admin lesen" on public.stands
   for select using (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id)));
-create policy "stands: Orga oder Admin verwaltet" on public.stands
-  for all
+create policy "stands: Orga oder Admin legen an/aktualisieren" on public.stands
+  for insert
+  with check (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id)));
+create policy "stands: Orga oder Admin aktualisieren" on public.stands
+  for update
   using (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id)))
   with check (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id)));
+-- Laden (Wiederherstellen) und Löschen eines gespeicherten Standes sind
+-- weitreichende Aktionen (überschreiben/löschen den kompletten Plan-Stand) –
+-- Löschen ist deshalb Admin-only auf DB-Ebene; "Laden" schreibt technisch nur
+-- auf plan_state (bleibt für Orga offen), wird aber in der Oberfläche auf
+-- Admin beschränkt (siehe script.part, renderStands()).
+create policy "stands: nur Admin löscht" on public.stands
+  for delete using (public.is_admin());
 
 -- ---------- Wer war zuletzt hier (je Wettkampf) ----------
 create table public.viewers (

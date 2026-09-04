@@ -279,8 +279,10 @@ body:not([data-auth="ok"]) main{display:none}
 .pill.prio-hoch{color:var(--bad); border-color:var(--bad)}
 .pill.prio-niedrig{color:var(--muted)}
 .pill.status-done{color:var(--ok); border-color:var(--ok)}
-.task-card.is-new{border-left:3px solid var(--warn)}
-.pill.new{color:var(--warn); border-color:var(--warn)}
+.task-card.is-new{border-left:3px solid var(--bad)}
+.dot-new{display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--bad); cursor:pointer; flex:0 0 auto}
+.dot-new:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.task-card-head .dot-new{margin-right:-2px}
 #taskCols{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start}
 .task-col{flex:1 1 240px; min-width:220px}
 .task-col h4{display:flex; align-items:center; gap:6px}
@@ -371,7 +373,7 @@ body.editing{caret-color:var(--ink)}
   .stat b{font-size:18px}
   section{padding:16px 0 0}
   section + section{border-top:none}
-  #quali,#personal,#routenplan,#finale,#routenbau,#offen,#wege{break-before:page}
+  #quali,#personal,#routenplan,#finale,#routenbau,#wege{break-before:page}
   #melde{padding-top:6px}
   h2{font-size:20px}
   .lede,p{font-size:13px; max-width:none}
@@ -489,13 +491,14 @@ body.editing{caret-color:var(--ink)}
 
 <div class="wrap">
   <details id="taskBox" class="task-box">
-    <summary class="task-summary"><span>Aufgaben</span><span class="pill" id="taskBadge">–</span></summary>
+    <summary class="task-summary"><span>Aufgaben</span><span class="dot-new" id="taskSummaryDot" hidden title="Neue Aktivität"></span><span class="pill" id="taskBadge">–</span></summary>
     <div class="task-body">
       <div class="toolbar" id="taskToolbar" hidden>
         <button class="fbtn" id="tkCreateToggle" type="button">+ Aufgabe</button>
       </div>
       <div class="addbox" id="taskCreateBox" hidden>
         <div class="cfgrow">
+          <label id="tkCompWrap" hidden>Wettkampf <select class="cin sel" id="tkComp"></select></label>
           <label>Titel <input class="cin" id="tkTitle" size="22"></label>
           <label>Beschreibung <input class="cin" id="tkDesc" size="28"></label>
           <label>Kategorie
@@ -769,56 +772,11 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Routenplan</p>
-      <h2>Elf Qualirouten – U11 neu mit eigener M- und W-Route</h2>
-      <p class="lede">Die U11 hat jetzt dieselbe Struktur wie U13 und U15: eine gemischte, eine reine Männer- und eine reine Frauenroute. Dadurch verschiebt sich die Nummerierung gegenüber der letzten Fassung – die Zuordnung steht auf jeder Karte.</p>
+      <h2>Alle Qualirouten im Überblick</h2>
+      <p class="lede">Entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
     </div>
 
-    <div class="routes" style="margin-bottom:22px">
-      <div class="route" data-ac="c0"><div class="route-id"><b>Q1</b><span class="route-who">U9 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>10:30–11:30</span></div>
-        <p class="route-desc">Einstiegsniveau. Zone für alle zehn erreichbar, Top nur für die Spitze.</p></div>
-      <div class="route" data-ac="c0"><div class="route-id"><b>Q2</b><span class="route-who">U9 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>10 Starts</span><span>60 Min</span><span>11:45–12:45</span></div>
-        <p class="route-desc">Gleiches Niveau, anderes Bewegungsthema. Startet 15 Minuten nach Q1.</p></div>
-      <div class="route" data-ac="c1"><div class="route-id"><b>Q3</b><span class="route-who">U11 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>20 Starts</span><span>120 Min</span><span>10:30–12:36</span></div>
-        <p class="route-desc">Läuft mit einer kurzen Unterbrechung durch: erst die 7 Jungs, dann die 13 Mädchen.</p></div>
-      <div class="route" data-ac="c1"><div class="route-id"><b>Q4</b><span class="route-who">U11 · Toprope</span></div>
-        <span class="tag">nur männlich</span>
-        <div class="route-meta"><span>7 Starts</span><span>42 Min</span><span>11:48–12:30</span></div>
-        <p class="route-desc">Neu. Wird erst gebraucht, wenn Q5 frei ist – dasselbe Team wechselt hinüber.</p></div>
-      <div class="route" data-ac="c1"><div class="route-id"><b>Q5</b><span class="route-who">U11 · Toprope</span></div>
-        <span class="tag w">nur weiblich</span>
-        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–11:48</span></div>
-        <p class="route-desc">Neu. Eröffnet den Tag zusammen mit Q3 – 13 Mädchen sind das zweitgrößte Feld.</p></div>
-      <div class="route" data-ac="c2"><div class="route-id"><b>Q6</b><span class="route-who">U13 · Toprope</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>24 Starts</span><span>144 Min</span><span>10:30–12:59</span></div>
-        <p class="route-desc">Meistgekletterte Route des Tages: erst die 8 Jungs, dann die 16 Mädchen.</p></div>
-      <div class="route" data-ac="c2"><div class="route-id"><b>Q7</b><span class="route-who">U13 · Toprope</span></div>
-        <span class="tag">nur männlich</span>
-        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:11–12:59</span></div>
-        <p class="route-desc">Startet erst, wenn Q8 frei ist. Letzte Route des Tages, gemeinsam mit Q6.</p></div>
-      <div class="route" data-ac="c2"><div class="route-id"><b>Q8</b><span class="route-who">U13 · Toprope</span></div>
-        <span class="tag w">nur weiblich</span>
-        <div class="route-meta"><span>16 Starts</span><span>96 Min</span><span>10:30–12:06</span></div>
-        <p class="route-desc">Größtes Einzelfeld im Wettkampf – hier zählt Differenzierung am meisten.</p></div>
-      <div class="route" data-ac="c3"><div class="route-id"><b>Q9</b><span class="route-who">U15 · Vorstieg</span></div>
-        <span class="tag">gemischt M + W</span>
-        <div class="route-meta"><span>13 Starts</span><span>78 Min</span><span>10:30–12:03</span></div>
-        <p class="route-desc">Jungs ab 10:30, nach 15 Minuten Pause die Mädchen. Muss beide Gruppen spreizen.</p></div>
-      <div class="route" data-ac="c3"><div class="route-id"><b>Q10</b><span class="route-who">U15 · Vorstieg</span></div>
-        <span class="tag">nur männlich</span>
-        <div class="route-meta"><span>5 Starts</span><span>30 Min</span><span>11:15–11:45</span></div>
-        <p class="route-desc">Härteste Route im Haus, kürzester Einsatz des Tages.</p></div>
-      <div class="route" data-ac="c3"><div class="route-id"><b>Q11</b><span class="route-who">U15 · Vorstieg</span></div>
-        <span class="tag w">nur weiblich</span>
-        <div class="route-meta"><span>8 Starts</span><span>48 Min</span><span>12:00–12:48</span></div>
-        <p class="route-desc">Startet 15 Minuten nach Q10, eigenständiges Thema gegenüber Q9.</p></div>
-    </div>
+    <div class="routes" style="margin-bottom:22px"></div>
   </div>
 </section>
 
@@ -875,28 +833,6 @@ body.editing{caret-color:var(--ink)}
           <li><strong>Beide Wertungsgruppen müssen sich spreizen</strong> – in der U13 sind 16 von 24 Gemeldeten Mädchen, in der U11 13 von 20.</li>
           <li><strong>Zone im mittleren Drittel</strong>, Top so, dass ihn nur wenige halten.</li>
         </ul></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ OFFENE PUNKTE ============ -->
-<section id="offen" data-views="orga">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Offene Punkte</p>
-      <h2>Was noch zu entscheiden ist</h2>
-    </div>
-    <div class="note" style="border-left-color:var(--warn)">
-      <h4>Drei Dinge für die Ausschreibung</h4>
-      <ol>
-        <li><strong>Lange Pausen für die Jungs.</strong> U13 101 Minuten, U11 78 Minuten – Folge der Zwei-Team-Regel. Entweder so lassen und im Zeitplan ankündigen, damit sich die Athleten neu aufwärmen können, oder je Klasse ein drittes Team für rund 45 Minuten einplanen.</li>
-        <li><strong>Beobachtung in der Quali ausdrücklich erlauben.</strong> Die Demovideos machen die Quali faktisch zum Flash-Format; weil Wertungsgruppen dieselbe Route nacheinander klettern, sollte Zuschauen explizit erlaubt sein. Das Finale bleibt on-sight mit Isolation.</li>
-        <li><strong>Bezug der Finalquote.</strong> Hier je Wertungsgruppe angewendet. Zählt stattdessen die Gesamtzahl der Altersklasse, ändert sich nur die U13 (24 &gt; 20 → Quote 10): dann 8 Jungs und 10 Mädchen im Finale, F4 dauert 60 statt 36 Minuten.</li>
-      </ol>
-    </div>
-    <div class="note">
-      <h4>Nachmeldungen bis zum 20.09.</h4>
-      <p>Jede zusätzliche Person verlängert einen Block um 6 Minuten. Bis zur ausgeschriebenen Besichtigung um 13:30 liegen nach dem Quali-Ende 31 Minuten Reserve – das trägt etwa fünf Nachmeldungen, ohne dass sich am Ablauf etwas ändert. Schieb die Balken einfach selbst nach hinten, die Anzeige rechnet mit.</p>
     </div>
   </div>
 </section>

@@ -818,10 +818,29 @@ function renderFinalTab(){
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 
+function renderRoutePlan(plan,list){
+  var box=document.querySelector("#routenplan .routes"); if(!box) return;
+  var h="";
+  plan.rows.forEach(function(r){
+    var uses=list.filter(function(b){return b.r===r.id;});
+    var starts=uses.reduce(function(s,b){return s+b.n;},0);
+    var mins=starts*CLIMB;
+    var lo=uses.length?Math.min.apply(null,uses.map(function(b){return b.s;})):null;
+    var hi=uses.length?Math.max.apply(null,uses.map(function(b){return b.e;})):null;
+    h+='<div class="route" data-ac="'+esc(ACOF[r.cls]||"c7")+'"><div class="route-id"><b>'+esc(r.id)+'</b>'+
+       '<span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></div>'+
+       '<span class="tag'+(r.allow==="w"?" w":"")+'">'+esc(allowTxt(r))+'</span>'+
+       '<div class="route-meta"><span>'+starts+' Starts</span><span>'+mins+' Min</span>'+
+         (uses.length?'<span>'+fmt(lo)+'–'+fmt(hi)+'</span>':'<span>noch nicht eingeplant</span>')+
+       '</div></div>';
+  });
+  box.innerHTML=h||'<p class="hint">Noch keine Routen angelegt.</p>';
+}
+
 /* ================= Instanzen ================= */
 var pq,pf;
 function afterQ(plan,list){
-  renderTeams(plan,list); renderFlow(plan,list);
+  renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
   if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
 }
 function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
@@ -1364,13 +1383,13 @@ function taskActivity(t){
   return last;
 }
 function isTaskNew(t){ var seen=TASKSEEN[t.id]; return !seen || taskActivity(t)>seen; }
-function markTasksSeen(){
-  TASKS.forEach(function(t){ TASKSEEN[t.id]=taskActivity(t); });
+function markOneSeen(id){
+  var t=TASKS.filter(function(x){return x.id===id;})[0]; if(!t) return;
+  TASKSEEN[id]=taskActivity(t);
   try{localStorage.setItem(TASKSEENKEY,JSON.stringify(TASKSEEN));}catch(e){}
   renderTasks();
 }
 var taskBoxEl=document.getElementById("taskBox");
-if(taskBoxEl) taskBoxEl.addEventListener("toggle",function(){ if(this.open) markTasksSeen(); });
 
 function loadTasks(){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
@@ -1384,7 +1403,7 @@ function loadTasks(){
       TASKS.forEach(function(t){
         (t.task_comments||[]).sort(function(a,b){return String(a.created_at).localeCompare(String(b.created_at));});
       });
-      if(taskBoxEl&&taskBoxEl.open) markTasksSeen(); else renderTasks();
+      renderTasks();
     }).catch(function(err){ console.warn("Aufgaben laden fehlgeschlagen:",err); });
 }
 var taskSub=null;
@@ -1400,9 +1419,9 @@ function subscribeTasks(){
     .subscribe();
 }
 
-function loadAssigneeOptions(){
-  if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!CURRENT_COMP) return;
-  sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",CURRENT_COMP.id).then(function(r){
+function loadAssigneeOptions(compId){
+  if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!compId) return;
+  sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",compId).then(function(r){
     if(r.error) return;
     APPROVEDPROFILES=(r.data||[]).map(function(x){return x.profiles;})
       .filter(function(p){return p&&p.status==="approved";})
@@ -1418,8 +1437,9 @@ function taskCardHtml(t,isOrga){
     return '<div class="task-comment"><b>'+esc((c.profiles&&c.profiles.full_name)||"?")+'</b> <span class="tm">'+dstr(c.created_at)+'</span><br>'+esc(c.body)+'</div>';
   }).join("");
   return '<div class="task-card'+(isTaskNew(t)?" is-new":"")+'" data-id="'+esc(t.id)+'">'+
-     '<div class="task-card-head"><b>'+esc(t.title)+'</b>'+
-     (isTaskNew(t)?'<span class="pill new">neu</span>':'')+
+     '<div class="task-card-head">'+
+     (isTaskNew(t)?'<span class="dot-new" data-mark-seen="'+esc(t.id)+'" role="button" tabindex="0" title="Als gesehen markieren"></span>':'')+
+     '<b>'+esc(t.title)+'</b>'+
      '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
      (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
      '<span class="pill'+(t.status==="done"?" status-done":"")+'">'+(t.status==="done"?"erledigt":"offen")+'</span>'+
@@ -1452,6 +1472,7 @@ function renderTasks(){
   var newN=TASKS.filter(isTaskNew).length;
   var badge=document.getElementById("taskBadge");
   if(badge) badge.textContent=openN+" offen"+(newN?" · "+newN+" neu":"")+(TASKS.length?" · "+TASKS.length+" gesamt":"");
+  var sdot=document.getElementById("taskSummaryDot"); if(sdot) sdot.hidden=!newN;
   var isOrga=!!(PROFILE&&PROFILE.category==="orga");
   var toolbar=document.getElementById("taskToolbar"); if(toolbar) toolbar.hidden=!isOrga;
 
@@ -1479,6 +1500,10 @@ function renderTasks(){
     box.innerHTML=filtered.map(function(t){return taskCardHtml(t,isOrga);}).join("");
   }
 
+  Array.prototype.forEach.call(box.querySelectorAll("[data-mark-seen]"),function(d){
+    d.onclick=function(ev){ ev.stopPropagation(); markOneSeen(this.getAttribute("data-mark-seen")); };
+    d.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); markOneSeen(this.getAttribute("data-mark-seen")); } };
+  });
   Array.prototype.forEach.call(box.querySelectorAll("[data-comment-send]"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-comment-send");
@@ -1511,7 +1536,9 @@ function renderTasks(){
 }
 
 function createTask(){
-  if(!sbClient||!PROFILE||!CURRENT_COMP) return;
+  if(!sbClient||!PROFILE) return;
+  var compId=document.getElementById("tkComp").value||(CURRENT_COMP&&CURRENT_COMP.id);
+  if(!compId){ taskSay("Kein Wettkampf ausgewählt.",true); return; }
   var title=document.getElementById("tkTitle").value.trim();
   var desc=document.getElementById("tkDesc").value.trim();
   var cat=document.getElementById("tkCat").value||null;
@@ -1520,7 +1547,7 @@ function createTask(){
   var ids=Array.prototype.filter.call(sel.options,function(o){return o.selected;}).map(function(o){return o.value;});
   if(!title){ taskSay("Titel eingeben.",true); return; }
   taskSay("Lege an …");
-  sbClient.from("tasks").insert({competition_id:CURRENT_COMP.id, title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
+  sbClient.from("tasks").insert({competition_id:compId, title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
     .select().single().then(function(r){
       if(r.error){ taskSay(r.error.message,true); return; }
       var taskId=r.data.id;
@@ -1540,8 +1567,19 @@ function resetTaskForm(){
 document.getElementById("tkCreateToggle").onclick=function(){
   var box=document.getElementById("taskCreateBox");
   box.hidden=!box.hidden;
-  if(!box.hidden) loadAssigneeOptions();
+  if(!box.hidden){
+    var wrap=document.getElementById("tkCompWrap"), csel=document.getElementById("tkComp");
+    if(MYCOMPS.length>1){
+      wrap.hidden=false;
+      csel.innerHTML=MYCOMPS.map(function(c){return '<option value="'+esc(c.id)+'"'+(CURRENT_COMP&&c.id===CURRENT_COMP.id?" selected":"")+'>'+esc(c.name)+'</option>';}).join("");
+    } else {
+      wrap.hidden=true;
+      csel.innerHTML=CURRENT_COMP?'<option value="'+esc(CURRENT_COMP.id)+'" selected>'+esc(CURRENT_COMP.name)+'</option>':"";
+    }
+    loadAssigneeOptions(csel.value||(CURRENT_COMP&&CURRENT_COMP.id));
+  }
 };
+document.getElementById("tkComp").onchange=function(){ loadAssigneeOptions(this.value); };
 document.getElementById("tkCancel").onclick=resetTaskForm;
 document.getElementById("tkGo").onclick=createTask;
 
@@ -1619,17 +1657,21 @@ function standSay(msg,bad){
 }
 function renderStands(){
   var body=document.querySelector("#standtab tbody"); if(!body) return;
+  var isAdmin=!!(PROFILE&&PROFILE.is_admin);
   var h="";
   STANDS.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).forEach(function(s){
     h+='<tr><td><strong>'+esc(s.title||"ohne Titel")+'</strong>'+(s.note?'<br><span style="color:var(--muted);font-size:13px">'+esc(s.note)+'</span>':'')+'</td>'+
        '<td>'+esc(s.author||"—")+'</td><td class="tm">'+dstr(s.at)+'</td>'+
-       '<td><button class="fbtn stload" type="button" data-id="'+esc(s.id)+'">Laden</button> '+
-       '<button class="fbtn stdel" type="button" data-id="'+esc(s.id)+'">Löschen</button></td></tr>';
+       '<td>'+(isAdmin
+         ?'<button class="fbtn stload" type="button" data-id="'+esc(s.id)+'">Laden</button> '+
+          '<button class="fbtn stdel" type="button" data-id="'+esc(s.id)+'">Löschen</button>'
+         :'<span style="color:var(--muted)">nur Admin</span>')+'</td></tr>';
   });
   if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
   body.innerHTML=h;
   Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
     b.onclick=function(){
+      if(!isAdmin) return;
       var id=this.getAttribute("data-id"), s=null;
       STANDS.forEach(function(x){if(x.id===id) s=x;});
       if(!s) return;
@@ -1639,6 +1681,7 @@ function renderStands(){
   });
   Array.prototype.forEach.call(document.querySelectorAll(".stdel"),function(b){
     b.onclick=function(){
+      if(!isAdmin) return;
       var id=this.getAttribute("data-id");
       if(DB){ DB.doc("stands/"+id).delete().catch(function(){standSay("Löschen nicht möglich.",true);}); }
       else { STANDS=STANDS.filter(function(x){return x.id!==id;}); saveLocalStands(); renderStands(); }
@@ -1648,7 +1691,7 @@ function renderStands(){
   if(st) st.textContent=DBSTATE;
   var md=document.getElementById("standMode");
   if(md) md.innerHTML=DB
-    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Alle freigegebenen Personen sehen dieselbe Liste. Speichern, Laden und Löschen kann nur das Orga-Team.'
+    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Alle freigegebenen Personen sehen dieselbe Liste. Speichern kann das Orga-Team, Laden und Löschen nur ein Admin.'
     : 'Diese Fassung speichert die Stände <strong>in deinem Browser</strong> – sie wandern nicht automatisch zu anderen. Zum Weitergeben nimm <strong>„Als Datei sichern"</strong>; wer die Datei bekommt, öffnet sie hier über <strong>„Datei laden"</strong>.';
 }
 function renderViewers(){
@@ -2089,7 +2132,7 @@ function buildPDF(){
   });
   foot();
 
-  /* --- Seite 6: Routenbau, Hinweise, offene Punkte (mit deinen Texten) --- */
+  /* --- Seite 6: Routenbau (mit deinen Texten) --- */
   function secItems(id){
     var out=[], root=document.getElementById(id);
     if(!root) return out;
@@ -2105,7 +2148,7 @@ function buildPDF(){
     var el=document.querySelector("#"+id+" h2");
     return el?el.textContent.replace(/\s+/g," ").trim():id;
   }
-  y=head("Routenbau und offene Punkte","Die Texte aus dem Plan – inklusive deiner Änderungen");
+  y=head("Routenbau","Die Texte aus dem Plan – inklusive deiner Änderungen");
   var colW=(CW-10)/2, cx0=[ML,ML+colW+10], ci=0, cy=y, TOP=y, BOT=PH-14;
   function put(kind,txt){
     var fs2=kind==="h"?8.5:7.4, lead=kind==="h"?3.4:3.1;
@@ -2120,7 +2163,7 @@ function buildPDF(){
     cy+=L.length*lead+(kind==="h"?1.2:1.8);
     return true;
   }
-  ["routenbau","offen"].forEach(function(id){
+  ["routenbau"].forEach(function(id){
     put("h",secTitle(id));
     secItems(id).forEach(function(it){ put(it.k,it.t); });
     cy+=2;
