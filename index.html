@@ -303,9 +303,13 @@ body:not([data-auth="ok"]) main{display:none}
 .pill.prio-niedrig{color:var(--muted)}
 .pill.status-done{color:var(--ok); border-color:var(--ok)}
 .task-card.is-new{border-left:3px solid var(--bad)}
-.dot-new{display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--bad); cursor:pointer; flex:0 0 auto}
-.dot-new:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
-.task-card-head .dot-new{margin-right:-2px}
+.dot-new{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--bad); flex:0 0 auto}
+#taskSummaryDot.dot-new{cursor:default}
+.tk-unread{display:inline-flex; align-items:center; gap:6px; font-family:var(--disp); font-size:11px; font-weight:500;
+  letter-spacing:.06em; text-transform:uppercase; padding:4px 10px 4px 8px; border-radius:12px;
+  border:1px solid var(--bad); color:var(--bad); background:transparent; cursor:pointer}
+.tk-unread:hover{background:var(--sunken)}
+.tk-unread:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
 #taskCols{display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start}
 .task-col{flex:1 1 240px; min-width:220px}
 .task-col h4{display:flex; align-items:center; gap:6px}
@@ -2419,7 +2423,7 @@ function taskCardHtml(t,isOrga){
   }).join("");
   return '<div class="task-card'+(isTaskNew(t)?" is-new":"")+'" data-id="'+esc(t.id)+'">'+
      '<div class="task-card-head">'+
-     (isTaskNew(t)?'<span class="dot-new" data-mark-seen="'+esc(t.id)+'" role="button" tabindex="0" title="Als gesehen markieren"></span>':'')+
+     (isTaskNew(t)?'<button type="button" class="tk-unread" data-mark-seen="'+esc(t.id)+'"><span class="dot-new"></span>Neu – als gelesen markieren</button>':'')+
      '<b>'+esc(t.title)+'</b>'+
      '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
      (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
@@ -2481,9 +2485,8 @@ function renderTasks(){
     box.innerHTML=filtered.map(function(t){return taskCardHtml(t,isOrga);}).join("");
   }
 
-  Array.prototype.forEach.call(box.querySelectorAll("[data-mark-seen]"),function(d){
-    d.onclick=function(ev){ ev.stopPropagation(); markOneSeen(this.getAttribute("data-mark-seen")); };
-    d.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); markOneSeen(this.getAttribute("data-mark-seen")); } };
+  Array.prototype.forEach.call(box.querySelectorAll("[data-mark-seen]"),function(b){
+    b.onclick=function(){ markOneSeen(this.getAttribute("data-mark-seen")); };
   });
   Array.prototype.forEach.call(box.querySelectorAll("[data-comment-send]"),function(b){
     b.onclick=function(){
