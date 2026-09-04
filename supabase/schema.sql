@@ -20,6 +20,7 @@ create table public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   email       text not null,
   full_name   text not null,
+  avatar_url  text,
   category    user_category not null,
   status      text not null default 'pending' check (status in ('pending','approved','rejected')),
   is_admin    boolean not null default false,
@@ -56,6 +57,35 @@ create policy "profiles: eigene Zeile bei Registrierung anlegen" on public.profi
   for insert with check (auth.uid() = id);
 create policy "profiles: Admin aktualisiert alle" on public.profiles
   for update using (public.is_admin()) with check (true);
+
+-- Verhindert, dass jemand über das Selbst-Update unten seine eigenen Rechte
+-- hochstuft (is_admin/status/category) oder E-Mail/Freigabe-Metadaten
+-- verändert. RLS allein kann das nicht spaltenweise prüfen, daher ein
+-- Trigger, der diese Felder bei Nicht-Admin-Updates auf den alten Wert
+-- zurücksetzt.
+create or replace function public.protect_privileged_profile_fields()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    new.is_admin    := old.is_admin;
+    new.status      := old.status;
+    new.category    := old.category;
+    new.email       := old.email;
+    new.approved_at := old.approved_at;
+    new.approved_by := old.approved_by;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists before_profile_update on public.profiles;
+create trigger before_profile_update
+  before update on public.profiles
+  for each row execute function public.protect_privileged_profile_fields();
+
+-- Jede Person darf ihre eigene Zeile aktualisieren (Name, Profilbild) –
+-- der Trigger oben schützt dabei die privilegierten Felder.
+create policy "profiles: eigene Zeile aktualisieren" on public.profiles
+  for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- ---------- Wettkämpfe ----------
 -- Mehrere Wettkämpfe parallel; jeder hat einen eigenen Link (?w=<slug>).
@@ -411,6 +441,19 @@ create policy "chat_messages: Teilnehmer schreiben" on public.chat_messages
     sender_id = auth.uid() and public.my_status() = 'approved' and
     (public.is_admin() or public.is_conv_participant(conversation_id))
   );
+
+-- ---------- Storage: Profilbilder ----------
+-- Öffentlich lesbar (damit <img> sie ohne Login/Signierung anzeigen kann),
+-- Schreibzugriff nur in den eigenen Ordner "<profile_id>/…".
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+create policy "avatars: alle lesen" on storage.objects
+  for select using (bucket_id = 'avatars');
+create policy "avatars: eigene Datei verwalten" on storage.objects
+  for all using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ============================================================
 -- Danach in der README weiterlesen:

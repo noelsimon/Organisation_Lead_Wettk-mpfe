@@ -72,6 +72,12 @@ h1{font-family:var(--disp); font-weight:600; letter-spacing:-.005em; font-size:c
 .stat{background:var(--surface); padding:16px 4px 18px}
 .stat b{display:block; font-family:var(--mono); font-weight:500; font-size:23px; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
 .stat span{display:block; font-family:var(--disp); font-size:11px; font-weight:400; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-top:3px}
+.stat-edit{font-family:inherit; font-weight:inherit; font-size:inherit; letter-spacing:inherit; width:2.4em; text-align:center;
+  border:none; border-bottom:1px dashed var(--line-strong); background:transparent; color:inherit; padding:0;
+  -moz-appearance:textfield}
+.stat-edit::-webkit-outer-spin-button,.stat-edit::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.stat-edit:disabled{border-bottom-color:transparent; opacity:.75; cursor:default}
+.stat-edit:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
 
 section{padding:52px 0 4px}
 section + section{border-top:1px solid var(--line)}
@@ -241,6 +247,24 @@ footer p{max-width:74ch; margin-bottom:8px}
 .textbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:22px 0 0;
   background:var(--sunken); border:1px solid var(--line); border-radius:3px; padding:12px 16px}
 .textbar p{margin:0; flex-basis:100%; font-size:13px; color:var(--muted); max-width:80ch}
+/* ---------- Suche ---------- */
+.searchbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:14px 0 0;
+  background:var(--sunken); border:1px solid var(--line); border-radius:3px; padding:10px 16px}
+.searchbar input[type="search"]{font-family:var(--serif); font-size:14px; padding:5px 8px; border-radius:2px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
+#searchCount{min-width:64px}
+mark.search-hit{background:#ffd54a; color:#141815; border-radius:2px; padding:0 1px}
+mark.search-hit.current{background:#ff9800}
+/* ---------- Abschnitte einklappen ---------- */
+.sec-head{position:relative; padding-right:36px}
+.sec-toggle{position:absolute; top:0; right:0; width:26px; height:26px; padding:0; border-radius:50%;
+  font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2); cursor:pointer}
+.sec-toggle:hover{background:var(--sunken)}
+.sec-toggle:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+@media screen{
+  section[data-collapsed="true"] .wrap>*:not(.sec-head){display:none}
+}
 /* ---------- Rollenansicht ---------- */
 .vbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:18px 0 0;
   background:var(--surface); border:1px solid var(--line-strong); border-radius:3px; padding:12px 16px; box-shadow:var(--shadow)}
@@ -371,6 +395,8 @@ td.pcell{font-size:13.5px; line-height:1.5}
 #nolist b,#vlist b{font-family:var(--disp); font-weight:500}
 #vlist .tm{font-family:var(--mono); font-size:12px; color:var(--muted)}
 .stbar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin:0 0 14px}
+.ub-avatar{width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid var(--line-strong)}
+.ub-avatar.big{width:56px; height:56px}
 .stbar .grow2{flex:1 1 220px}
 .stbar input[type="text"]{width:100%; font-family:var(--serif); font-size:14px; padding:6px 8px; border-radius:2px;
   border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
@@ -402,9 +428,9 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.searchbar,.sec-toggle{display:none !important}
   #staende,#admin,#compAdmin,#authWrap,#taskBox,.chat-bubble,.chat-panel{display:none !important}
-  .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
+  .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
   .printonly{display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin:0 0 10px}
@@ -444,7 +470,8 @@ body.editing{caret-color:var(--ink)}
     <div class="stats">
       <div class="stat"><b id="stAth">67</b><span>Athlet*innen</span></div>
       <div class="stat"><b id="stRoutes">18</b><span>Routen</span></div>
-      <div class="stat"><b id="stMin">804</b><span>Kletterminuten</span></div>
+      <div class="stat"><b><span id="stHelferIst">0</span> / <input class="stat-edit" id="stHelferSoll" type="number" min="0" max="999" value="0" title="Benötigte Helferzahl (Soll) eintragen"></b><span>Helfer Ist / Soll</span></div>
+      <div class="stat"><b id="stTasks">0 / 0</b><span>Aufgaben offen / erledigt</span></div>
       <div class="stat"><b id="stTeams">7</b><span>Routen-Teams</span></div>
       <div class="stat"><b id="stPers">21</b><span>Personen im Peak</span></div>
       <div class="stat"><b id="stEnd">12:59</b><span>Quali-Ende</span></div>
@@ -454,11 +481,25 @@ body.editing{caret-color:var(--ink)}
 
 <div class="wrap" id="authWrap">
   <div class="stbar" id="userbar" hidden>
+    <img class="ub-avatar" id="ubAvatar" alt="" hidden>
     <span class="lbl mono">Angemeldet als <strong id="ubName"></strong> · <span id="ubCat"></span></span>
     <span style="flex:1"></span>
     <label class="lbl" for="compSwitch" style="margin-right:4px">Wettkampf</label>
     <select class="cin sel" id="compSwitch" hidden></select>
+    <button class="fbtn" id="btnProfile" type="button">Profil</button>
     <button class="fbtn" id="btnLogout" type="button">Abmelden</button>
+  </div>
+
+  <div class="addbox" id="profileBox" hidden>
+    <div class="cfgrow">
+      <img class="ub-avatar big" id="pfAvatarPreview" alt="" hidden>
+      <label>Name <input class="cin" id="pfName" type="text" autocomplete="name" size="18"></label>
+      <label>Profilbild <input class="cin" id="pfAvatarFile" type="file" accept="image/*"></label>
+      <label><button class="fbtn big" id="pfSave" type="button">Speichern</button></label>
+      <label><button class="fbtn" id="pfCancel" type="button">Abbrechen</button></label>
+    </div>
+    <p class="hint">Bild max. 2 MB (JPG/PNG/etc.). Name und Bild sind für alle sichtbar, die diesen Wettkampf teilen.</p>
+    <p class="pdfmsg" id="pfMsg" role="status"></p>
   </div>
 
   <div class="vbar" id="authBar" hidden>
@@ -528,6 +569,12 @@ body.editing{caret-color:var(--ink)}
     <button class="fbtn" id="txtToggle" type="button" aria-pressed="false">Texte bearbeiten</button>
     <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
     <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
+  </div>
+  <div class="searchbar">
+    <input class="cin" type="search" id="pageSearch" placeholder="Seite durchsuchen …" size="24">
+    <span class="lbl mono" id="searchCount"></span>
+    <button class="fbtn" id="searchPrev" type="button" title="Vorheriger Treffer (Umschalt+Enter)">↑</button>
+    <button class="fbtn" id="searchNext" type="button" title="Nächster Treffer (Enter)">↓</button>
   </div>
 </div>
 

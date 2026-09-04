@@ -35,6 +35,7 @@ var CFG0={
   cats:[{id:"k1",name:"Sicherung"},{id:"k2",name:"Ergebnisdienst"},{id:"k3",name:"Routenbau"},
         {id:"k4",name:"Orga-Team"},{id:"k5",name:"Buffet"}],
   people:[],
+  helferSoll:0,
   seq:100
 };
 var CFG=clone(CFG0);
@@ -57,7 +58,7 @@ function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG)
 try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
   if(_c&&_c.classes&&_c.classes.length){
     CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
-    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100;
+    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0;
     ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(CFG.win[k]==null) CFG.win[k]=CFG0.win[k]; });
   }}catch(e){}
 reindex();
@@ -783,13 +784,17 @@ function teamPeopleHtml(idx){
   return Object.keys(by).map(function(k){
     return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
 }
+var HELFERIST=0;
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};
-  var min=(q.list||[]).reduce(function(a,b){return a+(b.e-b.s);},0);
   function set(id,v){var el=document.getElementById(id); if(el) el.textContent=v;}
   set("stAth",totalAth());
   set("stRoutes",pq.rows.length+pf.rows.length);
-  set("stMin",min);
+  set("stHelferIst",HELFERIST);
+  var soll=document.getElementById("stHelferSoll");
+  if(soll&&document.activeElement!==soll) soll.value=CFG.helferSoll||0;
+  var tlist=TASKS||[];
+  set("stTasks",tlist.filter(function(t){return t.status==="open";}).length+" / "+tlist.filter(function(t){return t.status==="done";}).length);
   set("stTeams",Math.max(q.maxR||0,f.maxR||0));
   set("stPers",Math.max(q.maxR||0,f.maxR||0)*TEAM_PERS);
   set("stEnd",fmt(q.end||0));
@@ -909,6 +914,10 @@ document.getElementById("addClsGo").onclick=function(){
     saveCfg(); pf.render(); pf.save(); renderWin();
   };
 });
+document.getElementById("stHelferSoll").onchange=function(){
+  CFG.helferSoll=Math.max(0,Math.min(999,parseInt(this.value,10)||0));
+  saveCfg(); renderStats();
+};
 document.getElementById("winReset").onclick=function(){
   CFG.win=clone(CFG0.win); applyWin();
 };
@@ -1132,7 +1141,54 @@ function renderUserbarIdentity(){
   if(!PROFILE) return;
   document.getElementById("ubName").textContent=PROFILE.full_name;
   document.getElementById("ubCat").textContent=CATLABEL[PROFILE.category]||PROFILE.category;
+  var av=document.getElementById("ubAvatar");
+  if(av){ av.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) av.src=PROFILE.avatar_url; }
 }
+
+/* ---- Profil-Selbstverwaltung: eigenen Namen ändern, eigenes Profilbild hochladen ---- */
+function profileSay(msg,bad){
+  var el=document.getElementById("pfMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function openProfileBox(){
+  if(!PROFILE) return;
+  document.getElementById("pfName").value=PROFILE.full_name||"";
+  var prev=document.getElementById("pfAvatarPreview");
+  prev.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) prev.src=PROFILE.avatar_url;
+  document.getElementById("pfAvatarFile").value="";
+  profileSay("");
+  document.getElementById("profileBox").hidden=false;
+}
+document.getElementById("btnProfile").onclick=openProfileBox;
+document.getElementById("pfCancel").onclick=function(){ document.getElementById("profileBox").hidden=true; };
+document.getElementById("pfSave").onclick=function(){
+  if(!sbClient||!PROFILE) return;
+  var name=document.getElementById("pfName").value.trim();
+  if(!name){ profileSay("Name darf nicht leer sein.",true); return; }
+  var file=(document.getElementById("pfAvatarFile").files||[])[0];
+  if(file&&(!/^image\//.test(file.type)||file.size>2*1024*1024)){
+    profileSay("Bild muss ein Bildformat und darf max. 2 MB groß sein.",true); return;
+  }
+  profileSay("Speichere …");
+  var upload=Promise.resolve(PROFILE.avatar_url||null);
+  if(file){
+    var ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+    upload=sbClient.storage.from("avatars").upload(PROFILE.id+"/avatar."+ext, file, {upsert:true}).then(function(r){
+      if(r.error) throw r.error;
+      var pub=sbClient.storage.from("avatars").getPublicUrl(PROFILE.id+"/avatar."+ext);
+      return pub.data.publicUrl+"?v="+Date.now();
+    });
+  }
+  upload.then(function(avatarUrl){
+    return sbClient.from("profiles").update({full_name:name, avatar_url:avatarUrl}).eq("id",PROFILE.id).select().single();
+  }).then(function(r){
+    if(r.error){ profileSay("Speichern fehlgeschlagen: "+r.error.message,true); return; }
+    PROFILE=r.data;
+    renderUserbarIdentity();
+    profileSay("Gespeichert.");
+    document.getElementById("profileBox").hidden=true;
+  }).catch(function(err){ profileSay("Speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
+};
 function applyCategoryUI(){
   if(!PROFILE) return;
   document.body.setAttribute("data-cat",PROFILE.category);
@@ -1142,6 +1198,8 @@ function applyCategoryUI(){
   if(admin) admin.hidden=!PROFILE.is_admin;
   var compAdmin=document.getElementById("compAdmin");
   if(compAdmin) compAdmin.hidden=!PROFILE.is_admin;
+  var soll=document.getElementById("stHelferSoll");
+  if(soll) soll.disabled=!(PROFILE.is_admin||PROFILE.category==="orga");
   if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); }
 }
 
@@ -1164,6 +1222,7 @@ function refreshSession(){
         setAuthState("ok");
         initDb(); pullState(); subscribePlanState();
         loadTasks(); subscribeTasks();
+        loadHelperCount();
         loadMyCompetitions();
         loadConversations(); subscribeChat();
         var bub=document.getElementById("chatBubble"); if(bub) bub.hidden=false;
@@ -1410,7 +1469,7 @@ function loadTasks(){
       TASKS.forEach(function(t){
         (t.task_comments||[]).sort(function(a,b){return String(a.created_at).localeCompare(String(b.created_at));});
       });
-      renderTasks();
+      renderTasks(); renderStats();
     }).catch(function(err){ console.warn("Aufgaben laden fehlgeschlagen:",err); });
 }
 var taskSub=null;
@@ -1426,6 +1485,14 @@ function subscribeTasks(){
     .subscribe();
 }
 
+function loadHelperCount(){
+  if(!sbClient||!PROFILE||!CURRENT_COMP) return;
+  sbClient.from("competition_members").select("profiles(status)").eq("competition_id",CURRENT_COMP.id).then(function(r){
+    if(r.error) return;
+    HELFERIST=(r.data||[]).filter(function(x){return x.profiles&&x.profiles.status==="approved";}).length;
+    renderStats();
+  });
+}
 function loadAssigneeOptions(compId){
   if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!compId) return;
   sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",compId).then(function(r){
@@ -1857,7 +1924,7 @@ function snapshot(){
 }
 function applySnapshot(s){
   if(!s||!s.cfg||!s.q||!s.f) return false;
-  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100;
+  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0;
   reindex(); saveCfg();
   TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
   pq.rows=s.q.rows; pq.groups=s.q.groups; pq.blocks=s.q.blocks; pq.seq=s.q.seq||1000; pq.sel=null;
@@ -1865,7 +1932,7 @@ function applySnapshot(s){
   pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
   pf.o.start=CFG.win.fs; pf.o.end=CFG.win.fe; pf.o.step=autoStep(CFG.win.fe-CFG.win.fs);
   pq.render(); pf.render(); pq.save(); pf.save();
-  renderWin(); renderCats(); renderPeople();
+  renderWin(); renderCats(); renderPeople(); renderStats();
   document.querySelectorAll("[data-ed]").forEach(function(el){
     var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
   });
@@ -2432,5 +2499,101 @@ document.getElementById("pdfbtn").onclick=function(){
   .then(function(){ btn.textContent=old; busy=false; });
 };
 document.getElementById("printbtn").onclick=function(){ try{window.print();}catch(e){} };
+
+/* ---- Abschnitte einklappen (jeder Abschnitt, unabhängig von Bearbeitungsrechten) ---- */
+var COLLAPSEKEY="kidscup-collapsed", COLLAPSED={};
+try{COLLAPSED=JSON.parse(localStorage.getItem(COLLAPSEKEY)||"{}")||{};}catch(e){COLLAPSED={};}
+function setSectionCollapsed(sec,collapsed){
+  sec.setAttribute("data-collapsed",collapsed?"true":"false");
+  var btn=sec.querySelector(".sec-toggle");
+  if(btn){ btn.textContent=collapsed?"+":"–"; btn.setAttribute("aria-expanded",collapsed?"false":"true"); }
+  COLLAPSED[sec.id]=collapsed;
+  try{localStorage.setItem(COLLAPSEKEY,JSON.stringify(COLLAPSED));}catch(e){}
+}
+function expandSection(id){
+  var sec=document.getElementById(id);
+  if(sec&&sec.getAttribute("data-collapsed")==="true") setSectionCollapsed(sec,false);
+}
+document.querySelectorAll("section[id]").forEach(function(sec){
+  var head=sec.querySelector(".sec-head"); if(!head) return;
+  var btn=document.createElement("button");
+  btn.type="button"; btn.className="sec-toggle"; btn.setAttribute("aria-label","Abschnitt ein-/ausklappen");
+  btn.onclick=function(){ setSectionCollapsed(sec, sec.getAttribute("data-collapsed")!=="true"); };
+  head.appendChild(btn);
+  setSectionCollapsed(sec, !!COLLAPSED[sec.id]);
+});
+
+/* ---- Suche über Seiteninhalte (nur innerhalb <main>) ---- */
+var searchMatches=[], searchIdx=-1, searchTimer=null;
+function clearSearchHighlights(){
+  document.querySelectorAll("main mark.search-hit").forEach(function(m){
+    var t=document.createTextNode(m.textContent);
+    m.parentNode.replaceChild(t,m);
+  });
+  searchMatches=[]; searchIdx=-1;
+}
+function updateSearchCount(){
+  var counter=document.getElementById("searchCount");
+  var term=(document.getElementById("pageSearch")||{}).value||"";
+  if(!counter) return;
+  counter.textContent = searchMatches.length ? (searchIdx+1)+" / "+searchMatches.length
+    : (term.trim() ? "Keine Treffer" : "");
+}
+function jumpToMatch(i){
+  if(!searchMatches.length) return;
+  searchIdx=((i%searchMatches.length)+searchMatches.length)%searchMatches.length;
+  searchMatches.forEach(function(m,idx){ m.classList.toggle("current",idx===searchIdx); });
+  updateSearchCount();
+  var el=searchMatches[searchIdx];
+  var sec=el.closest("section[id]");
+  if(sec) expandSection(sec.id);
+  el.scrollIntoView({block:"center",behavior:"smooth"});
+}
+function runSearch(){
+  clearSearchHighlights();
+  var main=document.querySelector("main"); if(!main) return;
+  var term=document.getElementById("pageSearch").value.trim();
+  if(!term){ updateSearchCount(); return; }
+  var re=new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");
+  var walker=document.createTreeWalker(main,NodeFilter.SHOW_TEXT,null);
+  var textNodes=[], node;
+  while((node=walker.nextNode())){
+    var p=node.parentNode; if(!p) continue;
+    var tag=p.nodeName;
+    if(tag==="SCRIPT"||tag==="STYLE"||tag==="TEXTAREA") continue;
+    if(node.nodeValue&&re.test(node.nodeValue)) textNodes.push(node);
+    re.lastIndex=0;
+  }
+  textNodes.forEach(function(tn){
+    var text=tn.nodeValue, frag=document.createDocumentFragment(), lastIdx=0, m, any=false;
+    re.lastIndex=0;
+    while((m=re.exec(text))){
+      any=true;
+      frag.appendChild(document.createTextNode(text.slice(lastIdx,m.index)));
+      var mark=document.createElement("mark");
+      mark.className="search-hit"; mark.textContent=m[0];
+      frag.appendChild(mark);
+      searchMatches.push(mark);
+      lastIdx=m.index+m[0].length;
+      if(m.index===re.lastIndex) re.lastIndex++;
+    }
+    if(any){ frag.appendChild(document.createTextNode(text.slice(lastIdx))); tn.parentNode.replaceChild(frag,tn); }
+  });
+  updateSearchCount();
+  if(searchMatches.length) jumpToMatch(0);
+}
+var pageSearchEl=document.getElementById("pageSearch");
+pageSearchEl.oninput=function(){
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(runSearch,150);
+};
+pageSearchEl.onkeydown=function(ev){
+  if(ev.key!=="Enter") return;
+  ev.preventDefault();
+  if(!searchMatches.length){ clearTimeout(searchTimer); runSearch(); return; }
+  jumpToMatch(searchIdx+(ev.shiftKey?-1:1));
+};
+document.getElementById("searchNext").onclick=function(){ jumpToMatch(searchIdx+1); };
+document.getElementById("searchPrev").onclick=function(){ jumpToMatch(searchIdx-1); };
 })();
 </script>
