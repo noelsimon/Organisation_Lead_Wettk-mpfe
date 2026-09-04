@@ -2244,12 +2244,19 @@ function makeSupabaseDB(){
     }
   };
 }
+var dbInited=false;
 function initDb(){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved"){
     DBSTATE="nicht verfügbar"; loadLocalStands(); renderStands(); return;
   }
+  if(dbInited){ renderStands(); logMe("geöffnet"); return; }
+  dbInited=true;
   DB=makeSupabaseDB();
   DBSTATE="geteilt – alle Freigegebenen sehen dieselben Stände";
+  /* onSnapshot registriert je Tabelle einen Realtime-Kanal; ein Kanal darf
+     nur einmal abonniert werden, darum initDb() nur beim ersten Mal (dbInited)
+     wirklich neu verdrahten – spätere Aufrufe (z.B. nach jedem
+     onAuthStateChange) sollen nicht erneut subscriben. */
   DB.collection("stands").onSnapshot(function(snap){
     STANDS=snap.docs.map(function(x){var o=x.data()||{}; o.id=x.id; return o;});
     renderStands();
