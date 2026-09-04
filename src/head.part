@@ -299,7 +299,10 @@ body[data-cat]:not([data-cat="orga"]) main section #pdfbtn,
 body[data-cat]:not([data-cat="orga"]) main section #printbtn,
 body[data-cat]:not([data-cat="orga"]) main section#admin input,
 body[data-cat]:not([data-cat="orga"]) main section#admin select,
-body[data-cat]:not([data-cat="orga"]) main section#admin button{
+body[data-cat]:not([data-cat="orga"]) main section#admin button,
+body[data-cat]:not([data-cat="orga"]) main section#compAdmin input,
+body[data-cat]:not([data-cat="orga"]) main section#compAdmin select,
+body[data-cat]:not([data-cat="orga"]) main section#compAdmin button{
   pointer-events:auto; opacity:1; cursor:pointer;
 }
 body[data-cat]:not([data-cat="orga"]):not([data-cat="routenbau"]) .textbar{display:none}
@@ -356,7 +359,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
-  #staende,#admin,#authWrap,#taskBox{display:none !important}
+  #staende,#admin,#compAdmin,#authWrap,#taskBox{display:none !important}
   .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -409,6 +412,8 @@ body.editing{caret-color:var(--ink)}
   <div class="stbar" id="userbar" hidden>
     <span class="lbl mono">Angemeldet als <strong id="ubName"></strong> · <span id="ubCat"></span></span>
     <span style="flex:1"></span>
+    <label class="lbl" for="compSwitch" style="margin-right:4px">Wettkampf</label>
+    <select class="cin sel" id="compSwitch" hidden></select>
     <button class="fbtn" id="btnLogout" type="button">Abmelden</button>
   </div>
 
@@ -444,7 +449,8 @@ body.editing{caret-color:var(--ink)}
       </label>
       <label><button class="fbtn big" id="reGo" type="button">Registrieren</button></label>
     </div>
-    <p class="hint" style="margin:12px 0 0">Nach dem Absenden muss die Orga deine Anmeldung freigeben, bevor du den Plan siehst.</p>
+    <p class="hint" id="regCompName" style="margin:12px 0 0"></p>
+    <p class="hint" style="margin:2px 0 0">Nach dem Absenden muss die Orga deine Anmeldung freigeben, bevor du den Plan siehst.</p>
     <p class="pdfmsg" id="reMsg" role="status"></p>
   </div>
 
@@ -455,6 +461,10 @@ body.editing{caret-color:var(--ink)}
   <div class="note" id="rejectedNote" hidden style="border-left-color:var(--bad)">
     <h4>Zugang abgelehnt</h4>
     <p>Für diesen Account wurde kein Zugriff freigegeben. Wende dich an die Orga, falls das ein Irrtum ist.</p>
+  </div>
+  <div class="note" id="noAccessNote" hidden style="border-left-color:var(--bad)">
+    <h4>Kein Zugriff auf diesen Wettkampf</h4>
+    <p>Dein Account ist freigegeben, aber (noch) keinem Wettkampf unter diesem Link zugeordnet. Wende dich an die Orga, um Zugriff zu bekommen.</p>
   </div>
 </div>
 
@@ -905,16 +915,52 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
+<!-- ============ WETTKÄMPFE (ADMIN) ============ -->
+<section id="compAdmin" data-views="orga" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Nur für Admins</p>
+      <h2>Wettkämpfe anlegen und verwalten</h2>
+      <p class="lede">Jeder Wettkampf hat einen eigenen Link zum Teilen. Personen einem Wettkampf zuordnen geht unten bei den Anmeldungen.</p>
+    </div>
+    <div class="tblwrap"><table id="comptab">
+      <thead><tr><th>Wettkampf</th><th>Link</th><th class="num">Mitglieder</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="toolbar">
+      <button class="fbtn" id="compCreateToggle" type="button">+ Neuer Wettkampf</button>
+    </div>
+    <div class="addbox" id="compCreateBox" hidden>
+      <div class="cfgrow">
+        <label>Name <input class="cin" id="ccName" placeholder="z. B. Kidscup 2027" size="22"></label>
+        <label>Link-Kennung <input class="cin" id="ccSlug" placeholder="kidscup2027" size="18"></label>
+      </div>
+      <div class="cfgrow" style="margin-top:10px">
+        <label><input type="radio" name="ccSrc" value="template" checked> Von Vorlage</label>
+        <label><input type="radio" name="ccSrc" value="dup"> Duplizieren von
+          <select class="cin sel" id="ccDupFrom"></select>
+        </label>
+      </div>
+      <div class="cfgrow" style="margin-top:10px">
+        <label><button class="fbtn" id="ccGo" type="button">Wettkampf anlegen</button></label>
+        <label><button class="fbtn" id="ccCancel" type="button">Abbrechen</button></label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">„Von Vorlage" startet mit den Standard-Wertungsklassen und dem Standard-Zeitplan (wie ein frischer Wettkampf). „Duplizieren" übernimmt Wertungsklassen, Zeitplan-Gerüst und Texte eines bestehenden Wettkampfs – keine Personen, Aufgaben oder Speicherstände.</p>
+      <p class="pdfmsg" id="ccMsg" role="status"></p>
+    </div>
+  </div>
+</section>
+
 <!-- ============ ADMIN ============ -->
 <section id="admin" data-views="orga" hidden>
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Nur für Admins</p>
       <h2>Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</h2>
-      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie und Admin-Rechte lassen sich jederzeit ändern.</p>
+      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie, Admin-Rechte und Wettkampf-Zuordnung lassen sich jederzeit ändern.</p>
     </div>
     <div class="tblwrap"><table id="admintab">
-      <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Wettkämpfe</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <p class="pdfmsg" id="adminMsg" role="status"></p>

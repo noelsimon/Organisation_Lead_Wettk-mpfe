@@ -1,6 +1,12 @@
 -- ============================================================
 -- Regieplan Lead-Wettkämpfe — Supabase-Schema
--- Login, Freigabe-Dashboard, feste Rechte je Kategorie.
+-- Login, Freigabe-Dashboard, feste Rechte je Kategorie, mehrere
+-- Wettkämpfe parallel.
+--
+-- Dies ist der Fresh-Install-Stand (neues, leeres Supabase-Projekt).
+-- Für ein bereits laufendes Projekt NICHT dieses ganze Skript erneut
+-- ausführen — die einzelnen Migrations-Blöcke aus dem Chat-Verlauf
+-- (bzw. supabase/migrations/) wurden inkrementell draufgesetzt.
 --
 -- Einmalig im SQL-Editor des Supabase-Projekts ausführen
 -- (Dashboard → SQL Editor → New query → einfügen → Run).
@@ -24,8 +30,9 @@ create table public.profiles (
 
 alter table public.profiles enable row level security;
 
--- security-definer Hilfsfunktionen: lesen profiles unter Umgehung von RLS,
--- damit die Policies unten sich nicht selbst rekursiv aufrufen.
+-- security-definer Hilfsfunktionen: lesen profiles/competition_members unter
+-- Umgehung von RLS, damit die Policies unten sich nicht selbst rekursiv
+-- aufrufen.
 create or replace function public.is_admin()
 returns boolean language sql security definer stable set search_path = public as $$
   select coalesce((select is_admin from public.profiles where id = auth.uid()), false);
@@ -50,7 +57,74 @@ create policy "profiles: eigene Zeile bei Registrierung anlegen" on public.profi
 create policy "profiles: Admin aktualisiert alle" on public.profiles
   for update using (public.is_admin()) with check (true);
 
--- Profil automatisch anlegen, sobald sich jemand registriert – per Trigger auf
+-- ---------- Wettkämpfe ----------
+-- Mehrere Wettkämpfe parallel; jeder hat einen eigenen Link (?w=<slug>).
+-- Der Link ohne Parameter zeigt den Wettkampf mit is_default = true.
+create table public.competitions (
+  id          uuid primary key default gen_random_uuid(),
+  slug        text unique not null,
+  name        text not null,
+  is_default  boolean not null default false,
+  created_by  uuid references public.profiles(id),
+  created_at  timestamptz not null default now()
+);
+alter table public.competitions enable row level security;
+
+create table public.competition_members (
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  profile_id     uuid not null references public.profiles(id) on delete cascade,
+  primary key (competition_id, profile_id)
+);
+alter table public.competition_members enable row level security;
+
+create or replace function public.is_member(c_id uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists(select 1 from public.competition_members where competition_id = c_id and profile_id = auth.uid());
+$$;
+
+-- Prüft für eine Aufgabe (über deren Wettkampf), ob die aufrufende Person
+-- Admin oder Mitglied des zugehörigen Wettkampfs ist — verhindert, dass
+-- jemand über task_assignees/task_comments an einer fremden Aufgabe
+-- vorbei am Wettkampf-Zugriff manipuliert.
+create or replace function public.task_competition_ok(t_id uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists(
+    select 1 from public.tasks t
+    where t.id = t_id and (public.is_admin() or public.is_member(t.competition_id))
+  );
+$$;
+
+-- competitions enthält keine sensiblen Daten (nur Name/Slug/Erstellt-von) und
+-- muss auch VOR dem Login lesbar sein, damit ein Wettkampf-Link (?w=<slug>)
+-- schon auf der Registrierungsmaske aufgelöst werden kann.
+create policy "competitions: alle lesen" on public.competitions
+  for select using (true);
+create policy "competitions: Admin verwaltet" on public.competitions
+  for all using (public.is_admin()) with check (public.is_admin());
+
+create policy "competition_members: Admin verwaltet alle" on public.competition_members
+  for all using (public.is_admin()) with check (public.is_admin());
+create policy "competition_members: eigene Zeilen lesen" on public.competition_members
+  for select using (profile_id = auth.uid());
+
+-- Ohne diese Policy sähe eine nicht-admin Person unter "Zugewiesen an" oder
+-- in der Zuweisen-Auswahl nur ihren eigenen Namen (RLS blockt sonst fremde
+-- profiles-Zeilen) — hier freigegeben für alle, die mindestens einen
+-- Wettkampf gemeinsam haben. security definer, weil sie sonst rekursiv an
+-- der RLS von competition_members selbst scheitern würde.
+create or replace function public.shares_competition_with(other uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists(
+    select 1 from public.competition_members cm1
+    join public.competition_members cm2 on cm1.competition_id = cm2.competition_id
+    where cm1.profile_id = auth.uid() and cm2.profile_id = other
+  );
+$$;
+create policy "profiles: Mitwettkämpfer sehen Basisdaten" on public.profiles
+  for select using (public.shares_competition_with(id));
+
+-- Profil (und bei Registrierung über einen Wettkampf-Link die Mitgliedschaft)
+-- automatisch anlegen, sobald sich jemand registriert – per Trigger auf
 -- auth.users statt per Insert vom Client aus. Läuft serverseitig (security
 -- definer, umgeht RLS) und funktioniert dadurch unabhängig davon, ob bei der
 -- Registrierung schon eine angemeldete Sitzung besteht (z.B. wenn "Confirm
@@ -58,6 +132,8 @@ create policy "profiles: Admin aktualisiert alle" on public.profiles
 -- ein Insert vom Client aus würde dann an der RLS-Policy oben scheitern).
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  comp_id uuid;
 begin
   insert into public.profiles (id, email, full_name, category)
   values (
@@ -67,6 +143,14 @@ begin
     coalesce((new.raw_user_meta_data->>'category')::user_category, 'buffet')
   )
   on conflict (id) do nothing;
+
+  comp_id := nullif(new.raw_user_meta_data->>'competition_id','')::uuid;
+  if comp_id is not null then
+    insert into public.competition_members (competition_id, profile_id)
+    values (comp_id, new.id)
+    on conflict do nothing;
+  end if;
+
   return new;
 end;
 $$;
@@ -76,40 +160,43 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- ---------- Planungsdaten: 1 Zeile je bisherigem localStorage-Key ----------
+-- ---------- Planungsdaten: 1 Zeile je bisherigem localStorage-Key, je Wettkampf ----------
 -- ersetzt kidscup-cfg-v1 / kidscup-quali-v9 / kidscup-finale-v9 / kidscup-texts-v1
 create table public.plan_state (
-  key        text primary key check (key in ('cfg','quali','finale','texts')),
-  data       jsonb not null,
-  updated_at timestamptz not null default now(),
-  updated_by uuid references public.profiles(id)
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  key            text not null check (key in ('cfg','quali','finale','texts')),
+  data           jsonb not null,
+  updated_at     timestamptz not null default now(),
+  updated_by     uuid references public.profiles(id),
+  primary key (competition_id, key)
 );
 alter table public.plan_state enable row level security;
 
-create policy "plan_state: Freigegebene lesen alles" on public.plan_state
-  for select using (public.my_status() = 'approved');
-create policy "plan_state: Orga schreibt Klassen/Zeitplan" on public.plan_state
+create policy "plan_state: Mitglieder oder Admin lesen" on public.plan_state
+  for select using (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id)));
+create policy "plan_state: Orga oder Admin schreibt Klassen/Zeitplan" on public.plan_state
   for all
-  using (public.my_status() = 'approved' and public.my_category() = 'orga' and key in ('cfg','quali','finale'))
-  with check (public.my_status() = 'approved' and public.my_category() = 'orga' and key in ('cfg','quali','finale'));
-create policy "plan_state: Orga und Routenbau schreiben Texte" on public.plan_state
+  using (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id) and key in ('cfg','quali','finale')))
+  with check (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id) and key in ('cfg','quali','finale')));
+create policy "plan_state: Orga/Routenbau/Admin schreiben Texte" on public.plan_state
   for update
-  using (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau'))
-  with check (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau'));
-create policy "plan_state: Orga oder Routenbau legen Texte-Zeile an" on public.plan_state
+  using (public.is_admin() or (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)))
+  with check (public.is_admin() or (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)));
+create policy "plan_state: Orga/Routenbau/Admin legen Texte-Zeile an" on public.plan_state
   for insert
-  with check (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau'));
+  with check (public.is_admin() or (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)));
 
 -- Bekannte Einschränkung: die Trennung "Routenbau darf nur einzelne Textstellen
 -- ändern" wird nur clientseitig durchgesetzt (die UI zeigt nur die für die Rolle
 -- relevanten Textfelder als bearbeitbar) — der 'texts'-Datensatz ist ein einziges
 -- JSON-Objekt, RLS kann nicht auf einzelne Schlüssel darin eingrenzen.
 
--- ---------- Speicherstände ----------
+-- ---------- Speicherstände (je Wettkampf) ----------
 -- id ist text, kein uuid: der Client erzeugt eigene IDs wie "s1a2b3c4d5e6"
 -- (aus der bisherigen Plan-Engine übernommen), das ist kein UUID-Format.
 create table public.stands (
-  id     text primary key,
+  id             text primary key,
+  competition_id uuid not null references public.competitions(id) on delete cascade,
   title  text not null,
   note   text,
   author text,                     -- Anzeigename, wie bisher (kein FK, entspricht meName())
@@ -117,37 +204,40 @@ create table public.stands (
   state  jsonb not null
 );
 alter table public.stands enable row level security;
-create policy "stands: Freigegebene lesen" on public.stands
-  for select using (public.my_status() = 'approved');
-create policy "stands: Orga verwaltet" on public.stands
+create policy "stands: Mitglieder oder Admin lesen" on public.stands
+  for select using (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id)));
+create policy "stands: Orga oder Admin verwaltet" on public.stands
   for all
-  using (public.my_status() = 'approved' and public.my_category() = 'orga')
-  with check (public.my_status() = 'approved' and public.my_category() = 'orga');
+  using (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id)))
+  with check (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id)));
 
--- ---------- Wer war zuletzt hier ----------
+-- ---------- Wer war zuletzt hier (je Wettkampf) ----------
 create table public.viewers (
-  key  uuid primary key,
+  key            uuid not null,
+  competition_id uuid not null references public.competitions(id) on delete cascade,
   name text not null,
   at   timestamptz not null,
   last text,
-  pdf  int not null default 0
+  pdf  int not null default 0,
+  primary key (competition_id, key)
 );
 alter table public.viewers enable row level security;
-create policy "viewers: Freigegebene lesen" on public.viewers
-  for select using (public.my_status() = 'approved');
+create policy "viewers: Mitglieder oder Admin lesen" on public.viewers
+  for select using (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id)));
 create policy "viewers: jede:r schreibt die eigene Zeile" on public.viewers
   for all
-  using (public.my_status() = 'approved' and key = auth.uid())
-  with check (public.my_status() = 'approved' and key = auth.uid());
+  using (public.is_admin() or (public.my_status() = 'approved' and key = auth.uid() and public.is_member(competition_id)))
+  with check (public.is_admin() or (public.my_status() = 'approved' and key = auth.uid() and public.is_member(competition_id)));
 
--- ---------- Aufgaben ----------
+-- ---------- Aufgaben (je Wettkampf) ----------
 -- Orga weist Aufgaben (mit Kategorie-Tag, Dringlichkeit, mehreren
 -- Zugewiesenen) zu; Zugewiesene kommentieren und markieren als erledigt.
 create type task_priority as enum ('niedrig','mittel','hoch');
 create type task_status as enum ('open','done');
 
 create table public.tasks (
-  id          uuid primary key default gen_random_uuid(),
+  id             uuid primary key default gen_random_uuid(),
+  competition_id uuid not null references public.competitions(id) on delete cascade,
   title       text not null,
   description text,
   category    user_category,          -- optionales Filter-Tag, wiederverwendet die Personal-Kategorien
@@ -197,10 +287,10 @@ returns boolean language sql security definer stable set search_path = public as
   select exists(select 1 from public.task_assignees where task_id = t_id and profile_id = auth.uid());
 $$;
 
-create policy "tasks: Orga sieht und verwaltet alle" on public.tasks
+create policy "tasks: Orga oder Admin verwaltet alle" on public.tasks
   for all
-  using (public.my_status()='approved' and public.my_category()='orga')
-  with check (public.my_status()='approved' and public.my_category()='orga');
+  using (public.is_admin() or (public.my_status()='approved' and public.my_category()='orga' and public.is_member(competition_id)))
+  with check (public.is_admin() or (public.my_status()='approved' and public.my_category()='orga' and public.is_member(competition_id)));
 create policy "tasks: Zugewiesene sehen eigene Aufgaben" on public.tasks
   for select using (public.my_status()='approved' and public.is_assigned(id));
 create policy "tasks: Zugewiesene markieren erledigt/offen" on public.tasks
@@ -209,17 +299,17 @@ create policy "tasks: Zugewiesene markieren erledigt/offen" on public.tasks
   with check (public.my_status()='approved' and public.is_assigned(id));
 
 create policy "task_assignees: sichtbar wenn Aufgabe sichtbar" on public.task_assignees
-  for select using (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)));
+  for select using (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)) and public.task_competition_ok(task_id));
 create policy "task_assignees: nur Orga verwaltet" on public.task_assignees
   for all
-  using (public.my_status()='approved' and public.my_category()='orga')
-  with check (public.my_status()='approved' and public.my_category()='orga');
+  using (public.my_status()='approved' and public.my_category()='orga' and public.task_competition_ok(task_id))
+  with check (public.my_status()='approved' and public.my_category()='orga' and public.task_competition_ok(task_id));
 
 create policy "task_comments: sichtbar wenn Aufgabe sichtbar" on public.task_comments
-  for select using (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)));
+  for select using (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)) and public.task_competition_ok(task_id));
 create policy "task_comments: schreiben wenn Aufgabe sichtbar" on public.task_comments
   for insert
-  with check (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)) and author=auth.uid());
+  with check (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)) and author=auth.uid() and public.task_competition_ok(task_id));
 
 -- Bekannte Einschränkung, gleiches Muster wie bei den Texten: Zugewiesene
 -- dürfen die ganze tasks-Zeile updaten (nicht nur status/done_at), weil RLS
@@ -232,7 +322,14 @@ create policy "task_comments: schreiben wenn Aufgabe sichtbar" on public.task_co
 --  2. Edge Function "notify-signup" deployen + Secrets setzen
 --  3. Database → Webhooks: INSERT auf profiles → Edge Function notify-signup
 --  4. src/config.part mit Project URL + anon key füllen, `python3 src/build.py`
---  5. Einmalig dich selbst freischalten (E-Mail anpassen):
+--  5. Einen ersten Wettkampf anlegen (is_default = true), z.B.:
+--       insert into public.competitions (slug, name, is_default)
+--       values ('kidscup2026', 'Kidscup 2026', true);
+--  6. Einmalig dich selbst freischalten + dem Wettkampf zuordnen
+--     (E-Mail anpassen, competitions-ID aus Schritt 5 einsetzen):
 --       update public.profiles set is_admin = true, status = 'approved'
+--       where email = 'deine@mail.de';
+--       insert into public.competition_members (competition_id, profile_id)
+--       select '<competition-id-aus-schritt-5>', id from public.profiles
 --       where email = 'deine@mail.de';
 -- ============================================================

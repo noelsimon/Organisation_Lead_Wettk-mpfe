@@ -308,7 +308,10 @@ body[data-cat]:not([data-cat="orga"]) main section #pdfbtn,
 body[data-cat]:not([data-cat="orga"]) main section #printbtn,
 body[data-cat]:not([data-cat="orga"]) main section#admin input,
 body[data-cat]:not([data-cat="orga"]) main section#admin select,
-body[data-cat]:not([data-cat="orga"]) main section#admin button{
+body[data-cat]:not([data-cat="orga"]) main section#admin button,
+body[data-cat]:not([data-cat="orga"]) main section#compAdmin input,
+body[data-cat]:not([data-cat="orga"]) main section#compAdmin select,
+body[data-cat]:not([data-cat="orga"]) main section#compAdmin button{
   pointer-events:auto; opacity:1; cursor:pointer;
 }
 body[data-cat]:not([data-cat="orga"]):not([data-cat="routenbau"]) .textbar{display:none}
@@ -365,7 +368,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
-  #staende,#admin,#authWrap,#taskBox{display:none !important}
+  #staende,#admin,#compAdmin,#authWrap,#taskBox{display:none !important}
   .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -418,6 +421,8 @@ body.editing{caret-color:var(--ink)}
   <div class="stbar" id="userbar" hidden>
     <span class="lbl mono">Angemeldet als <strong id="ubName"></strong> · <span id="ubCat"></span></span>
     <span style="flex:1"></span>
+    <label class="lbl" for="compSwitch" style="margin-right:4px">Wettkampf</label>
+    <select class="cin sel" id="compSwitch" hidden></select>
     <button class="fbtn" id="btnLogout" type="button">Abmelden</button>
   </div>
 
@@ -453,7 +458,8 @@ body.editing{caret-color:var(--ink)}
       </label>
       <label><button class="fbtn big" id="reGo" type="button">Registrieren</button></label>
     </div>
-    <p class="hint" style="margin:12px 0 0">Nach dem Absenden muss die Orga deine Anmeldung freigeben, bevor du den Plan siehst.</p>
+    <p class="hint" id="regCompName" style="margin:12px 0 0"></p>
+    <p class="hint" style="margin:2px 0 0">Nach dem Absenden muss die Orga deine Anmeldung freigeben, bevor du den Plan siehst.</p>
     <p class="pdfmsg" id="reMsg" role="status"></p>
   </div>
 
@@ -464,6 +470,10 @@ body.editing{caret-color:var(--ink)}
   <div class="note" id="rejectedNote" hidden style="border-left-color:var(--bad)">
     <h4>Zugang abgelehnt</h4>
     <p>Für diesen Account wurde kein Zugriff freigegeben. Wende dich an die Orga, falls das ein Irrtum ist.</p>
+  </div>
+  <div class="note" id="noAccessNote" hidden style="border-left-color:var(--bad)">
+    <h4>Kein Zugriff auf diesen Wettkampf</h4>
+    <p>Dein Account ist freigegeben, aber (noch) keinem Wettkampf unter diesem Link zugeordnet. Wende dich an die Orga, um Zugriff zu bekommen.</p>
   </div>
 </div>
 
@@ -914,16 +924,52 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
+<!-- ============ WETTKÄMPFE (ADMIN) ============ -->
+<section id="compAdmin" data-views="orga" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Nur für Admins</p>
+      <h2>Wettkämpfe anlegen und verwalten</h2>
+      <p class="lede">Jeder Wettkampf hat einen eigenen Link zum Teilen. Personen einem Wettkampf zuordnen geht unten bei den Anmeldungen.</p>
+    </div>
+    <div class="tblwrap"><table id="comptab">
+      <thead><tr><th>Wettkampf</th><th>Link</th><th class="num">Mitglieder</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="toolbar">
+      <button class="fbtn" id="compCreateToggle" type="button">+ Neuer Wettkampf</button>
+    </div>
+    <div class="addbox" id="compCreateBox" hidden>
+      <div class="cfgrow">
+        <label>Name <input class="cin" id="ccName" placeholder="z. B. Kidscup 2027" size="22"></label>
+        <label>Link-Kennung <input class="cin" id="ccSlug" placeholder="kidscup2027" size="18"></label>
+      </div>
+      <div class="cfgrow" style="margin-top:10px">
+        <label><input type="radio" name="ccSrc" value="template" checked> Von Vorlage</label>
+        <label><input type="radio" name="ccSrc" value="dup"> Duplizieren von
+          <select class="cin sel" id="ccDupFrom"></select>
+        </label>
+      </div>
+      <div class="cfgrow" style="margin-top:10px">
+        <label><button class="fbtn" id="ccGo" type="button">Wettkampf anlegen</button></label>
+        <label><button class="fbtn" id="ccCancel" type="button">Abbrechen</button></label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">„Von Vorlage" startet mit den Standard-Wertungsklassen und dem Standard-Zeitplan (wie ein frischer Wettkampf). „Duplizieren" übernimmt Wertungsklassen, Zeitplan-Gerüst und Texte eines bestehenden Wettkampfs – keine Personen, Aufgaben oder Speicherstände.</p>
+      <p class="pdfmsg" id="ccMsg" role="status"></p>
+    </div>
+  </div>
+</section>
+
 <!-- ============ ADMIN ============ -->
 <section id="admin" data-views="orga" hidden>
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Nur für Admins</p>
       <h2>Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</h2>
-      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie und Admin-Rechte lassen sich jederzeit ändern.</p>
+      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie, Admin-Rechte und Wettkampf-Zuordnung lassen sich jederzeit ändern.</p>
     </div>
     <div class="tblwrap"><table id="admintab">
-      <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Wettkämpfe</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <p class="pdfmsg" id="adminMsg" role="status"></p>
@@ -1987,7 +2033,7 @@ document.getElementById("txtReset").onclick=function(){
 var sbClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY &&
                  window.SUPABASE_URL.indexOf("DEIN-PROJEKT")<0)
   ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
-var SESSION=null, PROFILE=null, authTab="login";
+var SESSION=null, PROFILE=null, authTab="login", CURRENT_COMP=null, MYCOMPS=[];
 var CATVIEW={orga:"alles", routenbau:"bau", sicherung:"teams", ergebnisdienst:"teams", buffet:"teams"};
 var CATLABEL={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
 
@@ -1995,13 +2041,48 @@ function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; 
 
 function setAuthState(state){
   document.body.setAttribute("data-auth",state);
-  document.getElementById("userbar").hidden = state!=="ok";
+  document.getElementById("userbar").hidden = state==="locked";
   document.getElementById("authBar").hidden = state!=="locked";
   document.getElementById("loginBox").hidden = state!=="locked" || authTab!=="login";
   document.getElementById("registerBox").hidden = state!=="locked" || authTab!=="register";
   document.getElementById("pendingNote").hidden = state!=="pending";
   document.getElementById("rejectedNote").hidden = state!=="rejected";
+  document.getElementById("noAccessNote").hidden = state!=="no-access";
 }
+
+/* ---- Wettkampf aus der URL auflösen (?w=<slug>, sonst der Standard-Wettkampf) ---- */
+function resolveCompetition(){
+  if(!sbClient) return Promise.resolve();
+  var slug=null;
+  try{ slug=new URLSearchParams(location.search).get("w"); }catch(e){}
+  var q=sbClient.from("competitions").select("id,slug,name");
+  q = slug ? q.eq("slug",slug) : q.eq("is_default",true);
+  return q.maybeSingle().then(function(r){
+    CURRENT_COMP=(r.error||!r.data)?null:r.data;
+  }).catch(function(){ CURRENT_COMP=null; });
+}
+function loadMyCompetitions(){
+  if(!sbClient||!PROFILE) return;
+  var q = PROFILE.is_admin
+    ? sbClient.from("competitions").select("id,slug,name").order("name")
+    : sbClient.from("competition_members").select("competitions(id,slug,name)").eq("profile_id",PROFILE.id);
+  q.then(function(r){
+    if(r.error) return;
+    MYCOMPS = PROFILE.is_admin ? (r.data||[]) : (r.data||[]).map(function(x){return x.competitions;}).filter(Boolean);
+    renderCompSwitch();
+  });
+}
+function renderCompSwitch(){
+  var sel=document.getElementById("compSwitch"); if(!sel) return;
+  if(MYCOMPS.length<2){ sel.hidden=true; return; }
+  sel.hidden=false;
+  sel.innerHTML=MYCOMPS.map(function(c){return '<option value="'+esc(c.slug)+'"'+(CURRENT_COMP&&c.id===CURRENT_COMP.id?" selected":"")+'>'+esc(c.name)+'</option>';}).join("");
+}
+document.getElementById("compSwitch").onchange=function(){
+  var params; try{params=new URLSearchParams(location.search);}catch(e){params=new URLSearchParams();}
+  params.set("w",this.value);
+  location.search=params.toString();
+};
 function showAuthTab(t){
   authTab=t;
   document.getElementById("tabLogin").setAttribute("aria-pressed",t==="login"?"true":"false");
@@ -2013,6 +2094,7 @@ document.getElementById("tabRegister").onclick=function(){showAuthTab("register"
 
 function doRegister(){
   if(!sbClient){ authSay("reMsg","Supabase ist nicht konfiguriert (src/config.part ausfüllen).",true); return; }
+  if(!CURRENT_COMP){ authSay("reMsg","Kein gültiger Wettkampf-Link – bitte den Link zu deinem Wettkampf öffnen.",true); return; }
   var name=document.getElementById("reName").value.trim();
   var email=document.getElementById("reEmail").value.trim();
   var pass=document.getElementById("rePass").value;
@@ -2021,8 +2103,10 @@ function doRegister(){
   authSay("reMsg","Registriere …");
   /* Profil wird serverseitig per DB-Trigger angelegt (siehe supabase/schema.sql,
      handle_new_user) – nicht per Insert vom Client, das würde ohne aktive
-     Sitzung (z.B. bei aktivierter E-Mail-Bestätigung) an der RLS scheitern. */
-  sbClient.auth.signUp({email:email, password:pass, options:{data:{full_name:name, category:cat}}}).then(function(r){
+     Sitzung (z.B. bei aktivierter E-Mail-Bestätigung) an der RLS scheitern.
+     Der Trigger liest competition_id aus den Metadaten und ordnet die
+     Person direkt dem Wettkampf hinter diesem Link zu. */
+  sbClient.auth.signUp({email:email, password:pass, options:{data:{full_name:name, category:cat, competition_id:CURRENT_COMP.id}}}).then(function(r){
     if(r.error){ authSay("reMsg",r.error.message,true); return; }
     if(r.data.session){
       authSay("reMsg","Registriert – warte auf Freigabe durch die Orga.");
@@ -2054,16 +2138,21 @@ function doLogout(){
 }
 document.getElementById("btnLogout").onclick=doLogout;
 
+function renderUserbarIdentity(){
+  if(!PROFILE) return;
+  document.getElementById("ubName").textContent=PROFILE.full_name;
+  document.getElementById("ubCat").textContent=CATLABEL[PROFILE.category]||PROFILE.category;
+}
 function applyCategoryUI(){
   if(!PROFILE) return;
   document.body.setAttribute("data-cat",PROFILE.category);
-  document.getElementById("ubName").textContent=PROFILE.full_name;
-  document.getElementById("ubCat").textContent=CATLABEL[PROFILE.category]||PROFILE.category;
   var hadView=false; try{hadView=!!localStorage.getItem(VIEWKEY);}catch(e){}
   if(!hadView) setView(CATVIEW[PROFILE.category]||"alles");
   var admin=document.getElementById("admin");
   if(admin) admin.hidden=!PROFILE.is_admin;
-  if(PROFILE.is_admin) loadAdmin();
+  var compAdmin=document.getElementById("compAdmin");
+  if(compAdmin) compAdmin.hidden=!PROFILE.is_admin;
+  if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); }
 }
 
 function refreshSession(){
@@ -2076,12 +2165,17 @@ function refreshSession(){
       if(r2.error){ authSay("liMsg","Profil konnte nicht geladen werden: "+r2.error.message,true); setAuthState("locked"); return; }
       if(!r2.data){ authSay("liMsg","Kein Profil zu diesem Account gefunden – neu registrieren?",true); setAuthState("locked"); return; }
       PROFILE=r2.data;
+      renderUserbarIdentity();
       if(PROFILE.status==="pending"){ setAuthState("pending"); return; }
       if(PROFILE.status==="rejected"){ setAuthState("rejected"); return; }
-      applyCategoryUI();
-      setAuthState("ok");
-      initDb(); pullState(); subscribePlanState();
-      loadTasks(); subscribeTasks();
+      resolveCompetition().then(function(){
+        if(!CURRENT_COMP){ setAuthState("no-access"); return; }
+        applyCategoryUI();
+        setAuthState("ok");
+        initDb(); pullState(); subscribePlanState();
+        loadTasks(); subscribeTasks();
+        loadMyCompetitions();
+      });
     }).catch(function(err){ authSay("liMsg","Profil-Abfrage fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
   }).catch(function(err){ authSay("liMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
 }
@@ -2090,7 +2184,7 @@ function refreshSession(){
 var ADMINROWS=[];
 function loadAdmin(){
   if(!sbClient||!PROFILE||!PROFILE.is_admin) return;
-  sbClient.from("profiles").select("*").order("created_at",{ascending:false}).then(function(r){
+  sbClient.from("profiles").select("*, competition_members(competition_id)").order("created_at",{ascending:false}).then(function(r){
     if(r.error){ authSay("adminMsg",r.error.message,true); return; }
     ADMINROWS=r.data||[]; renderAdmin();
   }).catch(function(err){ authSay("adminMsg","Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
@@ -2099,10 +2193,14 @@ function renderAdmin(){
   var body=document.querySelector("#admintab tbody"); if(!body) return;
   var h="";
   ADMINROWS.forEach(function(p){
+    var have=(p.competition_members||[]).map(function(m){return m.competition_id;});
     h+='<tr><td>'+esc(p.full_name)+(p.is_admin?' <span class="pill ok">Admin</span>':'')+'</td>'+
        '<td>'+esc(p.email)+'</td>'+
        '<td><select class="cin sel admcat" data-id="'+esc(p.id)+'">'+
          Object.keys(CATLABEL).map(function(c){return '<option value="'+c+'"'+(c===p.category?" selected":"")+'>'+CATLABEL[c]+'</option>';}).join("")+
+       '</select></td>'+
+       '<td><select class="cin sel admcomp" multiple size="'+Math.min(4,Math.max(2,ALLCOMPS.length||1))+'" data-id="'+esc(p.id)+'" style="min-width:150px">'+
+         ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'"'+(have.indexOf(c.id)>=0?" selected":"")+'>'+esc(c.name)+'</option>';}).join("")+
        '</select></td>'+
        '<td><span class="pill '+(p.status==="approved"?"ok":(p.status==="rejected"?"bad":""))+'">'+esc(p.status)+'</span></td>'+
        '<td class="tm">'+dstr(p.created_at)+'</td>'+
@@ -2112,7 +2210,7 @@ function renderAdmin(){
          '<button class="fbtn admtoggle" type="button" data-id="'+esc(p.id)+'">'+(p.is_admin?"Admin entziehen":"Admin machen")+'</button>'+
        '</td></tr>';
   });
-  if(!ADMINROWS.length) h='<tr><td colspan="6" style="color:var(--muted)">Noch keine Anmeldungen.</td></tr>';
+  if(!ADMINROWS.length) h='<tr><td colspan="7" style="color:var(--muted)">Noch keine Anmeldungen.</td></tr>';
   body.innerHTML=h;
   function upd(id,patch){
     sbClient.from("profiles").update(patch).eq("id",id).then(function(r){
@@ -2137,17 +2235,126 @@ function renderAdmin(){
   Array.prototype.forEach.call(body.querySelectorAll(".admcat"),function(s){
     s.onchange=function(){ upd(this.getAttribute("data-id"),{category:this.value}); };
   });
+  Array.prototype.forEach.call(body.querySelectorAll(".admcomp"),function(s){
+    s.onchange=function(){
+      var id=this.getAttribute("data-id");
+      var wanted=Array.prototype.filter.call(this.options,function(o){return o.selected;}).map(function(o){return o.value;});
+      var p=ADMINROWS.filter(function(x){return x.id===id;})[0];
+      var have=((p&&p.competition_members)||[]).map(function(m){return m.competition_id;});
+      var toAdd=wanted.filter(function(x){return have.indexOf(x)<0;});
+      var toRemove=have.filter(function(x){return wanted.indexOf(x)<0;});
+      var ops=[];
+      if(toAdd.length) ops.push(sbClient.from("competition_members").insert(toAdd.map(function(cid){return {competition_id:cid, profile_id:id};})));
+      toRemove.forEach(function(cid){ ops.push(sbClient.from("competition_members").delete().match({competition_id:cid, profile_id:id})); });
+      Promise.all(ops).then(function(results){
+        var err=results.filter(function(r){return r&&r.error;})[0];
+        if(err){ authSay("adminMsg",err.error.message,true); return; }
+        authSay("adminMsg","Wettkämpfe aktualisiert.");
+        loadAdmin();
+      }).catch(function(err){ authSay("adminMsg","Fehler: "+((err&&err.message)||err),true); });
+    };
+  });
 }
+
+/* ---- Wettkämpfe verwalten (Admin): anlegen, duplizieren, Link kopieren ---- */
+var ALLCOMPS=[], slugTouched=false;
+function ccSay(msg,bad){ authSay("ccMsg",msg,bad); }
+function slugify(s){
+  var map={"ä":"ae","ö":"oe","ü":"ue","ß":"ss"};
+  return String(s).toLowerCase().replace(/[äöüß]/g,function(c){return map[c]||c;})
+    .replace(/[^a-z0-9]+/g,"").slice(0,40);
+}
+function competitionLink(slug){
+  return location.origin+location.pathname+"?w="+encodeURIComponent(slug);
+}
+function loadAllCompetitions(){
+  if(!sbClient||!PROFILE||!PROFILE.is_admin) return;
+  sbClient.from("competitions").select("id,slug,name,is_default,competition_members(profile_id)").order("name").then(function(r){
+    if(r.error) return;
+    ALLCOMPS=r.data||[];
+    renderCompAdmin();
+    renderAdmin();
+  });
+}
+function renderCompAdmin(){
+  var body=document.querySelector("#comptab tbody"); if(!body) return;
+  var h="";
+  ALLCOMPS.forEach(function(c){
+    var link=competitionLink(c.slug);
+    h+='<tr><td>'+esc(c.name)+(c.is_default?' <span class="pill ok">Standard</span>':'')+'</td>'+
+       '<td><span class="mono" style="font-size:12px">'+esc(link)+'</span> <button class="fbtn compcopy" data-link="'+esc(link)+'" type="button">Kopieren</button></td>'+
+       '<td class="num">'+((c.competition_members||[]).length)+'</td>'+
+       '<td></td></tr>';
+  });
+  if(!ALLCOMPS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Wettkampf.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(body.querySelectorAll(".compcopy"),function(b){
+    b.onclick=function(){
+      var link=this.getAttribute("data-link"), btn=this, old=btn.textContent;
+      (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(link):Promise.reject())
+        .then(function(){ btn.textContent="Kopiert!"; setTimeout(function(){btn.textContent=old;},1500); })
+        .catch(function(){ prompt("Link kopieren:",link); });
+    };
+  });
+  var dupSel=document.getElementById("ccDupFrom");
+  if(dupSel) dupSel.innerHTML=ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join("");
+}
+function resetCompForm(){
+  document.getElementById("ccName").value=""; document.getElementById("ccSlug").value="";
+  slugTouched=false;
+  var r=document.querySelector('input[name="ccSrc"][value="template"]'); if(r) r.checked=true;
+  document.getElementById("compCreateBox").hidden=true;
+}
+function createCompetition(){
+  if(!sbClient||!PROFILE) return;
+  var name=document.getElementById("ccName").value.trim();
+  var slug=slugify(document.getElementById("ccSlug").value.trim()||name);
+  var srcEl=document.querySelector('input[name="ccSrc"]:checked');
+  var src=srcEl?srcEl.value:"template";
+  var dupFrom=document.getElementById("ccDupFrom").value;
+  if(!name||!slug){ ccSay("Name und Link-Kennung eingeben.",true); return; }
+  ccSay("Lege an …");
+  sbClient.from("competitions").insert({slug:slug, name:name, created_by:PROFILE.id}).select().single().then(function(r){
+    if(r.error){ ccSay(r.error.message,true); return; }
+    var comp=r.data;
+    var seedP = (src==="dup"&&dupFrom)
+      ? sbClient.from("plan_state").select("key,data").eq("competition_id",dupFrom).then(function(r2){ return r2.data||[]; })
+      : Promise.resolve([
+          {key:"cfg",data:CFG0},
+          {key:"quali",data:{rows:QROWS,groups:QGROUPS,blocks:QBLOCKS,seq:1000}},
+          {key:"finale",data:{rows:FROWS,groups:FGROUPS,blocks:FBLOCKS,seq:1000}},
+          {key:"texts",data:{}}
+        ]);
+    seedP.then(function(rows){
+      var payload=(rows||[]).map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
+      if(!payload.length) return {error:null};
+      return sbClient.from("plan_state").insert(payload);
+    }).then(function(r3){
+      if(r3&&r3.error){ ccSay("Wettkampf angelegt, aber Struktur konnte nicht kopiert werden: "+r3.error.message,true); }
+      else ccSay('Wettkampf „'+name+'" angelegt: '+competitionLink(slug));
+      resetCompForm(); loadAllCompetitions();
+    }).catch(function(err){ ccSay("Fehler beim Anlegen der Struktur: "+((err&&err.message)||err),true); });
+  }).catch(function(err){ ccSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+document.getElementById("ccName").oninput=function(){
+  if(!slugTouched) document.getElementById("ccSlug").value=slugify(this.value);
+};
+document.getElementById("ccSlug").oninput=function(){ slugTouched=true; };
+document.getElementById("compCreateToggle").onclick=function(){
+  document.getElementById("compCreateBox").hidden=!document.getElementById("compCreateBox").hidden;
+};
+document.getElementById("ccCancel").onclick=resetCompForm;
+document.getElementById("ccGo").onclick=createCompetition;
 
 /* ---- Plan-Zustand mit Supabase abgleichen (ersetzt localStorage als Quelle der Wahrheit) ---- */
 function pushState(key,data){
-  if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
-  sbClient.from("plan_state").upsert({key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
+  sbClient.from("plan_state").upsert({competition_id:CURRENT_COMP.id,key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
     .then(function(r){ if(r.error) console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); });
 }
 function pullState(){
-  if(!sbClient) return;
-  sbClient.from("plan_state").select("key,data").then(function(r){
+  if(!sbClient||!CURRENT_COMP) return;
+  sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
     if(r.error||!r.data) return;
     var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
     if(by.cfg&&by.quali&&by.finale){
@@ -2163,9 +2370,9 @@ function pullState(){
 }
 var planSub=null;
 function subscribePlanState(){
-  if(!sbClient||planSub) return;
+  if(!sbClient||planSub||!CURRENT_COMP) return;
   planSub=sbClient.channel("plan_state-changes")
-    .on("postgres_changes",{event:"*",schema:"public",table:"plan_state"},function(){ pullState(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"plan_state",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ pullState(); })
     .subscribe();
 }
 
@@ -2195,9 +2402,10 @@ var taskBoxEl=document.getElementById("taskBox");
 if(taskBoxEl) taskBoxEl.addEventListener("toggle",function(){ if(this.open) markTasksSeen(); });
 
 function loadTasks(){
-  if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
   sbClient.from("tasks")
     .select("*, task_assignees(profile_id, profiles(full_name)), task_comments(id,author,body,created_at, profiles(full_name))")
+    .eq("competition_id",CURRENT_COMP.id)
     .order("created_at",{ascending:false})
     .then(function(r){
       if(r.error){ console.warn("Aufgaben laden fehlgeschlagen:",r.error.message); return; }
@@ -2210,19 +2418,24 @@ function loadTasks(){
 }
 var taskSub=null;
 function subscribeTasks(){
-  if(!sbClient||taskSub) return;
+  if(!sbClient||taskSub||!CURRENT_COMP) return;
+  /* task_assignees/task_comments haben keine eigene competition_id-Spalte
+     (nur über task_id) – Realtime kann dort nicht serverseitig filtern;
+     loadTasks() filtert beim Nachladen aber ohnehin auf CURRENT_COMP. */
   taskSub=sbClient.channel("tasks-changes")
-    .on("postgres_changes",{event:"*",schema:"public",table:"tasks"},function(){ loadTasks(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"tasks",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ loadTasks(); })
     .on("postgres_changes",{event:"*",schema:"public",table:"task_assignees"},function(){ loadTasks(); })
     .on("postgres_changes",{event:"*",schema:"public",table:"task_comments"},function(){ loadTasks(); })
     .subscribe();
 }
 
 function loadAssigneeOptions(){
-  if(!sbClient||!PROFILE||PROFILE.category!=="orga") return;
-  sbClient.from("profiles").select("id,full_name,category").eq("status","approved").order("full_name").then(function(r){
+  if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!CURRENT_COMP) return;
+  sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",CURRENT_COMP.id).then(function(r){
     if(r.error) return;
-    APPROVEDPROFILES=r.data||[];
+    APPROVEDPROFILES=(r.data||[]).map(function(x){return x.profiles;})
+      .filter(function(p){return p&&p.status==="approved";})
+      .sort(function(a,b){return String(a.full_name).localeCompare(String(b.full_name));});
     var s=document.getElementById("tkAssignees"); if(!s) return;
     s.innerHTML=APPROVEDPROFILES.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.full_name)+' ('+esc(CATSHORT[p.category]||p.category)+')</option>';}).join("");
   });
@@ -2327,7 +2540,7 @@ function renderTasks(){
 }
 
 function createTask(){
-  if(!sbClient||!PROFILE) return;
+  if(!sbClient||!PROFILE||!CURRENT_COMP) return;
   var title=document.getElementById("tkTitle").value.trim();
   var desc=document.getElementById("tkDesc").value.trim();
   var cat=document.getElementById("tkCat").value||null;
@@ -2336,7 +2549,7 @@ function createTask(){
   var ids=Array.prototype.filter.call(sel.options,function(o){return o.selected;}).map(function(o){return o.value;});
   if(!title){ taskSay("Titel eingeben.",true); return; }
   taskSay("Lege an …");
-  sbClient.from("tasks").insert({title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
+  sbClient.from("tasks").insert({competition_id:CURRENT_COMP.id, title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
     .select().single().then(function(r){
       if(r.error){ taskSay(r.error.message,true); return; }
       var taskId=r.data.id;
@@ -2375,7 +2588,15 @@ document.getElementById("tkViewCols").onclick=function(){ setTaskView("cols"); }
 
 function initAuth(){
   if(!sbClient){ setAuthState("locked"); authSay("liMsg","Supabase ist nicht konfiguriert – src/config.part ausfüllen.",true); return; }
-  sbClient.auth.onAuthStateChange(function(){ refreshSession(); });
+  /* Wettkampf aus dem Link (?w=<slug>) muss schon VOR dem Login feststehen,
+     damit sich jemand über einen Wettkampf-Link genau dafür registrieren
+     kann (competitions ist öffentlich lesbar, siehe schema.sql). */
+  resolveCompetition().then(function(){
+    var n=document.getElementById("regCompName");
+    if(n) n.textContent=CURRENT_COMP?("Für: "+CURRENT_COMP.name):"Kein gültiger Wettkampf-Link – bitte den Link zu deinem Wettkampf öffnen.";
+    var go=document.getElementById("reGo"); if(go) go.disabled=!CURRENT_COMP;
+    sbClient.auth.onAuthStateChange(function(){ refreshSession(); });
+  });
 }
 
 /* ================= Speicherstände ================= */
@@ -2502,8 +2723,9 @@ function makeSupabaseDB(){
     collection:function(name){
       return {
         onSnapshot:function(cb,errCb){
+          if(!CURRENT_COMP) return;
           function pull(){
-            sbClient.from(name).select("*").then(function(r){
+            sbClient.from(name).select("*").eq("competition_id",CURRENT_COMP.id).then(function(r){
               if(r.error){ if(errCb) errCb(r.error); return; }
               cb({docs:(r.data||[]).map(function(row){
                 return {id:(name==="viewers"?row.key:row.id), data:function(){return row;}};
@@ -2512,7 +2734,7 @@ function makeSupabaseDB(){
           }
           pull();
           sbClient.channel(name+"-changes")
-            .on("postgres_changes",{event:"*",schema:"public",table:name},pull)
+            .on("postgres_changes",{event:"*",schema:"public",table:name,filter:"competition_id=eq."+CURRENT_COMP.id},pull)
             .subscribe();
         }
       };
@@ -2521,12 +2743,15 @@ function makeSupabaseDB(){
       var d=parts(path);
       return {
         set:function(obj){
+          if(!CURRENT_COMP) return Promise.reject(new Error("kein Wettkampf ausgewählt"));
           var row={}; for(var k in obj) row[k]=obj[k];
+          row.competition_id=CURRENT_COMP.id;
           if(d.table==="viewers") row.key=d.id; else row.id=d.id;
           return sbClient.from(d.table).upsert(row).then(function(r){ if(r.error) throw r.error; });
         },
         delete:function(){
-          var col=(d.table==="viewers")?"key":"id", q={}; q[col]=d.id;
+          if(!CURRENT_COMP) return Promise.reject(new Error("kein Wettkampf ausgewählt"));
+          var col=(d.table==="viewers")?"key":"id", q={}; q[col]=d.id; q.competition_id=CURRENT_COMP.id;
           return sbClient.from(d.table).delete().match(q).then(function(r){ if(r.error) throw r.error; });
         }
       };
@@ -2535,7 +2760,7 @@ function makeSupabaseDB(){
 }
 var dbInited=false;
 function initDb(){
-  if(!sbClient||!PROFILE||PROFILE.status!=="approved"){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP){
     DBSTATE="nicht verfügbar"; loadLocalStands(); renderStands(); return;
   }
   if(dbInited){ renderStands(); logMe("geöffnet"); return; }
