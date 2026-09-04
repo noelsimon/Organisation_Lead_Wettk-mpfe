@@ -106,8 +106,10 @@ create policy "plan_state: Orga oder Routenbau legen Texte-Zeile an" on public.p
 -- JSON-Objekt, RLS kann nicht auf einzelne Schlüssel darin eingrenzen.
 
 -- ---------- Speicherstände ----------
+-- id ist text, kein uuid: der Client erzeugt eigene IDs wie "s1a2b3c4d5e6"
+-- (aus der bisherigen Plan-Engine übernommen), das ist kein UUID-Format.
 create table public.stands (
-  id     uuid primary key default gen_random_uuid(),
+  id     text primary key,
   title  text not null,
   note   text,
   author text,                     -- Anzeigename, wie bisher (kein FK, entspricht meName())
