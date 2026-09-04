@@ -2817,10 +2817,15 @@ function sendChatMessage(){
   var body=inp.value.trim(); if(!body) return;
   var compId = chatCurrentConv.kind==="group" ? chatCurrentConv.competition_id : (chatCompFilter||(CURRENT_COMP&&CURRENT_COMP.id)||null);
   chatSay("Sende …");
-  sbClient.from("chat_messages").insert({conversation_id:chatCurrentConv.id, competition_id:compId, sender_id:PROFILE.id, body:body}).then(function(r){
+  sbClient.from("chat_messages").insert({conversation_id:chatCurrentConv.id, competition_id:compId, sender_id:PROFILE.id, body:body})
+    .select().single().then(function(r){
     if(r.error){ chatSay("Nachricht fehlgeschlagen: "+r.error.message,true); return; }
     chatSay("");
     inp.value="";
+    /* eigene Nachricht zählt nicht als "ungelesen" für einen selbst –
+       Zeitstempel vom Server nehmen, nicht die Client-Uhr (Uhrzeit-Drift). */
+    CHATSEEN[chatCurrentConv.id]=r.data.created_at;
+    try{localStorage.setItem(CHATSEENKEY,JSON.stringify(CHATSEEN));}catch(e){}
     loadThread(chatCurrentConv.id,true);
     loadConversations();
   }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
