@@ -742,6 +742,7 @@ function renderPeople(){
   });
   if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
+  renderStats();
   function upd(sel,fn){
     Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){
       el.onchange=function(){
@@ -784,13 +785,12 @@ function teamPeopleHtml(idx){
   return Object.keys(by).map(function(k){
     return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
 }
-var HELFERIST=0;
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};
   function set(id,v){var el=document.getElementById(id); if(el) el.textContent=v;}
   set("stAth",totalAth());
   set("stRoutes",pq.rows.length+pf.rows.length);
-  set("stHelferIst",HELFERIST);
+  set("stHelferIst",CFG.people.length);
   var soll=document.getElementById("stHelferSoll");
   if(soll&&document.activeElement!==soll) soll.value=CFG.helferSoll||0;
   var tlist=TASKS||[];
@@ -1222,7 +1222,6 @@ function refreshSession(){
         setAuthState("ok");
         initDb(); pullState(); subscribePlanState();
         loadTasks(); subscribeTasks();
-        loadHelperCount();
         loadMyCompetitions();
         loadConversations(); subscribeChat();
         var bub=document.getElementById("chatBubble"); if(bub) bub.hidden=false;
@@ -1485,14 +1484,6 @@ function subscribeTasks(){
     .subscribe();
 }
 
-function loadHelperCount(){
-  if(!sbClient||!PROFILE||!CURRENT_COMP) return;
-  sbClient.from("competition_members").select("profiles(status)").eq("competition_id",CURRENT_COMP.id).then(function(r){
-    if(r.error) return;
-    HELFERIST=(r.data||[]).filter(function(x){return x.profiles&&x.profiles.status==="approved";}).length;
-    renderStats();
-  });
-}
 function loadAssigneeOptions(compId){
   if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!compId) return;
   sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",compId).then(function(r){
@@ -2530,7 +2521,14 @@ function clearSearchHighlights(){
     var t=document.createTextNode(m.textContent);
     m.parentNode.replaceChild(t,m);
   });
+  document.querySelectorAll("main .search-field-hit").forEach(function(el){
+    el.classList.remove("search-field-hit","current");
+  });
   searchMatches=[]; searchIdx=-1;
+}
+function fieldSearchText(el){
+  if(el.tagName==="SELECT"){ var o=el.options[el.selectedIndex]; return o?o.text:""; }
+  return el.value||"";
 }
 function updateSearchCount(){
   var counter=document.getElementById("searchCount");
@@ -2578,6 +2576,24 @@ function runSearch(){
       if(m.index===re.lastIndex) re.lastIndex++;
     }
     if(any){ frag.appendChild(document.createTextNode(text.slice(lastIdx))); tn.parentNode.replaceChild(frag,tn); }
+  });
+  /* Große Teile der Seite sind editierbare Felder (Klassen-/Routennamen, Zahlen,
+     Auswahllisten) – deren Wert steckt nicht in einem Textknoten und würde von
+     der TreeWalker-Suche oben sonst gar nicht gefunden. */
+  var needle=term.toLowerCase();
+  main.querySelectorAll("input, textarea, select").forEach(function(el){
+    if(el===pageSearchEl) return;
+    var txt=fieldSearchText(el);
+    if(txt&&txt.toLowerCase().indexOf(needle)>=0){
+      el.classList.add("search-field-hit");
+      searchMatches.push(el);
+    }
+  });
+  searchMatches.sort(function(a,b){
+    var pos=a.compareDocumentPosition(b);
+    if(pos&Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+    if(pos&Node.DOCUMENT_POSITION_PRECEDING) return 1;
+    return 0;
   });
   updateSearchCount();
   if(searchMatches.length) jumpToMatch(0);

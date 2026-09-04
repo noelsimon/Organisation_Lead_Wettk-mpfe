@@ -70,10 +70,11 @@ h1{font-family:var(--disp); font-weight:600; letter-spacing:-.005em; font-size:c
 .dek strong{color:var(--ink); font-weight:600}
 .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:1px; background:var(--line); border-top:1px solid var(--line); margin-top:34px}
 .stat{background:var(--surface); padding:16px 4px 18px}
-.stat b{display:block; font-family:var(--mono); font-weight:500; font-size:23px; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
-.stat span{display:block; font-family:var(--disp); font-size:11px; font-weight:400; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-top:3px}
-.stat-edit{font-family:inherit; font-weight:inherit; font-size:inherit; letter-spacing:inherit; width:2.4em; text-align:center;
-  border:none; border-bottom:1px dashed var(--line-strong); background:transparent; color:inherit; padding:0;
+.stat{text-align:center}
+.stat b{display:block; font-family:var(--mono); font-weight:500; font-size:23px; letter-spacing:-.02em; font-variant-numeric:tabular-nums; white-space:nowrap}
+.stat>span{display:block; font-family:var(--disp); font-size:11px; font-weight:400; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-top:3px}
+.stat-edit{font-family:inherit; font-weight:inherit; font-size:.85em; letter-spacing:inherit; width:1.7em; text-align:center;
+  border:none; border-bottom:1px dashed var(--line-strong); background:transparent; color:inherit; padding:0; vertical-align:baseline;
   -moz-appearance:textfield}
 .stat-edit::-webkit-outer-spin-button,.stat-edit::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 .stat-edit:disabled{border-bottom-color:transparent; opacity:.75; cursor:default}
@@ -255,6 +256,8 @@ footer p{max-width:74ch; margin-bottom:8px}
 #searchCount{min-width:64px}
 mark.search-hit{background:#ffd54a; color:#141815; border-radius:2px; padding:0 1px}
 mark.search-hit.current{background:#ff9800}
+.search-field-hit{outline:2px solid #ffd54a !important; outline-offset:1px}
+.search-field-hit.current{outline-color:#ff9800 !important}
 /* ---------- Abschnitte einklappen ---------- */
 .sec-head{position:relative; padding-right:36px}
 .sec-toggle{position:absolute; top:0; right:0; width:26px; height:26px; padding:0; border-radius:50%;
@@ -470,7 +473,7 @@ body.editing{caret-color:var(--ink)}
     <div class="stats">
       <div class="stat"><b id="stAth">67</b><span>Athlet*innen</span></div>
       <div class="stat"><b id="stRoutes">18</b><span>Routen</span></div>
-      <div class="stat"><b><span id="stHelferIst">0</span> / <input class="stat-edit" id="stHelferSoll" type="number" min="0" max="999" value="0" title="Benötigte Helferzahl (Soll) eintragen"></b><span>Helfer Ist / Soll</span></div>
+      <div class="stat"><b><span id="stHelferIst" title="Erfasste Personen im Abschnitt „Personal“">0</span>/<input class="stat-edit" id="stHelferSoll" type="number" min="0" max="999" value="0" title="Zielzahl eintragen – wie viele Helfer insgesamt gebraucht werden"></b><span>Helfer Ist / Soll</span></div>
       <div class="stat"><b id="stTasks">0 / 0</b><span>Aufgaben offen / erledigt</span></div>
       <div class="stat"><b id="stTeams">7</b><span>Routen-Teams</span></div>
       <div class="stat"><b id="stPers">21</b><span>Personen im Peak</span></div>
