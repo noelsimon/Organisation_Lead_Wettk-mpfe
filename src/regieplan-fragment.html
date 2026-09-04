@@ -266,6 +266,29 @@ body:not([data-auth="ok"]) main{display:none}
 #authWrap{padding:26px 0}
 #authWrap .note{margin:0 0 14px}
 
+/* ---------- Aufgaben ---------- */
+.task-box{background:var(--surface); border:1px solid var(--line-strong); border-radius:3px;
+  box-shadow:var(--shadow); margin:18px 0 0}
+.task-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px;
+  padding:12px 16px; font-family:var(--disp); font-weight:500; font-size:14px}
+.task-summary::-webkit-details-marker{display:none}
+.task-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
+.task-box[open] .task-summary::before{transform:rotate(90deg)}
+.task-body{padding:0 16px 16px}
+.task-card{background:var(--sunken); border:1px solid var(--line); border-radius:3px;
+  padding:14px 16px; margin:0 0 12px}
+.task-card-head{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px}
+.task-card-head b{font-family:var(--disp); font-weight:500; font-size:15px}
+.task-card .hint{margin:4px 0}
+.task-comments{margin:10px 0; display:flex; flex-direction:column; gap:6px}
+.task-comment{font-size:13.5px; background:var(--surface); border:1px solid var(--line);
+  border-radius:2px; padding:6px 9px}
+.task-comment b{font-family:var(--disp); font-weight:500}
+.task-comment .tm{color:var(--muted); font-size:11.5px}
+.pill.prio-hoch{color:var(--bad); border-color:var(--bad)}
+.pill.prio-niedrig{color:var(--muted)}
+.pill.status-done{color:var(--ok); border-color:var(--ok)}
+
 /* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
    Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
 body[data-cat]:not([data-cat="orga"]) main section input,
@@ -336,7 +359,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
-  #staende,#admin,#authWrap{display:none !important}
+  #staende,#admin,#authWrap,#taskBox{display:none !important}
   .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -455,6 +478,51 @@ body.editing{caret-color:var(--ink)}
     <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
     <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
   </div>
+</div>
+
+<div class="wrap">
+  <details id="taskBox" class="task-box">
+    <summary class="task-summary"><span>Aufgaben</span><span class="pill" id="taskBadge">–</span></summary>
+    <div class="task-body">
+      <div class="toolbar" id="taskToolbar" hidden>
+        <button class="fbtn" id="tkCreateToggle" type="button">+ Aufgabe</button>
+      </div>
+      <div class="addbox" id="taskCreateBox" hidden>
+        <div class="cfgrow">
+          <label>Titel <input class="cin" id="tkTitle" size="22"></label>
+          <label>Beschreibung <input class="cin" id="tkDesc" size="28"></label>
+          <label>Kategorie
+            <select class="cin sel" id="tkCat">
+              <option value="">–</option>
+              <option value="orga">Orga-Team</option>
+              <option value="sicherung">Sicherung</option>
+              <option value="ergebnisdienst">Ergebnisdienst</option>
+              <option value="routenbau">Routenbau</option>
+              <option value="buffet">Buffet</option>
+            </select>
+          </label>
+          <label>Dringlichkeit
+            <select class="cin sel" id="tkPrio">
+              <option value="niedrig">niedrig</option>
+              <option value="mittel" selected>mittel</option>
+              <option value="hoch">hoch</option>
+            </select>
+          </label>
+        </div>
+        <div class="cfgrow" style="margin-top:10px; align-items:flex-start">
+          <label style="align-items:flex-start">Zugewiesen an
+            <select class="cin sel" id="tkAssignees" multiple size="5" style="min-width:200px"></select>
+          </label>
+          <label><button class="fbtn" id="tkGo" type="button">Aufgabe anlegen</button></label>
+          <label><button class="fbtn" id="tkCancel" type="button">Abbrechen</button></label>
+        </div>
+        <p class="hint" style="margin:10px 0 0">Mehrfachauswahl mit Strg/Cmd-Klick.</p>
+        <p class="pdfmsg" id="tkMsg" role="status"></p>
+      </div>
+      <div id="taskList"></div>
+      <p class="hint" id="taskEmpty" hidden>Keine Aufgaben.</p>
+    </div>
+  </details>
 </div>
 
 <!-- ============ WERTUNGSKLASSEN ============ -->
@@ -1981,6 +2049,7 @@ function refreshSession(){
       applyCategoryUI();
       setAuthState("ok");
       initDb(); pullState(); subscribePlanState();
+      loadTasks(); subscribeTasks();
     }).catch(function(err){ authSay("liMsg","Profil-Abfrage fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
   }).catch(function(err){ authSay("liMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
 }
@@ -2067,6 +2136,144 @@ function subscribePlanState(){
     .on("postgres_changes",{event:"*",schema:"public",table:"plan_state"},function(){ pullState(); })
     .subscribe();
 }
+
+/* ================= Aufgaben ================= */
+var TASKS=[], APPROVEDPROFILES=[];
+var PRIOLABEL={niedrig:"niedrig", mittel:"mittel", hoch:"hoch"};
+var CATSHORT={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
+
+function taskSay(msg,bad){ authSay("tkMsg",msg,bad); }
+
+function loadTasks(){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
+  sbClient.from("tasks")
+    .select("*, task_assignees(profile_id, profiles(full_name)), task_comments(id,author,body,created_at, profiles(full_name))")
+    .order("created_at",{ascending:false})
+    .then(function(r){
+      if(r.error){ console.warn("Aufgaben laden fehlgeschlagen:",r.error.message); return; }
+      TASKS=r.data||[];
+      TASKS.forEach(function(t){
+        (t.task_comments||[]).sort(function(a,b){return String(a.created_at).localeCompare(String(b.created_at));});
+      });
+      renderTasks();
+    }).catch(function(err){ console.warn("Aufgaben laden fehlgeschlagen:",err); });
+}
+var taskSub=null;
+function subscribeTasks(){
+  if(!sbClient||taskSub) return;
+  taskSub=sbClient.channel("tasks-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"tasks"},function(){ loadTasks(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"task_assignees"},function(){ loadTasks(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"task_comments"},function(){ loadTasks(); })
+    .subscribe();
+}
+
+function loadAssigneeOptions(){
+  if(!sbClient||!PROFILE||PROFILE.category!=="orga") return;
+  sbClient.from("profiles").select("id,full_name,category").eq("status","approved").order("full_name").then(function(r){
+    if(r.error) return;
+    APPROVEDPROFILES=r.data||[];
+    var s=document.getElementById("tkAssignees"); if(!s) return;
+    s.innerHTML=APPROVEDPROFILES.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.full_name)+' ('+esc(CATSHORT[p.category]||p.category)+')</option>';}).join("");
+  });
+}
+
+function renderTasks(){
+  var box=document.getElementById("taskList"); if(!box) return;
+  var openN=TASKS.filter(function(t){return t.status==="open";}).length;
+  var badge=document.getElementById("taskBadge");
+  if(badge) badge.textContent=openN+" offen"+(TASKS.length?" · "+TASKS.length+" gesamt":"");
+  var isOrga=!!(PROFILE&&PROFILE.category==="orga");
+  var toolbar=document.getElementById("taskToolbar"); if(toolbar) toolbar.hidden=!isOrga;
+  document.getElementById("taskEmpty").hidden=!!TASKS.length;
+  var h="";
+  TASKS.forEach(function(t){
+    var names=(t.task_assignees||[]).map(function(a){return a.profiles&&a.profiles.full_name;}).filter(Boolean).join(", ")||"—";
+    var comments=(t.task_comments||[]).map(function(c){
+      return '<div class="task-comment"><b>'+esc((c.profiles&&c.profiles.full_name)||"?")+'</b> <span class="tm">'+dstr(c.created_at)+'</span><br>'+esc(c.body)+'</div>';
+    }).join("");
+    h+='<div class="task-card" data-id="'+esc(t.id)+'">'+
+       '<div class="task-card-head"><b>'+esc(t.title)+'</b>'+
+       '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
+       (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
+       '<span class="pill'+(t.status==="done"?" status-done":"")+'">'+(t.status==="done"?"erledigt":"offen")+'</span>'+
+       '</div>'+
+       (t.description?'<p>'+esc(t.description)+'</p>':'')+
+       '<p class="hint">Zugewiesen: '+esc(names)+'</p>'+
+       '<div class="task-comments">'+comments+'</div>'+
+       '<div class="cfgrow">'+
+         '<input class="cin" type="text" placeholder="Notiz …" data-comment-input="'+esc(t.id)+'" size="26">'+
+         '<button class="fbtn" data-comment-send="'+esc(t.id)+'" type="button">Senden</button>'+
+         '<button class="fbtn" data-toggle-done="'+esc(t.id)+'" type="button">'+(t.status==="done"?"Wieder öffnen":"Erledigt")+'</button>'+
+         (isOrga?'<button class="fbtn rdel-tk" data-task-del="'+esc(t.id)+'" type="button" title="Aufgabe löschen">×</button>':'')+
+       '</div></div>';
+  });
+  box.innerHTML=h;
+  Array.prototype.forEach.call(box.querySelectorAll("[data-comment-send]"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-comment-send");
+      var inp=box.querySelector('[data-comment-input="'+id+'"]');
+      var body=inp&&inp.value.trim(); if(!body) return;
+      sbClient.from("task_comments").insert({task_id:id, author:PROFILE.id, body:body}).then(function(r){
+        if(r.error){ console.warn("Notiz fehlgeschlagen:",r.error.message); return; }
+        if(inp) inp.value=""; loadTasks();
+      });
+    };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll("[data-toggle-done]"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-toggle-done");
+      var t=TASKS.filter(function(x){return x.id===id;})[0]; if(!t) return;
+      var toDone=t.status!=="done";
+      sbClient.from("tasks").update(toDone?{status:"done",done_at:new Date().toISOString(),done_by:PROFILE.id}:{status:"open",done_at:null,done_by:null}).eq("id",id)
+        .then(function(r){ if(r.error) console.warn("Status ändern fehlgeschlagen:",r.error.message); else loadTasks(); });
+    };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll("[data-task-del]"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-task-del");
+      if(!confirm("Diese Aufgabe wirklich löschen?")) return;
+      sbClient.from("tasks").delete().eq("id",id).then(function(r){
+        if(r.error) console.warn("Löschen fehlgeschlagen:",r.error.message); else loadTasks();
+      });
+    };
+  });
+}
+
+function createTask(){
+  if(!sbClient||!PROFILE) return;
+  var title=document.getElementById("tkTitle").value.trim();
+  var desc=document.getElementById("tkDesc").value.trim();
+  var cat=document.getElementById("tkCat").value||null;
+  var prio=document.getElementById("tkPrio").value;
+  var sel=document.getElementById("tkAssignees");
+  var ids=Array.prototype.filter.call(sel.options,function(o){return o.selected;}).map(function(o){return o.value;});
+  if(!title){ taskSay("Titel eingeben.",true); return; }
+  taskSay("Lege an …");
+  sbClient.from("tasks").insert({title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
+    .select().single().then(function(r){
+      if(r.error){ taskSay(r.error.message,true); return; }
+      var taskId=r.data.id;
+      if(!ids.length){ taskSay("Aufgabe angelegt."); resetTaskForm(); loadTasks(); return; }
+      sbClient.from("task_assignees").insert(ids.map(function(pid){return {task_id:taskId, profile_id:pid};})).then(function(r2){
+        if(r2.error){ taskSay("Angelegt, aber Zuweisung fehlgeschlagen: "+r2.error.message,true); return; }
+        taskSay("Aufgabe angelegt."); resetTaskForm(); loadTasks();
+      });
+    }).catch(function(err){ taskSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function resetTaskForm(){
+  document.getElementById("tkTitle").value=""; document.getElementById("tkDesc").value="";
+  document.getElementById("tkCat").value=""; document.getElementById("tkPrio").value="mittel";
+  var sel=document.getElementById("tkAssignees"); if(sel) Array.prototype.forEach.call(sel.options,function(o){o.selected=false;});
+  document.getElementById("taskCreateBox").hidden=true;
+}
+document.getElementById("tkCreateToggle").onclick=function(){
+  var box=document.getElementById("taskCreateBox");
+  box.hidden=!box.hidden;
+  if(!box.hidden) loadAssigneeOptions();
+};
+document.getElementById("tkCancel").onclick=resetTaskForm;
+document.getElementById("tkGo").onclick=createTask;
 
 function initAuth(){
   if(!sbClient){ setAuthState("locked"); authSay("liMsg","Supabase ist nicht konfiguriert – src/config.part ausfüllen.",true); return; }

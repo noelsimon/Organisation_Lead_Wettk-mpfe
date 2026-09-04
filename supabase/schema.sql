@@ -140,6 +140,77 @@ create policy "viewers: jede:r schreibt die eigene Zeile" on public.viewers
   using (public.my_status() = 'approved' and key = auth.uid())
   with check (public.my_status() = 'approved' and key = auth.uid());
 
+-- ---------- Aufgaben ----------
+-- Orga weist Aufgaben (mit Kategorie-Tag, Dringlichkeit, mehreren
+-- Zugewiesenen) zu; Zugewiesene kommentieren und markieren als erledigt.
+create type task_priority as enum ('niedrig','mittel','hoch');
+create type task_status as enum ('open','done');
+
+create table public.tasks (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  description text,
+  category    user_category,          -- optionales Filter-Tag, wiederverwendet die Personal-Kategorien
+  priority    task_priority not null default 'mittel',
+  status      task_status not null default 'open',
+  created_by  uuid references public.profiles(id),
+  created_at  timestamptz not null default now(),
+  done_at     timestamptz,
+  done_by     uuid references public.profiles(id)
+);
+alter table public.tasks enable row level security;
+
+create table public.task_assignees (
+  task_id    uuid not null references public.tasks(id) on delete cascade,
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  primary key (task_id, profile_id)
+);
+alter table public.task_assignees enable row level security;
+
+create table public.task_comments (
+  id         uuid primary key default gen_random_uuid(),
+  task_id    uuid not null references public.tasks(id) on delete cascade,
+  author     uuid references public.profiles(id),
+  body       text not null,
+  created_at timestamptz not null default now()
+);
+alter table public.task_comments enable row level security;
+
+-- Hilfsfunktion: bin ich einer bestimmten Aufgabe zugewiesen?
+create or replace function public.is_assigned(t_id uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists(select 1 from public.task_assignees where task_id = t_id and profile_id = auth.uid());
+$$;
+
+create policy "tasks: Orga sieht und verwaltet alle" on public.tasks
+  for all
+  using (public.my_status()='approved' and public.my_category()='orga')
+  with check (public.my_status()='approved' and public.my_category()='orga');
+create policy "tasks: Zugewiesene sehen eigene Aufgaben" on public.tasks
+  for select using (public.my_status()='approved' and public.is_assigned(id));
+create policy "tasks: Zugewiesene markieren erledigt/offen" on public.tasks
+  for update
+  using (public.my_status()='approved' and public.is_assigned(id))
+  with check (public.my_status()='approved' and public.is_assigned(id));
+
+create policy "task_assignees: sichtbar wenn Aufgabe sichtbar" on public.task_assignees
+  for select using (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)));
+create policy "task_assignees: nur Orga verwaltet" on public.task_assignees
+  for all
+  using (public.my_status()='approved' and public.my_category()='orga')
+  with check (public.my_status()='approved' and public.my_category()='orga');
+
+create policy "task_comments: sichtbar wenn Aufgabe sichtbar" on public.task_comments
+  for select using (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)));
+create policy "task_comments: schreiben wenn Aufgabe sichtbar" on public.task_comments
+  for insert
+  with check (public.my_status()='approved' and (public.my_category()='orga' or public.is_assigned(task_id)) and author=auth.uid());
+
+-- Bekannte Einschränkung, gleiches Muster wie bei den Texten: Zugewiesene
+-- dürfen die ganze tasks-Zeile updaten (nicht nur status/done_at), weil RLS
+-- keine Spalten einschränkt. Die Oberfläche zeigt Zugewiesenen aber nur den
+-- Erledigt-Umschalter, nicht die Bearbeitungsfelder von Orga.
+
 -- ============================================================
 -- Danach in der README weiterlesen:
 --  1. Auth → Providers → Email aktivieren (Confirm email nach Bedarf)

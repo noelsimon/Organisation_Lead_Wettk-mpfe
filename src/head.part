@@ -257,6 +257,29 @@ body:not([data-auth="ok"]) main{display:none}
 #authWrap{padding:26px 0}
 #authWrap .note{margin:0 0 14px}
 
+/* ---------- Aufgaben ---------- */
+.task-box{background:var(--surface); border:1px solid var(--line-strong); border-radius:3px;
+  box-shadow:var(--shadow); margin:18px 0 0}
+.task-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px;
+  padding:12px 16px; font-family:var(--disp); font-weight:500; font-size:14px}
+.task-summary::-webkit-details-marker{display:none}
+.task-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
+.task-box[open] .task-summary::before{transform:rotate(90deg)}
+.task-body{padding:0 16px 16px}
+.task-card{background:var(--sunken); border:1px solid var(--line); border-radius:3px;
+  padding:14px 16px; margin:0 0 12px}
+.task-card-head{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px}
+.task-card-head b{font-family:var(--disp); font-weight:500; font-size:15px}
+.task-card .hint{margin:4px 0}
+.task-comments{margin:10px 0; display:flex; flex-direction:column; gap:6px}
+.task-comment{font-size:13.5px; background:var(--surface); border:1px solid var(--line);
+  border-radius:2px; padding:6px 9px}
+.task-comment b{font-family:var(--disp); font-weight:500}
+.task-comment .tm{color:var(--muted); font-size:11.5px}
+.pill.prio-hoch{color:var(--bad); border-color:var(--bad)}
+.pill.prio-niedrig{color:var(--muted)}
+.pill.status-done{color:var(--ok); border-color:var(--ok)}
+
 /* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
    Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
 body[data-cat]:not([data-cat="orga"]) main section input,
@@ -327,7 +350,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
-  #staende,#admin,#authWrap{display:none !important}
+  #staende,#admin,#authWrap,#taskBox{display:none !important}
   .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -446,6 +469,51 @@ body.editing{caret-color:var(--ink)}
     <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
     <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
   </div>
+</div>
+
+<div class="wrap">
+  <details id="taskBox" class="task-box">
+    <summary class="task-summary"><span>Aufgaben</span><span class="pill" id="taskBadge">–</span></summary>
+    <div class="task-body">
+      <div class="toolbar" id="taskToolbar" hidden>
+        <button class="fbtn" id="tkCreateToggle" type="button">+ Aufgabe</button>
+      </div>
+      <div class="addbox" id="taskCreateBox" hidden>
+        <div class="cfgrow">
+          <label>Titel <input class="cin" id="tkTitle" size="22"></label>
+          <label>Beschreibung <input class="cin" id="tkDesc" size="28"></label>
+          <label>Kategorie
+            <select class="cin sel" id="tkCat">
+              <option value="">–</option>
+              <option value="orga">Orga-Team</option>
+              <option value="sicherung">Sicherung</option>
+              <option value="ergebnisdienst">Ergebnisdienst</option>
+              <option value="routenbau">Routenbau</option>
+              <option value="buffet">Buffet</option>
+            </select>
+          </label>
+          <label>Dringlichkeit
+            <select class="cin sel" id="tkPrio">
+              <option value="niedrig">niedrig</option>
+              <option value="mittel" selected>mittel</option>
+              <option value="hoch">hoch</option>
+            </select>
+          </label>
+        </div>
+        <div class="cfgrow" style="margin-top:10px; align-items:flex-start">
+          <label style="align-items:flex-start">Zugewiesen an
+            <select class="cin sel" id="tkAssignees" multiple size="5" style="min-width:200px"></select>
+          </label>
+          <label><button class="fbtn" id="tkGo" type="button">Aufgabe anlegen</button></label>
+          <label><button class="fbtn" id="tkCancel" type="button">Abbrechen</button></label>
+        </div>
+        <p class="hint" style="margin:10px 0 0">Mehrfachauswahl mit Strg/Cmd-Klick.</p>
+        <p class="pdfmsg" id="tkMsg" role="status"></p>
+      </div>
+      <div id="taskList"></div>
+      <p class="hint" id="taskEmpty" hidden>Keine Aufgaben.</p>
+    </div>
+  </details>
 </div>
 
 <!-- ============ WERTUNGSKLASSEN ============ -->
