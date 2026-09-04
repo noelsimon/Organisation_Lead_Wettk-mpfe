@@ -2785,7 +2785,7 @@ function loadThread(convId,keepScroll){
     .eq("conversation_id",convId).order("created_at",{ascending:true}).limit(500).then(function(r){
       if(r.error) return;
       CHATTHREAD=r.data||[];
-      if(chatView==="thread") renderChatThreadHtml();
+      if(chatView==="thread") renderChatView();
     });
 }
 function renderChatThreadHtml(){
