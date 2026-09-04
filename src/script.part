@@ -1627,23 +1627,26 @@ function markConvSeen(id){
   renderChatBadge();
 }
 
+function chatSay(msg,bad){ authSay("chatMsg",msg,bad); }
+
 function loadConversations(){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
   sbClient.from("conversations")
     .select("id,kind,competition_id,competitions(id,name,slug),conversation_participants(profile_id,profiles(id,full_name))")
     .order("created_at",{ascending:false})
     .then(function(r){
-      if(r.error){ console.warn("Chat laden fehlgeschlagen:",r.error.message); return; }
+      if(r.error){ chatSay("Chat laden fehlgeschlagen: "+r.error.message,true); return; }
       CONVERSATIONS=r.data||[];
       var ids=CONVERSATIONS.map(function(c){return c.id;});
       if(!ids.length){ CHATLAST={}; renderChatView(); return; }
       sbClient.from("chat_messages").select("conversation_id,body,sender_id,competition_id,created_at")
         .in("conversation_id",ids).order("created_at",{ascending:false}).limit(300).then(function(r2){
+          if(r2.error){ chatSay("Chat laden fehlgeschlagen: "+r2.error.message,true); return; }
           CHATLAST={};
           (r2.data||[]).forEach(function(m){ if(!CHATLAST[m.conversation_id]) CHATLAST[m.conversation_id]=m; });
           renderChatView();
         });
-    }).catch(function(err){ console.warn("Chat laden fehlgeschlagen:",err); });
+    }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 function subscribeChat(){
   if(!sbClient||chatSub) return;
@@ -1733,15 +1736,17 @@ function startDm(targetId){
     return ids.indexOf(targetId)>=0 && ids.indexOf(PROFILE.id)>=0;
   })[0];
   if(existing){ openThread(existing.id); return; }
+  chatSay("Lege Unterhaltung an …");
   sbClient.from("conversations").insert({kind:"dm"}).select().single().then(function(r){
-    if(r.error){ document.getElementById("chatBody").innerHTML='<p class="chat-empty">'+esc(r.error.message)+'</p>'; return; }
+    if(r.error){ chatSay("Anlegen fehlgeschlagen: "+r.error.message,true); return; }
     var convId=r.data.id;
     sbClient.from("conversation_participants").insert([{conversation_id:convId,profile_id:PROFILE.id},{conversation_id:convId,profile_id:targetId}])
       .then(function(r2){
-        if(r2.error){ document.getElementById("chatBody").innerHTML='<p class="chat-empty">'+esc(r2.error.message)+'</p>'; return; }
+        if(r2.error){ chatSay("Anlegen fehlgeschlagen: "+r2.error.message,true); return; }
+        chatSay("");
         loadConversationsThenOpen(convId);
-      });
-  });
+      }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+  }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 function loadConversationsThenOpen(convId){
   sbClient.from("conversations")
@@ -1759,10 +1764,10 @@ function openThread(convId){
 function loadThread(convId,keepScroll){
   sbClient.from("chat_messages").select("id,body,sender_id,competition_id,created_at,profiles(full_name)")
     .eq("conversation_id",convId).order("created_at",{ascending:true}).limit(500).then(function(r){
-      if(r.error) return;
+      if(r.error){ chatSay("Nachrichten laden fehlgeschlagen: "+r.error.message,true); return; }
       CHATTHREAD=r.data||[];
       if(chatView==="thread") renderChatView();
-    });
+    }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 function renderChatThreadHtml(){
   var body=document.getElementById("chatBody"); if(!body||!chatCurrentConv) return;
@@ -1786,12 +1791,14 @@ function sendChatMessage(){
   var inp=document.getElementById("chatInput");
   var body=inp.value.trim(); if(!body) return;
   var compId = chatCurrentConv.kind==="group" ? chatCurrentConv.competition_id : (chatCompFilter||(CURRENT_COMP&&CURRENT_COMP.id)||null);
+  chatSay("Sende …");
   sbClient.from("chat_messages").insert({conversation_id:chatCurrentConv.id, competition_id:compId, sender_id:PROFILE.id, body:body}).then(function(r){
-    if(r.error){ console.warn("Nachricht fehlgeschlagen:",r.error.message); return; }
+    if(r.error){ chatSay("Nachricht fehlgeschlagen: "+r.error.message,true); return; }
+    chatSay("");
     inp.value="";
     loadThread(chatCurrentConv.id,true);
     loadConversations();
-  });
+  }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
 document.getElementById("chatBubble").onclick=function(){
   chatOpen=!chatOpen;
@@ -1800,7 +1807,7 @@ document.getElementById("chatBubble").onclick=function(){
 };
 document.getElementById("chatClose").onclick=function(){ chatOpen=false; document.getElementById("chatPanel").hidden=true; };
 document.getElementById("chatBack").onclick=function(){
-  chatView = chatView==="thread" ? "list" : "list";
+  chatView="list";
   chatCurrentConv=null;
   renderChatView();
 };

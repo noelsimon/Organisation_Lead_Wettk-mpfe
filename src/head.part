@@ -1007,6 +1007,7 @@ body.editing{caret-color:var(--ink)}
     <button class="fbtn" id="chatClose" type="button">×</button>
   </div>
   <div class="chat-panel-body" id="chatBody"></div>
+  <p class="pdfmsg" id="chatMsg" role="status" style="margin:0 12px"></p>
   <div class="chat-panel-foot" id="chatFoot" hidden>
     <input class="cin" type="text" id="chatInput" placeholder="Nachricht …">
     <button class="fbtn" id="chatSend" type="button">Senden</button>
