@@ -301,6 +301,44 @@ body:not([data-auth="ok"]) main{display:none}
 .task-col h4{display:flex; align-items:center; gap:6px}
 .task-col .task-card{margin-bottom:10px}
 
+/* ---------- Chat ---------- */
+body:not([data-auth="ok"]) .chat-bubble,
+body:not([data-auth="ok"]) .chat-panel{display:none !important}
+.chat-bubble{position:fixed; right:20px; bottom:20px; z-index:60; width:52px; height:52px; border-radius:50%;
+  background:var(--ink); color:var(--bg); display:flex; align-items:center; justify-content:center;
+  font-size:22px; line-height:1; cursor:pointer; box-shadow:var(--shadow); border:none; padding:0}
+.chat-bubble:hover{opacity:.9}
+.chat-badge{position:absolute; top:-3px; right:-3px; background:var(--bad); color:#fff; font-family:var(--disp);
+  font-size:11px; font-weight:600; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center;
+  justify-content:center; padding:0 4px}
+.chat-panel{position:fixed; right:20px; bottom:84px; z-index:60; width:340px; max-width:calc(100vw - 40px);
+  height:480px; max-height:calc(100vh - 120px); background:var(--surface); border:1px solid var(--line-strong);
+  border-radius:8px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden}
+.chat-panel-head{display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line);
+  font-family:var(--disp); font-size:14px}
+.chat-panel-head select{max-width:120px; font-size:12px}
+.chat-panel-body{flex:1; overflow-y:auto; padding:6px 10px}
+.chat-conv{display:flex; flex-direction:column; gap:2px; padding:8px 6px; border-radius:4px; cursor:pointer; border-bottom:1px solid var(--line)}
+.chat-conv:hover{background:var(--sunken)}
+.chat-conv-top{display:flex; align-items:center; gap:6px}
+.chat-conv b{font-size:13.5px}
+.chat-conv .tm{color:var(--muted); font-size:11px; margin-left:auto}
+.chat-conv-preview{font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.chat-unread-badge{background:var(--bad); color:#fff; font-family:var(--disp); font-size:10.5px; font-weight:600;
+  min-width:16px; height:16px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; padding:0 4px}
+.chat-msg{margin-bottom:10px; font-size:13.5px; max-width:88%}
+.chat-msg b{font-family:var(--disp); font-weight:500; font-size:12px}
+.chat-msg .tm{color:var(--muted); font-size:10.5px; margin-left:6px}
+.chat-msg .tag{font-size:9px; padding:1px 5px; vertical-align:middle}
+.chat-msg-body{background:var(--sunken); border-radius:6px; padding:6px 9px; margin-top:2px}
+.chat-msg.mine{margin-left:auto}
+.chat-msg.mine .chat-msg-body{background:var(--m-bg,var(--surface-2))}
+.chat-contact{padding:8px 6px; cursor:pointer; border-bottom:1px solid var(--line); font-size:13.5px}
+.chat-contact:hover{background:var(--sunken)}
+.chat-panel-foot{display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--line)}
+.chat-panel-foot input{flex:1}
+.chat-empty{color:var(--muted); font-size:13px; padding:10px 4px}
+
 /* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
    Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
 body[data-cat]:not([data-cat="orga"]) main section input,
@@ -374,7 +412,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg{display:none !important}
-  #staende,#admin,#compAdmin,#authWrap,#taskBox{display:none !important}
+  #staende,#admin,#compAdmin,#authWrap,#taskBox,.chat-bubble,.chat-panel{display:none !important}
   .nin,.cin,.tin{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -966,6 +1004,23 @@ body.editing{caret-color:var(--ink)}
     <p>Geprüft auf Routen-Doppelbelegung, Pausenzeiten, gleichzeitige Routen je Klasse und Endzeiten: 0 Konflikte, 804 Kletterminuten, jede Klasse mit höchstens zwei Routen gleichzeitig, Quali-Ende 12:59.</p>
   </div>
 </footer>
+
+<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
+
+<div id="chatPanel" class="chat-panel" hidden>
+  <div class="chat-panel-head">
+    <button class="fbtn" id="chatBack" type="button" hidden>←</button>
+    <strong>Chat</strong>
+    <select class="cin sel" id="chatCompFilter"></select>
+    <span style="flex:1"></span>
+    <button class="fbtn" id="chatClose" type="button">×</button>
+  </div>
+  <div class="chat-panel-body" id="chatBody"></div>
+  <div class="chat-panel-foot" id="chatFoot" hidden>
+    <input class="cin" type="text" id="chatInput" placeholder="Nachricht …">
+    <button class="fbtn" id="chatSend" type="button">Senden</button>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -2134,6 +2189,8 @@ function refreshSession(){
         initDb(); pullState(); subscribePlanState();
         loadTasks(); subscribeTasks();
         loadMyCompetitions();
+        loadConversations(); subscribeChat();
+        var bub=document.getElementById("chatBubble"); if(bub) bub.hidden=false;
       });
     }).catch(function(err){ authSay("liMsg","Profil-Abfrage fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
   }).catch(function(err){ authSay("liMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
@@ -2571,6 +2628,209 @@ function setTaskView(v){
 }
 document.getElementById("tkViewList").onclick=function(){ setTaskView("list"); };
 document.getElementById("tkViewCols").onclick=function(){ setTaskView("cols"); };
+
+/* ================= Chat ================= */
+var CONVERSATIONS=[], CHATLAST={}, CHATTHREAD=[], chatView="list", chatCurrentConv=null, chatCompFilter="";
+var CHATSEENKEY="kidscup-chatseen", CHATSEEN={};
+try{CHATSEEN=JSON.parse(localStorage.getItem(CHATSEENKEY)||"{}")||{};}catch(e){CHATSEEN={};}
+var chatSub=null, chatOpen=false;
+
+function convTitle(c){
+  if(c.kind==="group") return (c.competitions&&c.competitions.name)||"Gruppe";
+  var other=(c.conversation_participants||[]).map(function(p){return p.profiles;}).filter(function(p){return p&&p.id!==PROFILE.id;})[0];
+  return other?other.full_name:"Direktnachricht";
+}
+function convUnread(c){
+  var last=CHATLAST[c.id]; if(!last) return false;
+  var seen=CHATSEEN[c.id];
+  return !seen || last.created_at>seen;
+}
+function markConvSeen(id){
+  CHATSEEN[id]=new Date().toISOString();
+  try{localStorage.setItem(CHATSEENKEY,JSON.stringify(CHATSEEN));}catch(e){}
+  renderChatBadge();
+}
+
+function loadConversations(){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
+  sbClient.from("conversations")
+    .select("id,kind,competition_id,competitions(id,name,slug),conversation_participants(profile_id,profiles(id,full_name))")
+    .order("created_at",{ascending:false})
+    .then(function(r){
+      if(r.error){ console.warn("Chat laden fehlgeschlagen:",r.error.message); return; }
+      CONVERSATIONS=r.data||[];
+      var ids=CONVERSATIONS.map(function(c){return c.id;});
+      if(!ids.length){ CHATLAST={}; renderChatView(); return; }
+      sbClient.from("chat_messages").select("conversation_id,body,sender_id,competition_id,created_at")
+        .in("conversation_id",ids).order("created_at",{ascending:false}).limit(300).then(function(r2){
+          CHATLAST={};
+          (r2.data||[]).forEach(function(m){ if(!CHATLAST[m.conversation_id]) CHATLAST[m.conversation_id]=m; });
+          renderChatView();
+        });
+    }).catch(function(err){ console.warn("Chat laden fehlgeschlagen:",err); });
+}
+function subscribeChat(){
+  if(!sbClient||chatSub) return;
+  chatSub=sbClient.channel("chat-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"chat_messages"},function(){
+      loadConversations();
+      if(chatView==="thread"&&chatCurrentConv) loadThread(chatCurrentConv.id,true);
+    })
+    .on("postgres_changes",{event:"*",schema:"public",table:"conversations"},function(){ loadConversations(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"conversation_participants"},function(){ loadConversations(); })
+    .subscribe();
+}
+function renderChatBadge(){
+  var n=CONVERSATIONS.filter(convUnread).length;
+  var b=document.getElementById("chatBadge"); if(!b) return;
+  b.hidden=!n; b.textContent=n;
+}
+function chatFilteredConvs(){
+  if(!chatCompFilter) return CONVERSATIONS;
+  return CONVERSATIONS.filter(function(c){
+    if(c.kind==="group") return c.competition_id===chatCompFilter;
+    var last=CHATLAST[c.id];
+    return last&&last.competition_id===chatCompFilter;
+  });
+}
+function renderChatCompFilter(){
+  var sel=document.getElementById("chatCompFilter"); if(!sel) return;
+  var opts='<option value="">Alle Wettkämpfe</option>'+MYCOMPS.map(function(c){
+    return '<option value="'+esc(c.id)+'"'+(chatCompFilter===c.id?" selected":"")+'>'+esc(c.name)+'</option>';
+  }).join("");
+  sel.innerHTML=opts;
+  sel.hidden=MYCOMPS.length<2;
+}
+function renderChatView(){
+  renderChatBadge();
+  var back=document.getElementById("chatBack"), foot=document.getElementById("chatFoot");
+  var titleEl=document.querySelector(".chat-panel-head strong");
+  if(chatView==="thread"){ back.hidden=false; foot.hidden=false; renderChatThreadHtml(); return; }
+  if(titleEl) titleEl.textContent="Chat";
+  back.hidden = chatView==="list";
+  foot.hidden=true;
+  if(chatView==="contacts"){ renderChatContactsHtml(); return; }
+  renderChatListHtml();
+}
+function renderChatListHtml(){
+  var body=document.getElementById("chatBody"); if(!body) return;
+  var list=chatFilteredConvs();
+  var h='<div class="toolbar"><button class="fbtn" id="chatNewMsg" type="button">+ Neue Nachricht</button></div>';
+  if(!list.length) h+='<p class="chat-empty">Noch keine Nachrichten.</p>';
+  list.slice().sort(function(a,b){
+    var la=CHATLAST[a.id]?CHATLAST[a.id].created_at:"", lb=CHATLAST[b.id]?CHATLAST[b.id].created_at:"";
+    return String(lb).localeCompare(String(la));
+  }).forEach(function(c){
+    var last=CHATLAST[c.id];
+    h+='<div class="chat-conv" data-conv="'+esc(c.id)+'">'+
+       '<div class="chat-conv-top">'+(c.kind==="group"?'<span class="tag" data-ac="c7">Gruppe</span>':'')+
+       '<b>'+esc(convTitle(c))+'</b>'+
+       (convUnread(c)?'<span class="chat-unread-badge">●</span>':'')+
+       (last?'<span class="tm">'+dstr(last.created_at)+'</span>':'')+'</div>'+
+       (last?'<div class="chat-conv-preview">'+esc(last.body)+'</div>':'')+
+       '</div>';
+  });
+  body.innerHTML=h;
+  document.getElementById("chatNewMsg").onclick=function(){ chatView="contacts"; renderChatView(); };
+  Array.prototype.forEach.call(body.querySelectorAll("[data-conv]"),function(el){
+    el.onclick=function(){ openThread(this.getAttribute("data-conv")); };
+  });
+}
+function renderChatContactsHtml(){
+  var body=document.getElementById("chatBody"); if(!body) return;
+  body.innerHTML='<p class="chat-empty">Lade Kontakte …</p>';
+  sbClient.from("profiles").select("id,full_name,category").neq("id",PROFILE.id).eq("status","approved").order("full_name").then(function(r){
+    if(r.error){ body.innerHTML='<p class="chat-empty">'+esc(r.error.message)+'</p>'; return; }
+    var people=r.data||[];
+    body.innerHTML = people.length
+      ? people.map(function(p){return '<div class="chat-contact" data-person="'+esc(p.id)+'" data-name="'+esc(p.full_name)+'">'+esc(p.full_name)+' <span class="hint" style="display:inline">('+esc(CATLABEL[p.category]||p.category)+')</span></div>';}).join("")
+      : '<p class="chat-empty">Niemand erreichbar – ihr müsst euch mindestens einen Wettkampf teilen.</p>';
+    Array.prototype.forEach.call(body.querySelectorAll("[data-person]"),function(el){
+      el.onclick=function(){ startDm(this.getAttribute("data-person")); };
+    });
+  });
+}
+function startDm(targetId){
+  var existing=CONVERSATIONS.filter(function(c){
+    if(c.kind!=="dm") return false;
+    var ids=(c.conversation_participants||[]).map(function(p){return p.profile_id;});
+    return ids.indexOf(targetId)>=0 && ids.indexOf(PROFILE.id)>=0;
+  })[0];
+  if(existing){ openThread(existing.id); return; }
+  sbClient.from("conversations").insert({kind:"dm"}).select().single().then(function(r){
+    if(r.error){ document.getElementById("chatBody").innerHTML='<p class="chat-empty">'+esc(r.error.message)+'</p>'; return; }
+    var convId=r.data.id;
+    sbClient.from("conversation_participants").insert([{conversation_id:convId,profile_id:PROFILE.id},{conversation_id:convId,profile_id:targetId}])
+      .then(function(r2){
+        if(r2.error){ document.getElementById("chatBody").innerHTML='<p class="chat-empty">'+esc(r2.error.message)+'</p>'; return; }
+        loadConversationsThenOpen(convId);
+      });
+  });
+}
+function loadConversationsThenOpen(convId){
+  sbClient.from("conversations")
+    .select("id,kind,competition_id,competitions(id,name,slug),conversation_participants(profile_id,profiles(id,full_name))")
+    .order("created_at",{ascending:false}).then(function(r){
+      CONVERSATIONS=r.data||[]; openThread(convId);
+    });
+}
+function openThread(convId){
+  chatCurrentConv=CONVERSATIONS.filter(function(c){return c.id===convId;})[0]||{id:convId};
+  chatView="thread";
+  markConvSeen(convId);
+  loadThread(convId,false);
+}
+function loadThread(convId,keepScroll){
+  sbClient.from("chat_messages").select("id,body,sender_id,competition_id,created_at,profiles(full_name)")
+    .eq("conversation_id",convId).order("created_at",{ascending:true}).limit(500).then(function(r){
+      if(r.error) return;
+      CHATTHREAD=r.data||[];
+      if(chatView==="thread") renderChatThreadHtml();
+    });
+}
+function renderChatThreadHtml(){
+  var body=document.getElementById("chatBody"); if(!body||!chatCurrentConv) return;
+  document.querySelector(".chat-panel-head strong").textContent=convTitle(chatCurrentConv);
+  var isGroup=chatCurrentConv.kind==="group";
+  var h=CHATTHREAD.map(function(m){
+    var mine=m.sender_id===PROFILE.id;
+    var compTag = (!isGroup && m.competition_id) ? (function(){
+      var c=MYCOMPS.filter(function(x){return x.id===m.competition_id;})[0];
+      return c?'<span class="tag" data-ac="c7">'+esc(c.name)+'</span>':'';
+    })() : "";
+    return '<div class="chat-msg'+(mine?" mine":"")+'"><b>'+esc((m.profiles&&m.profiles.full_name)||"?")+'</b>'+
+      '<span class="tm">'+dstr(m.created_at)+'</span> '+compTag+
+      '<div class="chat-msg-body">'+esc(m.body)+'</div></div>';
+  }).join("")||'<p class="chat-empty">Noch keine Nachrichten – schreib die erste.</p>';
+  body.innerHTML=h;
+  body.scrollTop=body.scrollHeight;
+}
+function sendChatMessage(){
+  if(!sbClient||!PROFILE||!chatCurrentConv) return;
+  var inp=document.getElementById("chatInput");
+  var body=inp.value.trim(); if(!body) return;
+  var compId = chatCurrentConv.kind==="group" ? chatCurrentConv.competition_id : (chatCompFilter||(CURRENT_COMP&&CURRENT_COMP.id)||null);
+  sbClient.from("chat_messages").insert({conversation_id:chatCurrentConv.id, competition_id:compId, sender_id:PROFILE.id, body:body}).then(function(r){
+    if(r.error){ console.warn("Nachricht fehlgeschlagen:",r.error.message); return; }
+    inp.value="";
+    loadThread(chatCurrentConv.id,true);
+    loadConversations();
+  });
+}
+document.getElementById("chatBubble").onclick=function(){
+  chatOpen=!chatOpen;
+  document.getElementById("chatPanel").hidden=!chatOpen;
+  if(chatOpen){ chatView="list"; renderChatCompFilter(); loadConversations(); }
+};
+document.getElementById("chatClose").onclick=function(){ chatOpen=false; document.getElementById("chatPanel").hidden=true; };
+document.getElementById("chatBack").onclick=function(){
+  chatView = chatView==="thread" ? "list" : "list";
+  chatCurrentConv=null;
+  renderChatView();
+};
+document.getElementById("chatCompFilter").onchange=function(){ chatCompFilter=this.value; chatView="list"; chatCurrentConv=null; renderChatView(); };
+document.getElementById("chatSend").onclick=sendChatMessage;
+document.getElementById("chatInput").onkeydown=function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); sendChatMessage(); } };
 
 function initAuth(){
   if(!sbClient){ setAuthState("locked"); authSay("liMsg","Supabase ist nicht konfiguriert – src/config.part ausfüllen.",true); return; }
