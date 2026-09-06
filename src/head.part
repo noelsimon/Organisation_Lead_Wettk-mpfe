@@ -249,16 +249,14 @@ footer p{max-width:74ch; margin-bottom:8px}
 .textbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:22px 0 0;
   background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md); padding:12px 16px}
 .textbar p{margin:0; flex-basis:100%; font-size:13px; color:var(--muted); max-width:80ch}
-/* ---------- Suche ---------- */
-.searchbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:14px 0 0;
-  background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md); padding:10px 16px}
-.searchbar input[type="search"]{font-family:var(--serif); font-size:14px; padding:5px 8px; border-radius:var(--r-sm);
-  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
-#searchCount{min-width:64px}
-mark.search-hit{background:#ffd54a; color:#141815; border-radius:var(--r-sm); padding:0 1px}
-mark.search-hit.current{background:#ff9800}
-.search-field-hit{outline:2px solid #ffd54a !important; outline-offset:1px}
-.search-field-hit.current{outline-color:#ff9800 !important}
+.fmt-toolbar{position:fixed; z-index:70; display:flex; align-items:center; gap:6px;
+  background:var(--ink); color:var(--bg); padding:6px 8px; border-radius:var(--r-sm); box-shadow:var(--shadow)}
+.fmt-toolbar button{font-family:var(--disp); font-size:13px; font-weight:600; padding:4px 9px; border-radius:var(--r-sm);
+  border:1px solid transparent; background:var(--surface-2); color:var(--bg); cursor:pointer}
+.fmt-toolbar button:hover{opacity:.85}
+.fmt-toolbar input[type="number"]{width:54px; font-family:var(--mono); font-size:13px; padding:4px 6px;
+  border-radius:var(--r-sm); border:1px solid var(--ink-2); background:var(--surface); color:var(--ink); -moz-appearance:textfield}
+.fmt-toolbar input[type="number"]::-webkit-outer-spin-button,.fmt-toolbar input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 /* ---------- Sprungnavigation ---------- */
 .jumpnav{display:flex; flex-wrap:wrap; gap:6px 8px; margin:14px 0 0}
 .jumpnav a{font-family:var(--disp); font-size:11.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
@@ -444,7 +442,7 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.searchbar,.sec-toggle,.jumpnav{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar{display:none !important}
   #staende,#admin,#compAdmin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
@@ -490,7 +488,6 @@ body.editing{caret-color:var(--ink)}
       <div class="stat"><b id="stTasks">0 / 0</b><span>Aufgaben offen / erledigt</span></div>
       <div class="stat"><b id="stTeams">7</b><span>Routen-Teams</span></div>
       <div class="stat"><b id="stPers">21</b><span>Personen im Peak</span></div>
-      <div class="stat"><b id="stEnd">12:59</b><span>Quali-Ende</span></div>
     </div>
   </div>
 </header>
@@ -585,15 +582,15 @@ body.editing{caret-color:var(--ink)}
   <div class="textbar">
     <button class="fbtn" id="txtToggle" type="button" aria-pressed="false">Texte bearbeiten</button>
     <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
-    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
-  </div>
-  <div class="searchbar">
-    <input class="cin" type="search" id="pageSearch" placeholder="Seite durchsuchen …" size="24">
-    <span class="lbl mono" id="searchCount"></span>
-    <button class="fbtn" id="searchPrev" type="button" title="Vorheriger Treffer (Umschalt+Enter)">↑</button>
-    <button class="fbtn" id="searchNext" type="button" title="Nächster Treffer (Enter)">↓</button>
+    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Markiere ein Textstück, um Schriftgröße oder -dicke nur dafür zu ändern. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
   </div>
   <nav class="jumpnav" id="jumpNav" aria-label="Sprungnavigation"></nav>
+</div>
+
+<div class="fmt-toolbar" id="fmtToolbar" hidden>
+  <button type="button" id="fmtBold" title="Fett"><b>F</b></button>
+  <input type="number" id="fmtSize" min="6" max="200" placeholder="px" title="Schriftgröße in Pixel">
+  <button type="button" id="fmtSizeGo" title="Größe anwenden">✓</button>
 </div>
 
 <!-- ============ START ============ -->
@@ -602,12 +599,11 @@ body.editing{caret-color:var(--ink)}
     <div class="sec-head">
       <p class="eyebrow">Für dich</p>
       <h2>Deine Startansicht</h2>
-      <p class="lede">Dein Status, deine Aufgaben und dein Team auf einen Blick. Der vollständige Plan folgt darunter.</p>
+      <p class="lede">Dein Status und deine Aufgaben auf einen Blick. Der vollständige Plan folgt darunter.</p>
     </div>
     <div class="cards g3">
       <div class="card"><h4>Dein Status</h4><div id="startStatus"></div></div>
       <div class="card"><h4>Deine Aufgaben</h4><div id="startTasks"></div></div>
-      <div class="card"><h4>Dein Team</h4><div id="startTeam"></div></div>
     </div>
   </div>
 </section>
@@ -867,7 +863,7 @@ body.editing{caret-color:var(--ink)}
     <h3>Personen und ihre Teams</h3>
     <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Konto</th><th>Notiz</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -875,10 +871,8 @@ body.editing{caret-color:var(--ink)}
         <label>Name <input class="cin" id="newPname" placeholder="z. B. Lara Wächter" size="20"></label>
         <label>Kategorie <select class="cin sel" id="newPcat"></select></label>
         <label>Team <select class="cin sel" id="newPteam"></select></label>
-        <label>Konto <select class="cin sel" id="newPprofile"><option value="">— kein Konto —</option></select></label>
         <label><button class="fbtn" id="addPeoGo" type="button">Person hinzufügen</button></label>
       </div>
-      <p class="hint" style="margin:12px 0 0">Ein verknüpftes Konto lässt diese Person ihre eigene Startansicht (Team, Zeiten, Aufgaben) sehen. Ohne Konto (z. B. Buffet ohne Login) bleibt die Zeile rein planerisch.</p>
     </div>
 
     <h4>Ohne Team-Zuordnung</h4>
