@@ -21,6 +21,7 @@ create table public.profiles (
   email       text not null,
   full_name   text not null,
   avatar_url  text,
+  phone       text,
   category    user_category not null,
   status      text not null default 'pending' check (status in ('pending','approved','rejected')),
   is_admin    boolean not null default false,
@@ -103,6 +104,8 @@ alter table public.competitions enable row level security;
 create table public.competition_members (
   competition_id uuid not null references public.competitions(id) on delete cascade,
   profile_id     uuid not null references public.profiles(id) on delete cascade,
+  attendance     text check (attendance in ('da','unterwegs','abwesend')),
+  attendance_at  timestamptz,
   primary key (competition_id, profile_id)
 );
 alter table public.competition_members enable row level security;
@@ -136,6 +139,29 @@ create policy "competition_members: Admin verwaltet alle" on public.competition_
   for all using (public.is_admin()) with check (public.is_admin());
 create policy "competition_members: eigene Zeilen lesen" on public.competition_members
   for select using (profile_id = auth.uid());
+create policy "competition_members: Mitglieder sehen Anwesenheit" on public.competition_members
+  for select using (public.is_admin() or public.is_member(competition_id));
+
+-- Verhindert, dass jemand über das Selbst-Update unten den Primärschlüssel
+-- (competition_id/profile_id) verschiebt und sich damit selbst einem
+-- anderen Wettkampf zuordnet.
+create or replace function public.protect_membership_keys()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    new.competition_id := old.competition_id;
+    new.profile_id := old.profile_id;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists before_membership_update on public.competition_members;
+create trigger before_membership_update
+  before update on public.competition_members
+  for each row execute function public.protect_membership_keys();
+
+create policy "competition_members: eigene Anwesenheit aktualisieren" on public.competition_members
+  for update using (profile_id = auth.uid()) with check (profile_id = auth.uid());
 
 -- Ohne diese Policy sähe eine nicht-admin Person unter "Zugewiesen an" oder
 -- in der Zuweisen-Auswahl nur ihren eigenen Namen (RLS blockt sonst fremde

@@ -258,6 +258,18 @@ mark.search-hit{background:#ffd54a; color:#141815; border-radius:2px; padding:0 
 mark.search-hit.current{background:#ff9800}
 .search-field-hit{outline:2px solid #ffd54a !important; outline-offset:1px}
 .search-field-hit.current{outline-color:#ff9800 !important}
+/* ---------- Sprungnavigation ---------- */
+.jumpnav{display:flex; flex-wrap:wrap; gap:6px 8px; margin:14px 0 0}
+.jumpnav a{font-family:var(--disp); font-size:11.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
+  padding:5px 11px; border-radius:12px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2);
+  text-decoration:none}
+.jumpnav a:hover{background:var(--sunken)}
+.jumpnav a:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+/* ---------- Startansicht ---------- */
+.startitem{padding:4px 0; font-size:13.5px; border-bottom:1px solid var(--line)}
+.startitem:last-child{border-bottom:none}
+.startitem a{color:inherit; text-decoration:none; display:flex; align-items:center; gap:6px}
+.startitem a:hover{text-decoration:underline}
 /* ---------- Abschnitte einklappen ---------- */
 .sec-head{position:relative; padding-right:36px}
 .sec-toggle{position:absolute; top:0; right:0; width:26px; height:26px; padding:0; border-radius:50%;
@@ -431,8 +443,8 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.searchbar,.sec-toggle{display:none !important}
-  #staende,#admin,#compAdmin,#authWrap,#taskBox,.chat-bubble,.chat-panel{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.searchbar,.sec-toggle,.jumpnav{display:none !important}
+  #staende,#admin,#compAdmin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -497,6 +509,7 @@ body.editing{caret-color:var(--ink)}
     <div class="cfgrow">
       <img class="ub-avatar big" id="pfAvatarPreview" alt="" hidden>
       <label>Name <input class="cin" id="pfName" type="text" autocomplete="name" size="18"></label>
+      <label>Telefon <input class="cin" id="pfPhone" type="tel" autocomplete="tel" placeholder="für Mitwettkämpfer sichtbar" size="16"></label>
       <label>Profilbild <input class="cin" id="pfAvatarFile" type="file" accept="image/*"></label>
       <label><button class="fbtn big" id="pfSave" type="button">Speichern</button></label>
       <label><button class="fbtn" id="pfCancel" type="button">Abbrechen</button></label>
@@ -579,7 +592,24 @@ body.editing{caret-color:var(--ink)}
     <button class="fbtn" id="searchPrev" type="button" title="Vorheriger Treffer (Umschalt+Enter)">↑</button>
     <button class="fbtn" id="searchNext" type="button" title="Nächster Treffer (Enter)">↓</button>
   </div>
+  <nav class="jumpnav" id="jumpNav" aria-label="Sprungnavigation"></nav>
 </div>
+
+<!-- ============ START ============ -->
+<section id="start" data-views="orga bau teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Für dich</p>
+      <h2>Deine Startansicht</h2>
+      <p class="lede">Dein Status, deine Aufgaben und dein Team auf einen Blick. Der vollständige Plan folgt darunter.</p>
+    </div>
+    <div class="cards g3">
+      <div class="card"><h4>Dein Status</h4><div id="startStatus"></div></div>
+      <div class="card"><h4>Deine Aufgaben</h4><div id="startTasks"></div></div>
+      <div class="card"><h4>Dein Team</h4><div id="startTeam"></div></div>
+    </div>
+  </div>
+</section>
 
 <div class="wrap">
   <details id="taskBox" class="task-box">
@@ -836,7 +866,7 @@ body.editing{caret-color:var(--ink)}
     <h3>Personen und ihre Teams</h3>
     <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Konto</th><th>Notiz</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -844,8 +874,10 @@ body.editing{caret-color:var(--ink)}
         <label>Name <input class="cin" id="newPname" placeholder="z. B. Lara Wächter" size="20"></label>
         <label>Kategorie <select class="cin sel" id="newPcat"></select></label>
         <label>Team <select class="cin sel" id="newPteam"></select></label>
+        <label>Konto <select class="cin sel" id="newPprofile"><option value="">— kein Konto —</option></select></label>
         <label><button class="fbtn" id="addPeoGo" type="button">Person hinzufügen</button></label>
       </div>
+      <p class="hint" style="margin:12px 0 0">Ein verknüpftes Konto lässt diese Person ihre eigene Startansicht (Team, Zeiten, Aufgaben) sehen. Ohne Konto (z. B. Buffet ohne Login) bleibt die Zeile rein planerisch.</p>
     </div>
 
     <h4>Ohne Team-Zuordnung</h4>
@@ -856,6 +888,22 @@ body.editing{caret-color:var(--ink)}
       <div class="card"><h4>Der Peak dauert zehn Minuten</h4><p style="font-size:14.5px;margin-bottom:0">Sieben gleichzeitige Routen gibt es nur 11:23–11:30 und 12:00–12:03. Zieh den U13-Mädchen-Block auf Q6 auf 11:32 und den U15-Mädchen-Block auf Q11 auf 12:05: dann sind es <strong>6 Teams = 18 Personen</strong>, die Quali endet 13:08 statt 12:59.</p></div>
       <div class="card"><h4>Dazu fix</h4><p style="font-size:14.5px;margin-bottom:0">Meldebüro, zentrale Auswertung, ISO-Aufsicht ab 13:55 und Moderation kommen zu den Routen-Teams hinzu.</p></div>
     </div>
+  </div>
+</section>
+
+<!-- ============ ANWESENHEIT ============ -->
+<section id="anwesenheit" data-views="orga bau teams sport">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Anwesenheit &amp; Kontakt</p>
+      <h2>Wer ist heute da – und wie erreicht man wen</h2>
+      <p class="lede">Jede Person setzt ihren eigenen Status selbst. Telefonnummern stammen aus dem eigenen Profil (Button „Profil" oben in der Kopfzeile).</p>
+    </div>
+    <div class="tblwrap"><table id="attab">
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Telefon</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <p class="pdfmsg" id="attMsg" role="status"></p>
   </div>
 </section>
 

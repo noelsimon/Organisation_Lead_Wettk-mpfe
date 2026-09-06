@@ -699,6 +699,19 @@ function teamOpts(sel){
   if(sel&&sel>T.length) h+='<option value="'+sel+'" selected>Team '+sel+' (nicht mehr vorhanden)</option>';
   return h;
 }
+function profileOpts(sel){
+  var h='<option value=""'+(!sel?" selected":"")+'>— kein Konto —</option>';
+  (APPROVEDPROFILES||[]).forEach(function(p){
+    h+='<option value="'+esc(p.id)+'"'+(sel===p.id?" selected":"")+'>'+esc(p.full_name)+'</option>';
+  });
+  if(sel&&!(APPROVEDPROFILES||[]).some(function(p){return p.id===sel;})){
+    h+='<option value="'+esc(sel)+'" selected>Konto (lädt …)</option>';
+  }
+  return h;
+}
+function refreshProfileSel(){
+  var s=document.getElementById("newPprofile"); if(s) s.innerHTML=profileOpts(null);
+}
 function renderCats(){
   var body=document.querySelector("#cattab tbody"); if(!body) return;
   var h="";
@@ -737,10 +750,11 @@ function renderPeople(){
     h+='<tr><td><input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></td>'+
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
+       '<td><select class="cin sel pprofile" data-p="'+p.id+'">'+profileOpts(p.profileId)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen">×</button></td></tr>';
   });
-  if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  if(!CFG.people.length) h='<tr><td colspan="6" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
   renderStats();
   function upd(sel,fn){
@@ -755,6 +769,7 @@ function renderPeople(){
   upd(".pnm",function(p,v){p.name=v.trim()||p.name;});
   upd(".pcat",function(p,v){p.cat=v;});
   upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
+  upd(".pprofile",function(p,v){p.profileId=v||null;});
   upd(".pnote",function(p,v){p.note=v;});
   Array.prototype.forEach.call(document.querySelectorAll(".pdel"),function(b){
     b.onclick=function(){
@@ -798,6 +813,7 @@ function renderStats(){
   set("stTeams",Math.max(q.maxR||0,f.maxR||0));
   set("stPers",Math.max(q.maxR||0,f.maxR||0)*TEAM_PERS);
   set("stEnd",fmt(q.end||0));
+  renderStart();
 }
 function renderFinalTab(){
   var list=(pf.stat&&pf.stat.list)||[], T=teams(pf,list), rteam={};
@@ -846,7 +862,7 @@ function renderRoutePlan(plan,list){
 var pq,pf;
 function afterQ(plan,list){
   renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
-  if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
+  if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); refreshProfileSel(); }
 }
 function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
 function autoStep(span){return span>300?60:(span>150?30:15);}
@@ -931,9 +947,11 @@ document.getElementById("addKatGo").onclick=function(){
 document.getElementById("addPeoGo").onclick=function(){
   var n=document.getElementById("newPname").value.trim(); if(!n) return;
   CFG.people.push({id:newId("p"),name:n,cat:document.getElementById("newPcat").value||"",
-    team:parseInt(document.getElementById("newPteam").value,10)||0,note:""});
+    team:parseInt(document.getElementById("newPteam").value,10)||0,
+    profileId:document.getElementById("newPprofile").value||null,note:""});
   document.getElementById("newPname").value="";
   document.getElementById("newPteam").value="0";
+  document.getElementById("newPprofile").value="";
   saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
   document.getElementById("newPname").focus();
 };
@@ -950,6 +968,7 @@ function setView(v){
   var n=document.getElementById("viewNote");
   if(n) n.textContent=v==="alles"?"Alle Kapitel sichtbar."
     :"Gefilterte Ansicht – nur die Kapitel, die diese Rolle braucht. Der Plan dahinter bleibt vollständig.";
+  renderJumpNav();
 }
 vbtns.forEach(function(b){b.onclick=function(){setView(b.getAttribute("data-v"));};});
 var v0="alles"; try{v0=localStorage.getItem(VIEWKEY)||"alles";}catch(e){}
@@ -1153,6 +1172,7 @@ function profileSay(msg,bad){
 function openProfileBox(){
   if(!PROFILE) return;
   document.getElementById("pfName").value=PROFILE.full_name||"";
+  document.getElementById("pfPhone").value=PROFILE.phone||"";
   var prev=document.getElementById("pfAvatarPreview");
   prev.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) prev.src=PROFILE.avatar_url;
   document.getElementById("pfAvatarFile").value="";
@@ -1165,6 +1185,7 @@ document.getElementById("pfSave").onclick=function(){
   if(!sbClient||!PROFILE) return;
   var name=document.getElementById("pfName").value.trim();
   if(!name){ profileSay("Name darf nicht leer sein.",true); return; }
+  var phone=document.getElementById("pfPhone").value.trim();
   var file=(document.getElementById("pfAvatarFile").files||[])[0];
   if(file&&(!/^image\//.test(file.type)||file.size>2*1024*1024)){
     profileSay("Bild muss ein Bildformat und darf max. 2 MB groß sein.",true); return;
@@ -1180,11 +1201,12 @@ document.getElementById("pfSave").onclick=function(){
     });
   }
   upload.then(function(avatarUrl){
-    return sbClient.from("profiles").update({full_name:name, avatar_url:avatarUrl}).eq("id",PROFILE.id).select().single();
+    return sbClient.from("profiles").update({full_name:name, phone:phone||null, avatar_url:avatarUrl}).eq("id",PROFILE.id).select().single();
   }).then(function(r){
     if(r.error){ profileSay("Speichern fehlgeschlagen: "+r.error.message,true); return; }
     PROFILE=r.data;
     renderUserbarIdentity();
+    loadAttendance();
     profileSay("Gespeichert.");
     document.getElementById("profileBox").hidden=true;
   }).catch(function(err){ profileSay("Speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
@@ -1201,6 +1223,7 @@ function applyCategoryUI(){
   var soll=document.getElementById("stHelferSoll");
   if(soll) soll.disabled=!(PROFILE.is_admin||PROFILE.category==="orga");
   if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); }
+  renderJumpNav();
 }
 
 function refreshSession(){
@@ -1222,6 +1245,8 @@ function refreshSession(){
         setAuthState("ok");
         initDb(); pullState(); subscribePlanState();
         loadTasks(); subscribeTasks();
+        loadAssigneeOptions(CURRENT_COMP.id);
+        loadAttendance(); subscribeAttendance();
         loadMyCompetitions();
         loadConversations(); subscribeChat();
         var bub=document.getElementById("chatBubble"); if(bub) bub.hidden=false;
@@ -1491,9 +1516,121 @@ function loadAssigneeOptions(compId){
     APPROVEDPROFILES=(r.data||[]).map(function(x){return x.profiles;})
       .filter(function(p){return p&&p.status==="approved";})
       .sort(function(a,b){return String(a.full_name).localeCompare(String(b.full_name));});
-    var s=document.getElementById("tkAssignees"); if(!s) return;
-    s.innerHTML=APPROVEDPROFILES.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.full_name)+' ('+esc(CATSHORT[p.category]||p.category)+')</option>';}).join("");
+    var s=document.getElementById("tkAssignees");
+    if(s) s.innerHTML=APPROVEDPROFILES.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.full_name)+' ('+esc(CATSHORT[p.category]||p.category)+')</option>';}).join("");
+    renderPeople();
   });
+}
+
+/* ---- Anwesenheit & Kontakt ---- */
+var ATTENDANCE=[];
+var ATTLABEL={da:"Vor Ort", unterwegs:"Auf dem Weg", abwesend:"Fällt aus"};
+function attendanceOptsHtml(current){
+  var h='<option value=""'+(!current?" selected":"")+'>— offen —</option>';
+  Object.keys(ATTLABEL).forEach(function(k){ h+='<option value="'+k+'"'+(current===k?" selected":"")+'>'+ATTLABEL[k]+'</option>'; });
+  return h;
+}
+function setMyAttendance(val){
+  if(!sbClient||!PROFILE||!CURRENT_COMP) return;
+  sbClient.from("competition_members").update({attendance:val||null, attendance_at:new Date().toISOString()})
+    .eq("competition_id",CURRENT_COMP.id).eq("profile_id",PROFILE.id)
+    .then(function(r){ if(r.error){ attSay("Status speichern fehlgeschlagen: "+r.error.message,true); } })
+    .catch(function(err){ attSay("Status speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function attSay(msg,bad){
+  var el=document.getElementById("attMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function loadAttendance(){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
+  sbClient.from("competition_members")
+    .select("profile_id,attendance,attendance_at,profiles(id,full_name,category,phone,status)")
+    .eq("competition_id",CURRENT_COMP.id)
+    .then(function(r){
+      if(r.error){ attSay("Laden fehlgeschlagen: "+r.error.message,true); return; }
+      ATTENDANCE=(r.data||[]).filter(function(x){return x.profiles&&x.profiles.status==="approved";})
+        .sort(function(a,b){return String(a.profiles.full_name).localeCompare(String(b.profiles.full_name),"de");});
+      renderAttendance(); renderStart();
+    }).catch(function(err){ attSay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function renderAttendance(){
+  var body=document.querySelector("#attab tbody"); if(!body) return;
+  var h="";
+  ATTENDANCE.forEach(function(m){
+    var p=m.profiles, mine=!!(PROFILE&&p.id===PROFILE.id);
+    h+='<tr'+(mine?' style="background:var(--sunken)"':'')+'><td>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</td>'+
+       '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
+       '<td>'+(p.phone?esc(p.phone):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(mine
+         ? '<select class="cin sel attsel" data-p="'+esc(p.id)+'">'+attendanceOptsHtml(m.attendance)+'</select>'
+         : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
+       '</td></tr>';
+  });
+  if(!ATTENDANCE.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine freigegebenen Mitglieder.</td></tr>';
+  body.innerHTML=h;
+  var sel=body.querySelector(".attsel");
+  if(sel) sel.onchange=function(){ setMyAttendance(this.value); };
+}
+var attSub=null;
+function subscribeAttendance(){
+  if(!sbClient||attSub||!CURRENT_COMP) return;
+  attSub=sbClient.channel("attendance-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"competition_members",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ loadAttendance(); })
+    .subscribe();
+}
+
+/* ---- Persönliche Startansicht ---- */
+function renderStart(){
+  if(!PROFILE) return;
+  var statusBox=document.getElementById("startStatus");
+  if(statusBox){
+    var mine=(ATTENDANCE||[]).filter(function(m){return m.profile_id===PROFILE.id;})[0];
+    statusBox.innerHTML='<select class="cin sel" id="startAttSel">'+attendanceOptsHtml(mine?mine.attendance:null)+'</select>';
+    var sel=document.getElementById("startAttSel");
+    if(sel) sel.onchange=function(){ setMyAttendance(this.value); };
+  }
+  var taskBox=document.getElementById("startTasks");
+  if(taskBox){
+    var myTasks=(TASKS||[]).filter(function(t){
+      return t.status==="open" && (t.task_assignees||[]).some(function(a){return a.profile_id===PROFILE.id;});
+    });
+    taskBox.innerHTML=myTasks.length
+      ? myTasks.map(function(t){
+          return '<div class="startitem"><a href="#taskBox" data-jump-task="'+esc(t.id)+'">'+
+            '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span> '+esc(t.title)+'</a></div>';
+        }).join("")
+      : '<p class="hint" style="margin:0">Keine offenen Aufgaben für dich.</p>';
+    Array.prototype.forEach.call(taskBox.querySelectorAll("[data-jump-task]"),function(a){
+      a.onclick=function(ev){
+        ev.preventDefault();
+        var id=this.getAttribute("data-jump-task");
+        var tb=document.getElementById("taskBox"); if(tb) tb.open=true;
+        setTimeout(function(){
+          var card=document.querySelector('.task-card[data-id="'+id+'"]');
+          if(card) card.scrollIntoView({behavior:"smooth",block:"center"});
+        },50);
+      };
+    });
+  }
+  var teamBox=document.getElementById("startTeam");
+  if(teamBox){
+    var me=(CFG.people||[]).filter(function(p){return p.profileId===PROFILE.id;})[0];
+    if(!me){
+      teamBox.innerHTML='<p class="hint" style="margin:0">Noch keinem Team zugeordnet.</p>';
+    } else if(!me.team){
+      teamBox.innerHTML='<p class="hint" style="margin:0">Als „'+esc(me.name)+'" erfasst, aber noch ohne Team.</p>';
+    } else {
+      var t=(LASTQ.T||[]).filter(function(x){return x.idx===me.team;})[0];
+      if(!t){
+        teamBox.innerHTML='<p class="hint" style="margin:0">Team '+me.team+' – noch nicht im aktuellen Zeitplan.</p>';
+      } else {
+        var rows=t.stations.map(function(st){
+          return '<div class="startitem">'+esc(st.r)+' · '+fmt(st.s)+'–'+fmt(st.e)+'</div>';
+        }).join("");
+        teamBox.innerHTML='<p style="margin:0 0 6px"><strong>'+esc(teamName(t.idx))+'</strong></p>'+rows;
+      }
+    }
+  }
 }
 
 function taskCardHtml(t,isOrga){
@@ -2513,6 +2650,28 @@ document.querySelectorAll("section[id]").forEach(function(sec){
   head.appendChild(btn);
   setSectionCollapsed(sec, !!COLLAPSED[sec.id]);
 });
+
+/* ---- Sprungnavigation ---- */
+function renderJumpNav(){
+  var bar=document.getElementById("jumpNav"); if(!bar) return;
+  var v=document.body.getAttribute("data-view")||"alles";
+  bar.innerHTML=Array.prototype.slice.call(document.querySelectorAll("section[id]")).filter(function(s){
+    if(s.hidden) return false;
+    var dv=s.getAttribute("data-views")||"";
+    return v==="alles"||dv.indexOf(v)>=0;
+  }).map(function(s){
+    var eb=s.querySelector(".sec-head .eyebrow");
+    var label=eb?eb.textContent:s.id;
+    return '<a href="#'+s.id+'" data-jump="'+s.id+'">'+esc(label)+'</a>';
+  }).join("");
+}
+document.getElementById("jumpNav").onclick=function(ev){
+  var a=ev.target.closest?ev.target.closest("a[data-jump]"):null; if(!a) return;
+  ev.preventDefault();
+  var id=a.getAttribute("data-jump");
+  expandSection(id);
+  var sec=document.getElementById(id); if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
+};
 
 /* ---- Suche über Seiteninhalte (nur innerhalb <main>) ---- */
 var searchMatches=[], searchIdx=-1, searchTimer=null;
