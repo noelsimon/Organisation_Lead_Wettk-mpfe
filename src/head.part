@@ -1050,6 +1050,19 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
     <p class="pdfmsg" id="adminMsg" role="status"></p>
+
+    <h3>Auszahlung &amp; Verpflegung</h3>
+    <p class="lede">Nur für dich als Admin sichtbar – niemand sonst sieht diese Beträge. Honorar je Person eintragen, dann die Listen zum Ausdrucken herunterladen.</p>
+    <div class="tblwrap"><table id="paytab">
+      <thead><tr><th>Name</th><th>Funktion</th><th class="num">Honorar (€)</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="readout"><span>Soll gesamt</span> <b id="paySum">—</b></div>
+    <div class="toolbar">
+      <button class="fbtn big" id="payPdfBtn" type="button">Auszahlungsliste als PDF</button>
+      <button class="fbtn big" id="drinkPdfBtn" type="button">Getränkeliste als PDF</button>
+    </div>
+    <p class="pdfmsg" id="payMsg" role="status"></p>
   </div>
 </section>
 

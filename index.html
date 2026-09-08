@@ -1075,6 +1075,19 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
     <p class="pdfmsg" id="adminMsg" role="status"></p>
+
+    <h3>Auszahlung &amp; Verpflegung</h3>
+    <p class="lede">Nur für dich als Admin sichtbar – niemand sonst sieht diese Beträge. Honorar je Person eintragen, dann die Listen zum Ausdrucken herunterladen.</p>
+    <div class="tblwrap"><table id="paytab">
+      <thead><tr><th>Name</th><th>Funktion</th><th class="num">Honorar (€)</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="readout"><span>Soll gesamt</span> <b id="paySum">—</b></div>
+    <div class="toolbar">
+      <button class="fbtn big" id="payPdfBtn" type="button">Auszahlungsliste als PDF</button>
+      <button class="fbtn big" id="drinkPdfBtn" type="button">Getränkeliste als PDF</button>
+    </div>
+    <p class="pdfmsg" id="payMsg" role="status"></p>
   </div>
 </section>
 
@@ -1906,6 +1919,7 @@ function renderPeople(){
   if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
   renderStats();
+  renderPayTab();
   function upd(sel,fn){
     Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){
       el.onchange=function(){
@@ -2437,7 +2451,7 @@ function applyCategoryUI(){
   if(compAdmin) compAdmin.hidden=!PROFILE.is_admin;
   var soll=document.getElementById("stHelferSoll");
   if(soll) soll.disabled=!(PROFILE.is_admin||PROFILE.category==="orga");
-  if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); }
+  if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); loadPayouts(); subscribePayouts(); }
   renderJumpNav();
 }
 
@@ -3453,6 +3467,200 @@ function pdfSay(msg,bad){
   el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
 }
 function T(el,fb){var n=document.querySelector('[data-ed="'+el+'"]'); return n?n.textContent.trim():fb;}
+
+/* ================= Auszahlung & Verpflegung (nur Admin) =================
+   Honorare liegen bewusst NICHT in CFG/plan_state (das ist für alle
+   freigegebenen Mitglieder lesbar), sondern in einer eigenen Tabelle mit
+   admin-only RLS – siehe supabase/migrations/0006_payouts.sql. */
+var PAYOUTS={};
+function paySay(msg,bad){
+  var el=document.getElementById("payMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function payAmount(p){ return PAYOUTS[p.id]!=null?PAYOUTS[p.id]:25; }
+function euro(n){ return (Number(n)||0).toFixed(2).replace(".",",")+" €"; }
+function sortedPeople(){
+  return CFG.people.slice().sort(function(a,b){return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");});
+}
+function loadPayouts(){
+  if(!sbClient||!PROFILE||!PROFILE.is_admin||!CURRENT_COMP) return;
+  sbClient.from("payouts").select("person_id,amount").eq("competition_id",CURRENT_COMP.id).then(function(r){
+    if(r.error){ paySay("Laden fehlgeschlagen: "+r.error.message,true); return; }
+    PAYOUTS={};
+    (r.data||[]).forEach(function(row){ PAYOUTS[row.person_id]=Number(row.amount); });
+    renderPayTab();
+  }).catch(function(err){ paySay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function renderPayTab(){
+  var body=document.querySelector("#paytab tbody"); if(!body) return;
+  var sumEl=document.getElementById("paySum");
+  if(!PROFILE||!PROFILE.is_admin){ body.innerHTML=""; if(sumEl) sumEl.textContent="—"; return; }
+  var list=sortedPeople(), h="", sum=0;
+  list.forEach(function(p){
+    var amt=payAmount(p); sum+=amt;
+    h+='<tr><td>'+esc(p.name)+'</td><td>'+esc(catName(p.cat))+'</td>'+
+       '<td class="num"><input class="nin payamt" data-p="'+esc(p.id)+'" type="number" min="0" max="9999" step="0.5" value="'+amt+'"></td></tr>';
+  });
+  if(!list.length) h='<tr><td colspan="3" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  body.innerHTML=h;
+  if(sumEl) sumEl.textContent=euro(sum);
+  Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(inp){
+    inp.onchange=function(){
+      var v=Math.max(0,parseFloat(this.value)||0); this.value=v;
+      var id=this.getAttribute("data-p");
+      PAYOUTS[id]=v;
+      var total=0; CFG.people.forEach(function(p){total+=payAmount(p);});
+      if(sumEl) sumEl.textContent=euro(total);
+      if(!sbClient||!CURRENT_COMP||!PROFILE) return;
+      sbClient.from("payouts").upsert({competition_id:CURRENT_COMP.id,person_id:id,amount:v,updated_by:PROFILE.id,updated_at:new Date().toISOString()})
+        .then(function(r){ if(r.error) paySay("Speichern fehlgeschlagen: "+r.error.message,true); });
+    };
+  });
+}
+var paySub=null;
+function subscribePayouts(){
+  if(!sbClient||paySub||!CURRENT_COMP||!PROFILE||!PROFILE.is_admin) return;
+  paySub=sbClient.channel("payouts-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"payouts",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ loadPayouts(); })
+    .subscribe();
+}
+function ensureJsPDF(){
+  return (window.jspdf&&window.jspdf.jsPDF ? Promise.resolve()
+    : loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"))
+    .then(function(){ if(!(window.jspdf&&window.jspdf.jsPDF)) throw new Error("jspdf"); });
+}
+function downloadPdfDoc(doc,filename,msgFn){
+  var blob=doc.output("blob");
+  return (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null))
+    .then(function(dl){
+      if(dl&&dl.save) return dl.save({filename:filename,data:blob}).then(function(){msgFn("PDF gespeichert.");});
+      if(saveBlob(blob,filename)){ msgFn("PDF heruntergeladen."); return; }
+      var url=URL.createObjectURL(blob), w=window.open(url,"_blank");
+      if(!w) throw new Error("popup");
+      setTimeout(function(){URL.revokeObjectURL(url);},60000);
+      msgFn("PDF in neuem Tab geöffnet – dort speichern.");
+    });
+}
+function simplePdfKit(){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  var CP1252="€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
+  var SUB={"→":"->","←":"<-","↔":"<->","⇒":"=>","≥":">=","≤":"<=","≠":"!=","✓":"x"};
+  function P(s){
+    s=String(s); var o="";
+    for(var i=0;i<s.length;i++){
+      var c=s.charAt(i);
+      if(s.charCodeAt(i)<256||CP1252.indexOf(c)>=0) o+=c;
+      else o+=(SUB[c]!=null?SUB[c]:"-");
+    }
+    return o;
+  }
+  var _text=doc.text.bind(doc), _split=doc.splitTextToSize.bind(doc);
+  doc.text=function(t,x,y,o){ return _text(Array.isArray(t)?t.map(P):P(t),x,y,o); };
+  doc.splitTextToSize=function(t,w,o){ return _split(P(t),w,o); };
+  var PW=210, PH=297, ML=16, MR=16, CW=PW-ML-MR, page=0;
+  function head(title,sub){
+    page++; if(page>1) doc.addPage();
+    doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+    doc.rect(0,0,PW,20,"F");
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(title,ML,13);
+    doc.setFont("helvetica","normal"); doc.setFontSize(8);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(sub||"",PW-MR,13,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    return 30;
+  }
+  function foot(){
+    doc.setFont("helvetica","normal"); doc.setFontSize(7);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text("Nur für die Orga – nicht veröffentlichen.",ML,PH-8);
+    doc.text("Seite "+page,PW-MR,PH-8,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  }
+  function table(x,y,cols,rows,opt){
+    opt=opt||{};
+    var rh=opt.rh||7, fs=opt.fs||9, rowH=opt.rowH||8;
+    var tw=cols.reduce(function(a,c){return a+c.w;},0);
+    function headerRow(yy){
+      doc.setFontSize(fs-1); doc.setFont("helvetica","bold");
+      doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+      doc.rect(x,yy,tw,rh,"F");
+      doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+      var cx=x; cols.forEach(function(c){ doc.text(String(c.t),c.r?cx+c.w-2:cx+2,yy+rh-2.2,{align:c.r?"right":"left"}); cx+=c.w; });
+      doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+      return yy+rh;
+    }
+    var yy=headerRow(y);
+    rows.forEach(function(r){
+      if(yy+rowH>PH-18){
+        var ny=head(opt.title||"",opt.sub||"");
+        yy=headerRow(ny);
+      }
+      doc.setFont("helvetica",r.bold?"bold":"normal");
+      if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,rowH,"F"); }
+      var cx2=x;
+      cols.forEach(function(c,i){
+        var v=r.c[i]==null?"":String(r.c[i]);
+        doc.text(v,c.r?cx2+c.w-2:cx2+2,yy+rowH/2+fs*0.35,{align:c.r?"right":"left"});
+        cx2+=c.w;
+      });
+      doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.1);
+      doc.line(x,yy+rowH,x+tw,yy+rowH);
+      yy+=rowH;
+    });
+    return yy;
+  }
+  return {doc:doc, head:head, foot:foot, table:table, PW:PW, PH:PH, ML:ML, MR:MR, CW:CW};
+}
+function buildPayoutPDF(){
+  var kit=simplePdfKit(), doc=kit.doc;
+  var sub="Nur für die Orga – nicht veröffentlichen";
+  var y=kit.head("Auszahlungsliste",sub);
+  var cols=[
+    {t:"Name",w:42},{t:"Funktion",w:36},{t:"Shirt-Rückgabe",w:32},
+    {t:"ausgezahlt",w:26,r:true},{t:"Unterschrift",w:kit.CW-42-36-32-26}
+  ];
+  var sum=0;
+  var rows=sortedPeople().map(function(p){
+    var amt=payAmount(p); sum+=amt;
+    return {c:[p.name,catName(p.cat),"",euro(amt),""]};
+  });
+  rows.push({c:["","","SOLL",euro(sum),""],bold:true,fill:PDFCOL.soft});
+  rows.push({c:["","","IST","",""],bold:true});
+  kit.table(kit.ML,y,cols,rows,{title:"Auszahlungsliste",sub:sub});
+  kit.foot();
+  return doc;
+}
+function buildDrinkPDF(){
+  var kit=simplePdfKit(), doc=kit.doc;
+  var sub="Nur für die Orga – nicht veröffentlichen";
+  var y=kit.head("Getränkeliste",sub);
+  var cols=[{t:"Name",w:70},{t:"2 Getränke nach Wahl",w:kit.CW-70}];
+  var rows=sortedPeople().map(function(p){ return {c:[p.name,""]}; });
+  kit.table(kit.ML,y,cols,rows,{title:"Getränkeliste",sub:sub});
+  kit.foot();
+  return doc;
+}
+document.getElementById("payPdfBtn").onclick=function(){
+  if(!PROFILE||!PROFILE.is_admin) return;
+  var btn=this, old=btn.textContent; btn.textContent="PDF wird erstellt …"; paySay("");
+  ensureJsPDF().then(function(){
+    return downloadPdfDoc(buildPayoutPDF(),"Auszahlungsliste.pdf",function(m){paySay(m);});
+  }).catch(function(err){
+    paySay("PDF-Export fehlgeschlagen: "+((err&&err.message)||err),true);
+  }).then(function(){ btn.textContent=old; });
+};
+document.getElementById("drinkPdfBtn").onclick=function(){
+  if(!PROFILE||!PROFILE.is_admin) return;
+  var btn=this, old=btn.textContent; btn.textContent="PDF wird erstellt …"; paySay("");
+  ensureJsPDF().then(function(){
+    return downloadPdfDoc(buildDrinkPDF(),"Getraenkeliste.pdf",function(m){paySay(m);});
+  }).catch(function(err){
+    paySay("PDF-Export fehlgeschlagen: "+((err&&err.message)||err),true);
+  }).then(function(){ btn.textContent=old; });
+};
 function buildPDF(){
   var jsPDF=window.jspdf&&window.jspdf.jsPDF;
   var doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});

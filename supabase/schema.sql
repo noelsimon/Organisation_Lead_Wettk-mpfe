@@ -481,6 +481,23 @@ create policy "avatars: eigene Datei verwalten" on storage.objects
   for all using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 
+-- ---------- Honorar/Auszahlung je Person (nur für Admins sichtbar) ----------
+-- Eigene Tabelle statt Ablage in plan_state/CFG: plan_state ist für alle
+-- freigegebenen Mitglieder des Wettkampfs lesbar – Honorare sollen aber
+-- ausschließlich für Admins sichtbar sein. person_id verweist auf die
+-- Client-ID aus CFG.people (kein Fremdschlüssel möglich, reines Plan-JSON).
+create table public.payouts (
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  person_id      text not null,
+  amount         numeric not null default 25,
+  updated_at     timestamptz not null default now(),
+  updated_by     uuid references public.profiles(id),
+  primary key (competition_id, person_id)
+);
+alter table public.payouts enable row level security;
+create policy "payouts: nur Admin" on public.payouts
+  for all using (public.is_admin()) with check (public.is_admin());
+
 -- ============================================================
 -- Danach in der README weiterlesen:
 --  1. Auth → Providers → Email aktivieren (Confirm email nach Bedarf)
