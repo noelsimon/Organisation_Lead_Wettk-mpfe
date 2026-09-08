@@ -709,14 +709,22 @@ function renderCats(){
     var n=CFG.people.filter(function(p){return p.cat===k.id;}).length;
     h+='<tr><td><input class="cin katin" data-k="'+k.id+'" value="'+esc(k.name)+'"></td>'+
        '<td class="num">'+n+'</td>'+
+       '<td class="num"><input class="nin katneed" data-k="'+k.id+'" type="number" min="0" max="99" value="'+(k.need||0)+'"></td>'+
        '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen">×</button></td></tr>';
   });
-  if(!CFG.cats.length) h='<tr><td colspan="3" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
+  if(!CFG.cats.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
   body.innerHTML=h;
   Array.prototype.forEach.call(document.querySelectorAll(".katin"),function(i){
     i.onchange=function(){
       for(var j=0;j<CFG.cats.length;j++) if(CFG.cats[j].id===this.getAttribute("data-k")) CFG.cats[j].name=this.value.trim()||CFG.cats[j].name;
       saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".katneed"),function(i){
+    i.onchange=function(){
+      var v=Math.max(0,Math.min(99,parseInt(this.value,10)||0)); this.value=v;
+      for(var j=0;j<CFG.cats.length;j++) if(CFG.cats[j].id===this.getAttribute("data-k")) CFG.cats[j].need=v;
+      saveCfg();
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll(".katdel"),function(b){
@@ -928,7 +936,7 @@ document.getElementById("winReset").onclick=function(){
 /* ---- Kategorien und Personen ---- */
 document.getElementById("addKatGo").onclick=function(){
   var n=document.getElementById("newKat").value.trim(); if(!n) return;
-  CFG.cats.push({id:newId("k"),name:n}); document.getElementById("newKat").value="";
+  CFG.cats.push({id:newId("k"),name:n,need:0}); document.getElementById("newKat").value="";
   saveCfg(); renderCats(); renderPeople();
 };
 document.getElementById("addPeoGo").onclick=function(){

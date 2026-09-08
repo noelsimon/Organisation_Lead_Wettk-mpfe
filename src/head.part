@@ -856,8 +856,8 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Kategorien</h3>
     <p class="lede">Lege fest, welche Rollen es am Wettkampftag gibt – Sicherung, Ergebnisdienst, Routenbau, Orga, Buffet, was auch immer du brauchst.</p>
-    <div class="tblwrap" style="max-width:520px"><table id="cattab">
-      <thead><tr><th>Kategorie</th><th class="num">Personen</th><th></th></tr></thead>
+    <div class="tblwrap" style="max-width:620px"><table id="cattab">
+      <thead><tr><th>Kategorie</th><th class="num">Ist</th><th class="num">Soll</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
