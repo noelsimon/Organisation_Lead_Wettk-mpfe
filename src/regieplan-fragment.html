@@ -940,6 +940,14 @@ body.editing{caret-color:var(--ink)}
       <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
     </div>
 
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Besichtigung <input class="nin" id="finBesIn" type="number" min="0" max="180" step="5"> Min</label>
+        <label>ISO <input class="nin" id="finIsoIn" type="number" min="0" max="180" step="5"> Min</label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Verschiebt den Start der Kletterblöcke – beide Zeitpläne (hier und in „Wertungsklassen und Meldezahlen") zeigen denselben Wert.</p>
+    </div>
+
     <div class="toolbar">
       <span class="lbl">Finale</span>
       <button class="fbtn" id="resetF">Zurücksetzen</button>
@@ -947,7 +955,7 @@ body.editing{caret-color:var(--ink)}
     <div class="readout" id="roF"></div>
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
-    <p class="hint">Besichtigung und ISO sind fixiert; die Kletterblöcke lassen sich verschieben und auf andere Finalrouten ziehen.</p>
+    <p class="hint">Besichtigung und ISO sind als Block fixiert; ihre Dauer stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen.</p>
 
     <h3>Finalquoten</h3>
     <div class="tblwrap"><table id="finaltab">
@@ -1808,8 +1816,8 @@ function renderWin(){
   function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}
   set("winQs",CFG.win.qs); set("winQe",CFG.win.qe);
   set("winFs",CFG.win.fs); set("winFe",CFG.win.fe);
-  var b=document.getElementById("winBes"), i=document.getElementById("winIso");
-  if(b) b.value=CFG.win.bes; if(i) i.value=CFG.win.iso;
+  ["winBes","finBesIn"].forEach(function(id){var el=document.getElementById(id); if(el) el.value=CFG.win.bes;});
+  ["winIso","finIsoIn"].forEach(function(id){var el=document.getElementById(id); if(el) el.value=CFG.win.iso;});
   var out=document.getElementById("winOut");
   if(out) out.textContent="Quali "+fmt(CFG.win.qs)+"–"+fmt(CFG.win.qe)+" · Finale "+fmt(CFG.win.fs)+"–"+fmt(CFG.win.fe)+
     " · erster Finalzug "+fmt(CFG.win.fs+(+CFG.win.bes||0)+(+CFG.win.iso||0));
@@ -2047,9 +2055,10 @@ document.getElementById("addClsGo").onclick=function(){
     applyWin();
   };
 });
-["winBes","winIso"].forEach(function(id){
-  document.getElementById(id).onchange=function(){
-    CFG.win[id==="winBes"?"bes":"iso"]=Math.max(0,Math.min(180,parseInt(this.value,10)||0));
+[["winBes","bes"],["winIso","iso"],["finBesIn","bes"],["finIsoIn","iso"]].forEach(function(pair){
+  var el=document.getElementById(pair[0]); if(!el) return;
+  el.onchange=function(){
+    CFG.win[pair[1]]=Math.max(0,Math.min(180,parseInt(this.value,10)||0));
     saveCfg(); pf.render(); pf.save(); renderWin();
   };
 });
