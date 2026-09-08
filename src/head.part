@@ -840,6 +840,13 @@ body.editing{caret-color:var(--ink)}
       <p class="lede">Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
     </div>
 
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Personen pro Routen-Team <input class="nin" id="teamPersIn" type="number" min="1" max="10" value="3"></label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Wirkt sich sofort auf „Personen im Peak", die Team-Tabelle, die Kennzahlen und die PDF aus.</p>
+    </div>
+
     <div class="readout"><span>Bedarf</span> <b id="teamsum">—</b></div>
 
     <div class="tblwrap"><table id="teamtable">

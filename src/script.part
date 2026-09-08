@@ -1,7 +1,7 @@
 <script>
 (function(){
 "use strict";
-var CLIMB=6, SNAP=5, TEAM_PERS=3;
+var CLIMB=6, SNAP=5;
 var TEAMNAMES=["Wölfe","Falken","Luchse","Uhus","Fischotter","Dachse","Kraniche","Habichte","Biber","Reiher","Steinadler","Wanderfalken","Gämsen","Murmeltiere"];
 function fmt(t){var h=Math.floor(t/60),m=Math.round(t%60);return (h<10?"0":"")+h+":"+(m<10?"0":"")+m;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c];});}
@@ -36,6 +36,7 @@ var CFG0={
         {id:"k4",name:"Orga-Team"},{id:"k5",name:"Buffet"}],
   people:[],
   helferSoll:0,
+  teamPers:3,
   seq:100
 };
 var CFG=clone(CFG0);
@@ -58,7 +59,7 @@ function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG)
 try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
   if(_c&&_c.classes&&_c.classes.length){
     CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
-    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0;
+    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3;
     ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(CFG.win[k]==null) CFG.win[k]=CFG0.win[k]; });
   }}catch(e){}
 reindex();
@@ -438,7 +439,7 @@ Plan.prototype.recalc=function(){
   document.getElementById(o.readout).innerHTML=
     '<span>Ende</span> <b>'+fmt(end)+'</b>'+
     '<span>gleichzeitig</span> <b>'+maxR+' Routen</b>'+
-    '<span>Routen-Teams</span> <b>'+maxR+' × 3 = '+(maxR*TEAM_PERS)+' Personen</b>'+
+    '<span>Routen-Teams</span> <b>'+maxR+' × '+CFG.teamPers+' = '+(maxR*CFG.teamPers)+' Personen</b>'+
     '<span>je Klasse max.</span> <b>'+maxCls+' Routen</b>'+
     '<span class="flag'+(nc?" bad":"")+'">'+(nc?nc+(nc===1?" Doppelbelegung":" Doppelbelegungen"):"keine Doppelbelegung")+'</span>'+
     (nw?'<span class="flag warn">'+nw+(nw===1?" Block":" Blöcke")+' auf fremder Route</span>':'');
@@ -518,6 +519,8 @@ function teamName(i){return "Team "+i+" · "+TEAMNAMES[(i-1)%TEAMNAMES.length];}
 var LASTQ={T:[],list:[],plan:null};
 function renderTeams(plan,list){
   if(!plan||!list) return;
+  var tpIn=document.getElementById("teamPersIn");
+  if(tpIn&&document.activeElement!==tpIn) tpIn.value=CFG.teamPers;
   var T=teams(plan,list), h="";
   LASTQ={T:T,list:list,plan:plan};
   T.forEach(function(t){
@@ -530,15 +533,15 @@ function renderTeams(plan,list){
          '<td><span class="ac">'+esc(st.r)+'</span> <span style="color:var(--muted)">'+esc(plan.desc(st.row))+'</span></td>'+
          '<td>'+esc(who)+'</td>'+
          (i===0?'<td rowspan="'+t.stations.length+'" style="vertical-align:top" class="pcell">'+teamPeopleHtml(t.idx)+'</td>':'')+
-         '<td class="num">'+(i===0?(np?np+" / "+TEAM_PERS:TEAM_PERS):"")+'</td></tr>';
+         '<td class="num">'+(i===0?(np?np+" / "+CFG.teamPers:CFG.teamPers):"")+'</td></tr>';
     });
   });
   var named=CFG.people.filter(function(p){return p.team;}).length;
   h+='<tr class="sum"><td>'+T.length+' Routen-Teams</td><td class="tm">—</td><td>'+plan.rows.length+' Routen gebaut</td>'+
      '<td>je Team: Sicherung + Ergebnisdienst</td><td>'+named+' Personen namentlich zugeteilt</td>'+
-     '<td class="num">'+(T.length*TEAM_PERS)+'</td></tr>';
+     '<td class="num">'+(T.length*CFG.teamPers)+'</td></tr>';
   document.querySelector("#teamtable tbody").innerHTML=h;
-  document.getElementById("teamsum").textContent=T.length+" Routen-Teams à "+TEAM_PERS+" Personen = "+(T.length*TEAM_PERS)+" Personen"+
+  document.getElementById("teamsum").textContent=T.length+" Routen-Teams à "+CFG.teamPers+" Personen = "+(T.length*CFG.teamPers)+" Personen"+
     (CFG.people.length?" · "+named+" von "+CFG.people.length+" erfassten Personen einem Team zugeordnet":"");
 }
 
@@ -796,7 +799,7 @@ function renderStats(){
   var tlist=TASKS||[];
   set("stTasks",tlist.filter(function(t){return t.status==="open";}).length+" / "+tlist.filter(function(t){return t.status==="done";}).length);
   set("stTeams",Math.max(q.maxR||0,f.maxR||0));
-  set("stPers",Math.max(q.maxR||0,f.maxR||0)*TEAM_PERS);
+  set("stPers",Math.max(q.maxR||0,f.maxR||0)*CFG.teamPers);
   renderStart();
 }
 function renderFinalTab(){
@@ -819,7 +822,7 @@ function renderFinalTab(){
     });
   });
   h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">—</td><td class="num">'+sumF+'</td>'+
-     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td class="num">'+T.length+'</td><td>'+T.length*TEAM_PERS+' Personen</td></tr>';
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td class="num">'+T.length+'</td><td>'+T.length*CFG.teamPers+' Personen</td></tr>';
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 
@@ -940,6 +943,10 @@ document.getElementById("addPeoGo").onclick=function(){
 function refreshTeamSel(){
   var s=document.getElementById("newPteam"); if(s) s.innerHTML=teamOpts(0);
 }
+document.getElementById("teamPersIn").onchange=function(){
+  CFG.teamPers=Math.max(1,Math.min(10,parseInt(this.value,10)||3));
+  afterCfg(false);
+};
 
 /* ---- Rollenansicht ---- */
 var VIEWKEY="kidscup-view-v1", vbtns=Array.prototype.slice.call(document.querySelectorAll(".vbtn"));
@@ -2079,7 +2086,7 @@ function snapshot(){
 }
 function applySnapshot(s){
   if(!s||!s.cfg||!s.q||!s.f) return false;
-  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0;
+  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3;
   reindex(); saveCfg();
   TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
   pq.rows=s.q.rows; pq.groups=s.q.groups; pq.blocks=s.q.blocks; pq.seq=s.q.seq||1000; pq.sel=null;
@@ -2419,7 +2426,7 @@ function buildPDF(){
   doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
   var kpis=[["Athlet*innen",totalAth()],["Routen",pq.rows.length+pf.rows.length],
             ["Kletterminuten",ql.reduce(function(a,b){return a+(b.e-b.s);},0)],
-            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*TEAM_PERS],
+            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*CFG.teamPers],
             ["Quali-Ende",fmt(q.end)],["Finale-Ende",fmt(f.end)]];
   var kw=CW/kpis.length;
   kpis.forEach(function(k,i){
@@ -2469,7 +2476,7 @@ function buildPDF(){
   foot();
 
   /* --- Seite 2: Quali --- */
-  y=head("Qualifikation – Zeitplan","Ende "+fmt(q.end)+" · max. "+q.maxR+" Routen gleichzeitig · "+(q.maxR*TEAM_PERS)+" Personen");
+  y=head("Qualifikation – Zeitplan","Ende "+fmt(q.end)+" · max. "+q.maxR+" Routen gleichzeitig · "+(q.maxR*CFG.teamPers)+" Personen");
   y=gantt(ML,y,CW,110,pq,ql,44)+6;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Laufkarte der Startgruppen",ML,y); y+=2;
   var lk=[];
@@ -2484,7 +2491,7 @@ function buildPDF(){
   foot();
 
   /* --- Seite 3: Teams --- */
-  y=head("Team-Zeitplan","Ein Routen-Team = Sicherung + Ergebnisdienst = 3 Personen");
+  y=head("Team-Zeitplan","Ein Routen-Team = Sicherung + Ergebnisdienst = "+CFG.teamPers+" Personen");
   var trows=[];
   LASTQ.T.forEach(function(t){
     var ps=peopleOfTeam(t.idx), by={};
@@ -2493,13 +2500,13 @@ function buildPDF(){
     t.stations.forEach(function(st,i){
       trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),st.r+"  "+pq.desc(st.row),
         st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"-"+fmt(x.e)+")";}).join(", "),
-        i===0?pl:"", i===0?(ps.length?ps.length+" / "+TEAM_PERS:TEAM_PERS):""],
+        i===0?pl:"", i===0?(ps.length?ps.length+" / "+CFG.teamPers:CFG.teamPers):""],
         col:[null,null,PC(st.row.cls).ac]});
     });
   });
   trows.push({bold:true,fill:PDFCOL.soft,c:[LASTQ.T.length+" Routen-Teams","—",pq.rows.length+" Routen gebaut",
     "je Team: Sicherung + Ergebnisdienst",
-    CFG.people.filter(function(p){return p.team;}).length+" Personen zugeteilt",LASTQ.T.length*TEAM_PERS]});
+    CFG.people.filter(function(p){return p.team;}).length+" Personen zugeteilt",LASTQ.T.length*CFG.teamPers]});
   var ty=table(ML,y,[{t:"Team",w:36},{t:"Zeit",w:22},{t:"Route",w:50},{t:"Wer klettert",w:78},
                      {t:"Personen",w:62},{t:"Pers.",w:25,r:true}],trows,{rh:5.6,fs:7.5});
   var frei=CFG.people.filter(function(p){return !p.team;});
@@ -2532,7 +2539,7 @@ function buildPDF(){
   var sumG=0,sumF=0;
   CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
   frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,"—",sumF,pf.rows.length+" Routen","—",Tf.length,
-    Tf.length*TEAM_PERS+" Personen"]});
+    Tf.length*CFG.teamPers+" Personen"]});
   table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},{t:"im Finale",w:20,r:true},
               {t:"Route",w:20},{t:"Zeit",w:28},{t:"Team",w:16,r:true},{t:"Ablauf",w:34}],frows,{rh:5.4,fs:7.5});
   foot();
