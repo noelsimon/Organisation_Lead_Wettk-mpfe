@@ -1052,9 +1052,9 @@ body.editing{caret-color:var(--ink)}
     <p class="pdfmsg" id="adminMsg" role="status"></p>
 
     <h3>Auszahlung &amp; Verpflegung</h3>
-    <p class="lede">Nur für dich als Admin sichtbar – niemand sonst sieht diese Beträge. Honorar je Person eintragen, dann die Listen zum Ausdrucken herunterladen.</p>
+    <p class="lede">Nur für dich als Admin sichtbar – niemand sonst sieht diese Beträge. Honorar je Person eintragen, mit dem Häkchen festlegen, wer auf die Getränkeliste kommt, dann die Listen zum Ausdrucken herunterladen.</p>
     <div class="tblwrap"><table id="paytab">
-      <thead><tr><th>Name</th><th>Funktion</th><th class="num">Honorar (€)</th></tr></thead>
+      <thead><tr><th>Name</th><th>Funktion</th><th class="num">Honorar (€)</th><th class="num">Getränkeliste</th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="readout"><span>Soll gesamt</span> <b id="paySum">—</b></div>

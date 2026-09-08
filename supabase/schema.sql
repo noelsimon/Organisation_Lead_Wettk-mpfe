@@ -490,6 +490,7 @@ create table public.payouts (
   competition_id uuid not null references public.competitions(id) on delete cascade,
   person_id      text not null,
   amount         numeric not null default 25,
+  drink_list     boolean not null default true,
   updated_at     timestamptz not null default now(),
   updated_by     uuid references public.profiles(id),
   primary key (competition_id, person_id)

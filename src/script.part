@@ -2315,17 +2315,25 @@ function paySay(msg,bad){
   var el=document.getElementById("payMsg"); if(!el) return;
   el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
 }
-function payAmount(p){ return PAYOUTS[p.id]!=null?PAYOUTS[p.id]:25; }
+function payAmount(p){ return PAYOUTS[p.id]&&PAYOUTS[p.id].amount!=null?PAYOUTS[p.id].amount:25; }
+function payDrink(p){ return !PAYOUTS[p.id]||PAYOUTS[p.id].drink!==false; }
 function euro(n){ return (Number(n)||0).toFixed(2).replace(".",",")+" €"; }
 function sortedPeople(){
   return CFG.people.slice().sort(function(a,b){return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");});
 }
+function savePayout(id,fields){
+  if(!sbClient||!CURRENT_COMP||!PROFILE) return;
+  var payload={competition_id:CURRENT_COMP.id,person_id:id,updated_by:PROFILE.id,updated_at:new Date().toISOString(),
+    amount:PAYOUTS[id]?PAYOUTS[id].amount:25, drink_list:PAYOUTS[id]?PAYOUTS[id].drink!==false:true};
+  for(var k in fields) payload[k]=fields[k];
+  sbClient.from("payouts").upsert(payload).then(function(r){ if(r.error) paySay("Speichern fehlgeschlagen: "+r.error.message,true); });
+}
 function loadPayouts(){
   if(!sbClient||!PROFILE||!PROFILE.is_admin||!CURRENT_COMP) return;
-  sbClient.from("payouts").select("person_id,amount").eq("competition_id",CURRENT_COMP.id).then(function(r){
+  sbClient.from("payouts").select("person_id,amount,drink_list").eq("competition_id",CURRENT_COMP.id).then(function(r){
     if(r.error){ paySay("Laden fehlgeschlagen: "+r.error.message,true); return; }
     PAYOUTS={};
-    (r.data||[]).forEach(function(row){ PAYOUTS[row.person_id]=Number(row.amount); });
+    (r.data||[]).forEach(function(row){ PAYOUTS[row.person_id]={amount:Number(row.amount), drink:row.drink_list!==false}; });
     renderPayTab();
   }).catch(function(err){ paySay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
@@ -2337,21 +2345,27 @@ function renderPayTab(){
   list.forEach(function(p){
     var amt=payAmount(p); sum+=amt;
     h+='<tr><td>'+esc(p.name)+'</td><td>'+esc(catName(p.cat))+'</td>'+
-       '<td class="num"><input class="nin payamt" data-p="'+esc(p.id)+'" type="number" min="0" max="9999" step="0.5" value="'+amt+'"></td></tr>';
+       '<td class="num"><input class="nin payamt" data-p="'+esc(p.id)+'" type="number" min="0" max="9999" step="0.5" value="'+amt+'"></td>'+
+       '<td class="num"><input type="checkbox" class="paydrink" data-p="'+esc(p.id)+'"'+(payDrink(p)?" checked":"")+'></td></tr>';
   });
-  if(!list.length) h='<tr><td colspan="3" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  if(!list.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
   if(sumEl) sumEl.textContent=euro(sum);
   Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(inp){
     inp.onchange=function(){
       var v=Math.max(0,parseFloat(this.value)||0); this.value=v;
       var id=this.getAttribute("data-p");
-      PAYOUTS[id]=v;
+      PAYOUTS[id]=PAYOUTS[id]||{drink:true}; PAYOUTS[id].amount=v;
       var total=0; CFG.people.forEach(function(p){total+=payAmount(p);});
       if(sumEl) sumEl.textContent=euro(total);
-      if(!sbClient||!CURRENT_COMP||!PROFILE) return;
-      sbClient.from("payouts").upsert({competition_id:CURRENT_COMP.id,person_id:id,amount:v,updated_by:PROFILE.id,updated_at:new Date().toISOString()})
-        .then(function(r){ if(r.error) paySay("Speichern fehlgeschlagen: "+r.error.message,true); });
+      savePayout(id,{amount:v});
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".paydrink"),function(cb){
+    cb.onchange=function(){
+      var id=this.getAttribute("data-p"), on=this.checked;
+      PAYOUTS[id]=PAYOUTS[id]||{amount:25}; PAYOUTS[id].drink=on;
+      savePayout(id,{drink_list:on});
     };
   });
 }
@@ -2476,7 +2490,7 @@ function buildDrinkPDF(){
   var sub="Nur für die Orga – nicht veröffentlichen";
   var y=kit.head("Getränkeliste",sub);
   var cols=[{t:"Name",w:70},{t:"2 Getränke nach Wahl",w:kit.CW-70}];
-  var rows=sortedPeople().map(function(p){ return {c:[p.name,""]}; });
+  var rows=sortedPeople().filter(payDrink).map(function(p){ return {c:[p.name,""]}; });
   kit.table(kit.ML,y,cols,rows,{title:"Getränkeliste",sub:sub});
   kit.foot();
   return doc;
