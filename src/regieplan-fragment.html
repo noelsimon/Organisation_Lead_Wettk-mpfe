@@ -120,7 +120,8 @@ h1{font-family:var(--disp); font-weight:600; letter-spacing:-.005em; font-size:c
 section{padding:52px 0 4px}
 section + section{border-top:1px solid var(--line)}
 .sec-head{margin:0 0 26px}
-.sec-head p.eyebrow{margin-bottom:6px}
+.sec-head .eyebrow{font-family:var(--disp); font-weight:500; font-size:clamp(22px,3vw,30px); line-height:1.15;
+  letter-spacing:normal; text-transform:none; color:var(--ink); margin:0; text-wrap:balance}
 h2{font-family:var(--disp); font-weight:500; font-size:clamp(22px,3vw,30px); line-height:1.15; margin:0; text-wrap:balance}
 h3{font-family:var(--disp); font-weight:500; font-size:17px; margin:0 0 10px}
 h4{font-family:var(--disp); font-weight:500; font-size:13px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:0 0 8px}
@@ -618,7 +619,7 @@ body.editing{caret-color:var(--ink)}
   .stat b{font-size:18px}
   section{padding:16px 0 0}
   section + section{border-top:none}
-  #quali,#personal,#routenplan,#finale{break-before:page}
+  #quali,#personal,#finale{break-before:page}
   #melde{padding-top:6px}
   h2{font-size:20px}
   .lede,p{font-size:13px; max-width:none}
@@ -779,7 +780,6 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Für dich</p>
-      <h2>Deine Startansicht</h2>
       <p class="lede">Dein Status und deine Aufgaben auf einen Blick. Der vollständige Plan folgt darunter.</p>
     </div>
     <div class="cards g3">
@@ -866,7 +866,6 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
-      <h2>Klassen, Gruppen, Zahlen – alles frei einstellbar</h2>
       <p class="lede">Diese Tabelle ist der Ursprung des ganzen Plans. Klassennamen und Gruppenbezeichnungen sind frei: aus U15 männlich/weiblich wird bei Bedarf U21 Herren/Damen. Jede Änderung verlängert oder verkürzt sofort die Balken im Zeitplan, verschiebt die Endzeiten und passt Laufkarte, Team-Zeitplan, Wegediagramm und Finalquoten an.</p>
     </div>
     <div class="tblwrap"><table id="meldtab">
@@ -917,7 +916,6 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Tagesablauf</p>
-      <h2>Von der Registrierung bis zur Siegerehrung</h2>
     </div>
     <div class="rail">
       <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
@@ -937,11 +935,10 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ QUALI ============ -->
-<section id="quali" data-views="orga teams sport" data-tab="zeitplan">
+<section id="quali" data-views="orga teams sport bau" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Zeitplan Qualifikation</p>
-      <h2>Jede Klasse mit zwei Routen-Teams</h2>
       <p class="lede">Alle vier Altersklassen starten um 10:30. Innerhalb einer Klasse laufen die drei Routen so versetzt, dass <strong>nie mehr als zwei gleichzeitig besetzt sind</strong> – das Team der frei werdenden Route wandert zur nächsten. Bei der U9 reicht sogar ein Team für beide Routen. Ein Routen-Team sind drei Personen: Sicherung plus Ergebnisdienst. Helle Balken sind die Jungs, dunkle die Mädchen.</p>
     </div>
 
@@ -988,6 +985,10 @@ body.editing{caret-color:var(--ink)}
     <div class="flowwrap" id="flow"></div>
     <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
 
+    <h3>Routenplan</h3>
+    <p class="lede">Alle Qualirouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
+    <div class="routes" id="routenplan" style="margin-bottom:22px"></div>
+
     <div class="cards g2">
       <div class="card">
         <h4>Wie die Klassen ihre drei Routen abarbeiten</h4>
@@ -1022,7 +1023,6 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Personal</p>
-      <h2>Der Team-Zeitplan entsteht aus dem Plan</h2>
       <p class="lede">Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
     </div>
 
@@ -1084,7 +1084,6 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Anwesenheit &amp; Kontakt</p>
-      <h2>Wer ist heute da – und wie erreicht man wen</h2>
       <p class="lede">Jede Person setzt ihren eigenen Status selbst. Telefonnummern stammen aus dem eigenen Profil (Button „Profil" oben in der Kopfzeile).</p>
     </div>
     <p class="att-summary" id="attSummary"></p>
@@ -1097,25 +1096,11 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
-<!-- ============ ROUTENPLAN ============ -->
-<section id="routenplan" data-views="orga bau" data-tab="zeitplan">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Routenplan</p>
-      <h2>Alle Qualirouten im Überblick</h2>
-      <p class="lede">Entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
-    </div>
-
-    <div class="routes" style="margin-bottom:22px"></div>
-  </div>
-</section>
-
 <!-- ============ FINALE ============ -->
 <section id="finale" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Finale · 14:15 – 15:29</p>
-      <h2>Besichtigung, ISO, dann alles parallel</h2>
       <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
     </div>
 
@@ -1149,8 +1134,7 @@ body.editing{caret-color:var(--ink)}
 <section id="compAdmin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Nur für Admins</p>
-      <h2>Wettkämpfe anlegen und verwalten</h2>
+      <p class="eyebrow">Wettkämpfe anlegen und verwalten</p>
       <p class="lede">Jeder Wettkampf hat einen eigenen Link zum Teilen. Personen einem Wettkampf zuordnen geht unten bei den Anmeldungen.</p>
     </div>
     <div class="tblwrap"><table id="comptab">
@@ -1185,8 +1169,7 @@ body.editing{caret-color:var(--ink)}
 <section id="admin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Nur für Admins</p>
-      <h2>Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</h2>
+      <p class="eyebrow">Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</p>
       <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie, Admin-Rechte und Wettkampf-Zuordnung lassen sich jederzeit ändern.</p>
     </div>
     <div class="tblwrap"><table id="admintab">
@@ -1215,7 +1198,6 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Speicherstände</p>
-      <h2>Zwischenstände sichern und weitergeben</h2>
       <p class="lede">Jeder Stand friert den kompletten Plan ein: Klassen, Meldezahlen, Zeitfenster, alle Balken, Personal und die bearbeiteten Texte. Unten steht, wer zuletzt hier war und was er oder sie gemacht hat.</p>
     </div>
     <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
@@ -2153,7 +2135,7 @@ function renderFinalTab(){
 
 var routeNoteTimer=null;
 function renderRoutePlan(plan,list){
-  var box=document.querySelector("#routenplan .routes"); if(!box) return;
+  var box=document.getElementById("routenplan"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;

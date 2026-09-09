@@ -841,7 +841,7 @@ function renderFinalTab(){
 
 var routeNoteTimer=null;
 function renderRoutePlan(plan,list){
-  var box=document.querySelector("#routenplan .routes"); if(!box) return;
+  var box=document.getElementById("routenplan"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;
