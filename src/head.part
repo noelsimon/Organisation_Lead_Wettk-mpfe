@@ -118,7 +118,7 @@ li{margin-bottom:6px}
 .g3{grid-template-columns:repeat(auto-fit,minmax(228px,1fr))}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:18px 18px 16px; box-shadow:var(--shadow)}
 .card p:last-child,.card ul:last-child{margin-bottom:0}
-.note{background:var(--sunken); border:1px solid var(--line); border-left:3px solid var(--line-strong); border-radius:var(--r-md); padding:16px 18px; margin:0 0 18px}
+.note{background:var(--sunken); border:1px solid var(--line); border-left:3px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:16px 18px; margin:0 0 18px}
 .note h4{color:var(--ink); letter-spacing:.07em}
 .note p:last-child,.note ul:last-child,.note ol:last-child{margin-bottom:0}
 
@@ -157,7 +157,7 @@ li{margin-bottom:6px}
 .fbtn.big[aria-pressed="true"]{background:var(--brand-dark); border-color:var(--brand-dark)}
 .fbtn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
 .readout{display:flex; flex-wrap:wrap; gap:6px 18px; align-items:baseline; padding:10px 14px; margin:0 0 12px;
-  background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md); font-size:13.5px}
+  background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow); font-size:13.5px}
 .readout b{font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--ink)}
 .readout span{color:var(--muted)}
 .readout .flag{font-family:var(--disp); letter-spacing:.06em; text-transform:uppercase; font-size:11.5px; padding:2px 8px; border-radius:var(--r-pill); border:1px solid var(--ok); color:var(--ok)}
@@ -210,7 +210,7 @@ li{margin-bottom:6px}
 .rdel:disabled{opacity:0; cursor:default}
 .grow:hover .rdel:disabled{opacity:.35}
 .rdel:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
-.addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); padding:14px 16px; margin:0 0 14px}
+.addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .flowwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow); padding:8px 0 4px}
 .flowwrap svg{display:block; min-width:980px}
 tbody tr.tstart td{border-top:1px solid var(--line-strong)}
@@ -352,18 +352,30 @@ body:not([data-auth="ok"]) main{display:none}
 .task-box[open] .task-summary::before{transform:rotate(90deg)}
 .task-body{padding:0 16px 16px}
 .task-card{background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md);
-  padding:14px 16px; margin:0 0 12px}
+  box-shadow:var(--shadow); padding:14px 16px; margin:0 0 12px}
 .task-card-head{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px}
-.task-card-head b{font-family:var(--disp); font-weight:500; font-size:15px}
+.task-card-head b{font-family:var(--disp); font-weight:500; font-size:15px; flex-basis:100%}
 .task-card .hint{margin:4px 0}
+.task-card-meta{display:flex; align-items:center; gap:10px; margin:4px 0 8px}
+.tk-avatars{display:flex; align-items:center}
+.tk-avatar{display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px;
+  border-radius:50%; font-family:var(--disp); font-size:10px; font-weight:700; color:#fff;
+  border:2px solid var(--sunken)}
+.tk-avatar-more{background:var(--surface-2); color:var(--ink-2)}
+.tk-commentcount{display:flex; align-items:center; gap:4px; color:var(--muted); font-size:11.5px; margin-left:auto}
+.tk-commentcount svg{stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
 .task-comments{margin:10px 0; display:flex; flex-direction:column; gap:6px}
 .task-comment{font-size:13.5px; background:var(--surface); border:1px solid var(--line);
   border-radius:var(--r-sm); padding:6px 9px}
 .task-comment b{font-family:var(--disp); font-weight:500}
 .task-comment .tm{color:var(--muted); font-size:11.5px}
 .pill.prio-hoch{color:var(--bad); border-color:var(--bad)}
+.pill.prio-mittel{color:var(--warn); border-color:var(--warn)}
 .pill.prio-niedrig{color:var(--muted)}
 .pill.status-done{color:var(--ok); border-color:var(--ok)}
+.task-card:has(.pill.prio-hoch){border-left:3px solid var(--bad)}
+.task-card:has(.pill.prio-mittel){border-left:3px solid var(--warn)}
+.task-card:has(.pill.prio-niedrig){border-left:3px solid var(--ok)}
 .task-card.is-new{border-left:3px solid var(--bad)}
 .dot-new{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--bad); flex:0 0 auto}
 #taskSummaryDot.dot-new{cursor:default}
@@ -446,7 +458,7 @@ body[data-cat]:not([data-cat="orga"]):not([data-cat="routenbau"]) .textbar{displ
 #meldtab .nm{font-family:var(--disp); font-weight:600; color:var(--ac)}
 .tin{font-family:var(--mono); font-size:13.5px; padding:4px 6px; border-radius:var(--r-sm); width:100px;
   border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
-.cfgbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); padding:14px 16px; margin:0 0 16px}
+.cfgbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 16px}
 .cfgbox h4{margin-bottom:10px}
 .cfgrow{display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center}
 .cfgrow label{display:flex; align-items:center; gap:7px; font-family:var(--disp); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
@@ -459,6 +471,40 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .stbar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin:0 0 14px}
 .ub-avatar{width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid var(--line-strong)}
 .ub-avatar.big{width:56px; height:56px}
+.attToggle{display:inline-flex; background:var(--surface-2); border-radius:var(--r-pill); padding:3px; gap:2px}
+.attToggle .attBtn{flex:1; border:none; background:none; padding:8px 12px; border-radius:var(--r-pill);
+  font-family:var(--disp); font-size:12px; font-weight:500; color:var(--ink-2); cursor:pointer; white-space:nowrap}
+.attToggle .attBtn[aria-pressed="true"]{background:var(--brand); color:#fff; font-weight:600}
+.attToggle .attBtn:hover{color:var(--ink)}
+.attToggle .attBtn[aria-pressed="true"]:hover{color:#fff}
+.attToggle .attBtn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.person-cell{display:flex; align-items:center; gap:10px}
+.tel-btn{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
+  background:var(--brand-tint); color:var(--brand); vertical-align:middle; margin-right:6px}
+.tel-btn svg{stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+.tel-btn:hover{background:var(--brand-tint-2)}
+@media (max-width:760px){
+  .tblwrap:has(#attab){overflow-x:visible; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #attab, #attab thead, #attab tbody, #attab tr, #attab td{display:block; width:100%}
+  #attab thead{display:none}
+  #attab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
+    padding:12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
+  #attab td{border-bottom:none; padding:0}
+  #attab td:nth-child(1){flex:1 1 100%; order:1}
+  #attab td:nth-child(2){order:3; font-size:12.5px; color:var(--muted)}
+  #attab td:nth-child(3){order:2; flex:1 1 auto; display:flex; align-items:center}
+  #attab td:nth-child(4){order:4; flex:0 0 auto; margin-left:auto}
+}
+@media (max-width:760px){
+  .masthead{padding-bottom:0}
+  .masthead .stats{position:relative; z-index:3; margin-top:30px; margin-bottom:-52px;
+    background:var(--line); border-top:none; box-shadow:var(--shadow); border-radius:var(--r-md)}
+  .masthead .stat{background:var(--surface)}
+  .masthead .stat b{color:var(--ink)}
+  .masthead .stat>span{color:var(--muted)}
+  .masthead .stat-edit{color:var(--ink); border-bottom-color:var(--line-strong)}
+  #authWrap{padding-top:58px}
+}
 .stbar .grow2{flex:1 1 220px}
 .stbar input[type="text"]{width:100%; font-family:var(--serif); font-size:14px; padding:6px 8px; border-radius:var(--r-sm);
   border:1px solid var(--line-strong); background:var(--surface); color:var(--ink)}
