@@ -1141,6 +1141,7 @@ function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; 
 function setAuthState(state){
   document.body.setAttribute("data-auth",state);
   document.getElementById("userbar").hidden = state==="locked";
+  var mpb=document.getElementById("mastheadProfileBtn"); if(mpb) mpb.hidden = state==="locked";
   document.getElementById("authBar").hidden = state!=="locked";
   document.getElementById("loginBox").hidden = state!=="locked" || authTab!=="login";
   document.getElementById("registerBox").hidden = state!=="locked" || authTab!=="register";
@@ -1243,6 +1244,11 @@ function renderUserbarIdentity(){
   document.getElementById("ubCat").textContent=CATLABEL[PROFILE.category]||PROFILE.category;
   var av=document.getElementById("ubAvatar");
   if(av){ av.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) av.src=PROFILE.avatar_url; }
+  var mImg=document.getElementById("mastheadAvatarImg"), mIn=document.getElementById("mastheadAvatarInitial");
+  if(mImg&&mIn){
+    mImg.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) mImg.src=PROFILE.avatar_url;
+    mIn.hidden=!!PROFILE.avatar_url; mIn.textContent=initials(PROFILE.full_name);
+  }
 }
 
 /* ---- Profil-Selbstverwaltung: eigenen Namen ändern, eigenes Profilbild hochladen ---- */
@@ -1261,6 +1267,11 @@ function openProfileBox(){
   document.getElementById("profileBox").hidden=false;
 }
 document.getElementById("btnProfile").onclick=openProfileBox;
+document.getElementById("mastheadProfileBtn").onclick=function(){
+  openProfileBox();
+  var box=document.getElementById("profileBox");
+  if(box) box.scrollIntoView({behavior:"smooth",block:"start"});
+};
 document.getElementById("pfCancel").onclick=function(){ document.getElementById("profileBox").hidden=true; };
 document.getElementById("pfSave").onclick=function(){
   if(!sbClient||!PROFILE) return;

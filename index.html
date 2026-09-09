@@ -96,6 +96,14 @@ body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--serif);
 .masthead{background:linear-gradient(165deg, var(--brand) 0%, var(--brand-dark) 100%); border-bottom:none;
   padding:40px 0 26px; color:#fff; border-radius:0 0 var(--r-lg) var(--r-lg);
   box-shadow:0 16px 32px -20px rgba(11,52,89,.45)}
+.masthead-top{display:flex; align-items:flex-start; justify-content:space-between; gap:14px}
+.avatar-btn{flex:0 0 auto; width:38px; height:38px; border-radius:50%; padding:0; margin-top:-2px;
+  border:2px solid rgba(255,255,255,.5); background:rgba(255,255,255,.15); color:#fff;
+  display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer;
+  font-family:var(--disp); font-weight:600; font-size:14px}
+.avatar-btn:hover{background:rgba(255,255,255,.28)}
+.avatar-btn:focus-visible{outline:2px solid #fff; outline-offset:2px}
+.avatar-btn img{width:100%; height:100%; object-fit:cover}
 .eyebrow{font-family:var(--disp); font-weight:500; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:0 0 10px}
 .masthead .eyebrow{color:rgba(255,255,255,.78)}
 h1{font-family:var(--disp); font-weight:600; letter-spacing:-.005em; font-size:clamp(34px,5.2vw,54px); line-height:1.03; margin:0; text-wrap:balance}
@@ -311,9 +319,8 @@ footer p{max-width:74ch; margin-bottom:8px}
 .tabnav{display:none}
 @media (max-width:760px){
   #jumpNav{display:none}
-  body{padding-bottom:78px}
-  .chat-bubble{bottom:86px}
-  .chat-panel{bottom:150px; max-height:calc(100vh - 186px)}
+  #roleBar{display:none}
+  body{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
   .tabnav{display:flex; position:fixed; left:0; right:0; bottom:0; z-index:65;
     background:var(--surface); border-top:1px solid var(--line);
     box-shadow:0 -4px 16px rgba(16,21,28,.08);
@@ -450,6 +457,11 @@ body:not([data-auth="ok"]) .chat-panel{display:none !important}
 .chat-panel-foot{display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--line)}
 .chat-panel-foot input{flex:1}
 .chat-empty{color:var(--muted); font-size:13px; padding:10px 4px}
+@media (max-width:760px){
+  .chat-bubble{bottom:calc(78px + env(safe-area-inset-bottom,0px)); z-index:66}
+  .chat-panel{bottom:calc(142px + env(safe-area-inset-bottom,0px)); z-index:66;
+    max-height:calc(100vh - 178px - env(safe-area-inset-bottom,0px))}
+}
 
 /* ---------- Rechte je Kategorie: Bearbeiten nur fürs Orga-Team,
    Routenbau bekommt nur die Textbearbeitung in seinen zwei Kapiteln ---------- */
@@ -561,7 +573,7 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
   #staende,#admin,#compAdmin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
@@ -603,7 +615,13 @@ body.editing{caret-color:var(--ink)}
 <body>
 <header class="masthead">
   <div class="wrap">
-    <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
+    <div class="masthead-top">
+      <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
+      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten">
+        <img id="mastheadAvatarImg" alt="" hidden>
+        <span id="mastheadAvatarInitial"></span>
+      </button>
+    </div>
     <p class="printonly" id="stamp"></p>
     <h1>Regieplan Kids Cup</h1>
     <p class="dek">Elf Qualirouten, sieben Finalrouten. Jede Altersklasse braucht <strong>höchstens zwei Routen gleichzeitig</strong> – die U9 sogar nur eine. Der Plan ist ein Werkzeug, kein Ausdruck: <strong>Wertungsklassen, Meldezahlen und Zeitfenster ändern, Balken verschieben, Personal eintragen</strong> – Endzeiten, Pausen und Personalbedarf rechnen sich sofort neu. Oben wählst du die Ansicht für deine Rolle, unten sicherst du Zwischenstände und gibst sie weiter.</p>
@@ -696,7 +714,7 @@ body.editing{caret-color:var(--ink)}
 <main>
 
 <div class="wrap">
-  <div class="vbar">
+  <div class="vbar" id="roleBar">
     <span class="lbl">Ansicht für</span>
     <button class="fbtn vbtn" type="button" data-v="alles" aria-pressed="true">Alles</button>
     <button class="fbtn vbtn" type="button" data-v="orga">Orga-Team</button>
@@ -2428,6 +2446,7 @@ function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; 
 function setAuthState(state){
   document.body.setAttribute("data-auth",state);
   document.getElementById("userbar").hidden = state==="locked";
+  var mpb=document.getElementById("mastheadProfileBtn"); if(mpb) mpb.hidden = state==="locked";
   document.getElementById("authBar").hidden = state!=="locked";
   document.getElementById("loginBox").hidden = state!=="locked" || authTab!=="login";
   document.getElementById("registerBox").hidden = state!=="locked" || authTab!=="register";
@@ -2530,6 +2549,11 @@ function renderUserbarIdentity(){
   document.getElementById("ubCat").textContent=CATLABEL[PROFILE.category]||PROFILE.category;
   var av=document.getElementById("ubAvatar");
   if(av){ av.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) av.src=PROFILE.avatar_url; }
+  var mImg=document.getElementById("mastheadAvatarImg"), mIn=document.getElementById("mastheadAvatarInitial");
+  if(mImg&&mIn){
+    mImg.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) mImg.src=PROFILE.avatar_url;
+    mIn.hidden=!!PROFILE.avatar_url; mIn.textContent=initials(PROFILE.full_name);
+  }
 }
 
 /* ---- Profil-Selbstverwaltung: eigenen Namen ändern, eigenes Profilbild hochladen ---- */
@@ -2548,6 +2572,11 @@ function openProfileBox(){
   document.getElementById("profileBox").hidden=false;
 }
 document.getElementById("btnProfile").onclick=openProfileBox;
+document.getElementById("mastheadProfileBtn").onclick=function(){
+  openProfileBox();
+  var box=document.getElementById("profileBox");
+  if(box) box.scrollIntoView({behavior:"smooth",block:"start"});
+};
 document.getElementById("pfCancel").onclick=function(){ document.getElementById("profileBox").hidden=true; };
 document.getElementById("pfSave").onclick=function(){
   if(!sbClient||!PROFILE) return;
