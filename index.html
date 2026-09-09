@@ -344,7 +344,6 @@ footer p{max-width:74ch; margin-bottom:8px}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
-  #jumpNav{display:none}
   #roleBar{display:none}
   body{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
   .tabnav{display:flex; position:fixed; left:0; right:0; bottom:0; z-index:65;
@@ -382,16 +381,12 @@ footer p{max-width:74ch; margin-bottom:8px}
 @media screen{
   section[data-collapsed="true"] .wrap>*:not(.sec-head){display:none}
 }
-/* ---------- Rollenansicht ---------- */
+/* ---------- Kartenleiste (vbar) ---------- */
 .vbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:18px 0 0;
   background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); padding:12px 16px; box-shadow:var(--shadow)}
 .vbar .lbl{font-family:var(--disp); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-right:4px}
 .vbar p{flex-basis:100%; margin:0; font-size:12.5px; color:var(--muted)}
-body[data-view="orga"]  main section:not([data-views~="orga"]),
-body[data-view="bau"]   main section:not([data-views~="bau"]),
-body[data-view="teams"] main section:not([data-views~="teams"]),
-body[data-view="sport"] main section:not([data-views~="sport"]){display:none}
-body:not([data-view="alles"]) .textbar{display:none}
+#roleBar .jumpnav{margin:0}
 
 /* ---------- Login / Freigabe ---------- */
 body:not([data-auth="ok"]) main{display:none}
@@ -665,7 +660,7 @@ body.editing{caret-color:var(--ink)}
     </div>
     <p class="printonly" id="stamp"></p>
     <h1>Regieplan Kids Cup</h1>
-    <p class="dek">Elf Qualirouten, sieben Finalrouten. Jede Altersklasse braucht <strong>höchstens zwei Routen gleichzeitig</strong> – die U9 sogar nur eine. Der Plan ist ein Werkzeug, kein Ausdruck: <strong>Wertungsklassen, Meldezahlen und Zeitfenster ändern, Balken verschieben, Personal eintragen</strong> – Endzeiten, Pausen und Personalbedarf rechnen sich sofort neu. Oben wählst du die Ansicht für deine Rolle, unten sicherst du Zwischenstände und gibst sie weiter.</p>
+    <p class="dek">Elf Qualirouten, sieben Finalrouten. Jede Altersklasse braucht <strong>höchstens zwei Routen gleichzeitig</strong> – die U9 sogar nur eine. Der Plan ist ein Werkzeug, kein Ausdruck: <strong>Wertungsklassen, Meldezahlen und Zeitfenster ändern, Balken verschieben, Personal eintragen</strong> – Endzeiten, Pausen und Personalbedarf rechnen sich sofort neu. Oben springst du direkt zu einem Kapitel, unten sicherst du Zwischenstände und gibst sie weiter.</p>
     <div class="stats">
       <div class="stat"><b id="stAth">67</b><span>Athlet*innen</span></div>
       <div class="stat"><b id="stRoutes">18</b><span>Routen</span></div>
@@ -756,13 +751,7 @@ body.editing{caret-color:var(--ink)}
 
 <div class="wrap">
   <div class="vbar" id="roleBar">
-    <span class="lbl">Ansicht für</span>
-    <button class="fbtn vbtn" type="button" data-v="alles" aria-pressed="true">Alles</button>
-    <button class="fbtn vbtn" type="button" data-v="orga">Orga-Team</button>
-    <button class="fbtn vbtn" type="button" data-v="bau">Routenbau</button>
-    <button class="fbtn vbtn" type="button" data-v="teams">Routen-Teams / Sicherung</button>
-    <button class="fbtn vbtn" type="button" data-v="sport">Trainer*innen &amp; Athlet*innen</button>
-    <p id="viewNote">Alle Kapitel sichtbar.</p>
+    <nav class="jumpnav" id="jumpNav" aria-label="Sprungnavigation"></nav>
   </div>
   <div class="textbar">
     <button class="fbtn" id="txtToggle" type="button" aria-pressed="false">Texte bearbeiten</button>
@@ -774,7 +763,6 @@ body.editing{caret-color:var(--ink)}
       <div id="txtRestoreList"></div>
     </div>
   </div>
-  <nav class="jumpnav" id="jumpNav" aria-label="Sprungnavigation"></nav>
 </div>
 
 <div class="fmt-toolbar" id="fmtToolbar" hidden>
@@ -2277,21 +2265,6 @@ document.getElementById("teamPersIn").onchange=function(){
   afterCfg(false);
 };
 
-/* ---- Rollenansicht ---- */
-var VIEWKEY="kidscup-view-v1", vbtns=Array.prototype.slice.call(document.querySelectorAll(".vbtn"));
-function setView(v){
-  document.body.setAttribute("data-view",v);
-  vbtns.forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-v")===v?"true":"false");});
-  try{localStorage.setItem(VIEWKEY,v);}catch(e){}
-  var n=document.getElementById("viewNote");
-  if(n) n.textContent=v==="alles"?"Alle Kapitel sichtbar."
-    :"Gefilterte Ansicht – nur die Kapitel, die diese Rolle braucht. Der Plan dahinter bleibt vollständig.";
-  renderJumpNav();
-}
-vbtns.forEach(function(b){b.onclick=function(){setView(b.getAttribute("data-v"));};});
-var v0="alles"; try{v0=localStorage.getItem(VIEWKEY)||"alles";}catch(e){}
-setView(v0);
-
 /* ---- Tab-Navigation (Handy) ---- */
 var tabBtns=Array.prototype.slice.call(document.querySelectorAll(".tabnav [data-tabbtn]"));
 function setTab(t,skipScroll){
@@ -2640,7 +2613,6 @@ var sbClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_K
                  window.SUPABASE_URL.indexOf("DEIN-PROJEKT")<0)
   ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
 var SESSION=null, PROFILE=null, authTab="login", CURRENT_COMP=null, MYCOMPS=[];
-var CATVIEW={orga:"alles", routenbau:"bau", sicherung:"teams", ergebnisdienst:"teams", buffet:"teams"};
 var CATLABEL={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
 
 function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; n.textContent=msg||""; n.className="pdfmsg"+(bad?" bad":""); }
@@ -2813,8 +2785,6 @@ document.getElementById("pfSave").onclick=function(){
 function applyCategoryUI(){
   if(!PROFILE) return;
   document.body.setAttribute("data-cat",PROFILE.category);
-  var hadView=false; try{hadView=!!localStorage.getItem(VIEWKEY);}catch(e){}
-  if(!hadView) setView(CATVIEW[PROFILE.category]||"alles");
   var admin=document.getElementById("admin");
   if(admin) admin.hidden=!PROFILE.is_admin;
   var soll=document.getElementById("stHelferSoll");
@@ -4500,11 +4470,8 @@ document.querySelectorAll("section[id]").forEach(function(sec){
 /* ---- Sprungnavigation ---- */
 function renderJumpNav(){
   var bar=document.getElementById("jumpNav"); if(!bar) return;
-  var v=document.body.getAttribute("data-view")||"alles";
   bar.innerHTML=Array.prototype.slice.call(document.querySelectorAll("section[id]")).filter(function(s){
-    if(s.hidden) return false;
-    var dv=s.getAttribute("data-views")||"";
-    return v==="alles"||dv.indexOf(v)>=0;
+    return !s.hidden;
   }).map(function(s){
     var eb=s.querySelector(".sec-head .eyebrow");
     var label=eb?eb.textContent:s.id;
@@ -4518,6 +4485,7 @@ document.getElementById("jumpNav").onclick=function(ev){
   expandSection(id);
   var sec=document.getElementById(id); if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
 };
+renderJumpNav();
 
 })();
 </script>
