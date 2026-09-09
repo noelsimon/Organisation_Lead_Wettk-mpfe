@@ -220,7 +220,7 @@ create trigger on_auth_user_created
 -- ersetzt kidscup-cfg-v1 / kidscup-quali-v9 / kidscup-finale-v9 / kidscup-texts-v1
 create table public.plan_state (
   competition_id uuid not null references public.competitions(id) on delete cascade,
-  key            text not null check (key in ('cfg','quali','finale','texts')),
+  key            text not null check (key in ('cfg','quali','finale','texts','textblocks')),
   data           jsonb not null,
   updated_at     timestamptz not null default now(),
   updated_by     uuid references public.profiles(id),
@@ -236,11 +236,11 @@ create policy "plan_state: Orga oder Admin schreibt Klassen/Zeitplan" on public.
   with check (public.is_admin() or (public.my_status() = 'approved' and public.my_category() = 'orga' and public.is_member(competition_id) and key in ('cfg','quali','finale')));
 create policy "plan_state: Orga/Routenbau/Admin schreiben Texte" on public.plan_state
   for update
-  using (public.is_admin() or (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)))
-  with check (public.is_admin() or (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)));
+  using (public.is_admin() or (public.my_status() = 'approved' and key in ('texts','textblocks') and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)))
+  with check (public.is_admin() or (public.my_status() = 'approved' and key in ('texts','textblocks') and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)));
 create policy "plan_state: Orga/Routenbau/Admin legen Texte-Zeile an" on public.plan_state
   for insert
-  with check (public.is_admin() or (public.my_status() = 'approved' and key = 'texts' and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)));
+  with check (public.is_admin() or (public.my_status() = 'approved' and key in ('texts','textblocks') and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)));
 
 -- Bekannte Einschränkung: die Trennung "Routenbau darf nur einzelne Textstellen
 -- ändern" wird nur clientseitig durchgesetzt (die UI zeigt nur die für die Rolle

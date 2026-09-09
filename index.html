@@ -170,11 +170,19 @@ li{margin-bottom:6px}
 .pill.ok{color:var(--ok); border-color:var(--ok)}
 
 .routes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(234px,1fr))}
-.route{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--ac); border-radius:var(--r-md); padding:14px 15px 13px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px}
-.route-id{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
-.route-id b{font-family:var(--disp); font-weight:600; font-size:21px; color:var(--ac)}
+.route{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--ac); border-radius:var(--r-md); padding:14px 15px 13px; box-shadow:var(--shadow)}
+.route-summary{list-style:none; cursor:pointer; display:flex; align-items:baseline; gap:9px; margin:0}
+.route-summary::-webkit-details-marker{display:none}
+.route-summary::before{content:"▸"; color:var(--muted); font-size:12px; flex:0 0 auto; transition:transform .12s ease}
+.route[open] .route-summary::before{transform:rotate(90deg)}
+.route-summary b{font-family:var(--disp); font-weight:600; font-size:21px; color:var(--ac)}
 .route-who{font-family:var(--disp); font-size:14px; font-weight:400; color:var(--ink)}
+.route-body{margin-top:10px; display:flex; flex-direction:column; gap:8px}
 .route-meta{display:flex; flex-wrap:wrap; gap:6px 10px; font-family:var(--mono); font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.route-note-label{font-family:var(--disp); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:2px 0 0}
+.route-note{font-family:var(--serif); font-size:13.5px; padding:8px 10px; border-radius:var(--r-sm); border:1px solid var(--line-strong);
+  background:var(--sunken); color:var(--ink); resize:vertical; width:100%}
+.route-note:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .route-desc{font-size:14px; color:var(--ink-2); margin:0}
 
 /* ---------- Gantt ---------- */
@@ -578,6 +586,7 @@ td.pcell{font-size:13.5px; line-height:1.5}
 body.editing [data-ed]{outline:1px dashed var(--line-strong); outline-offset:3px; border-radius:var(--r-sm)}
 body.editing [data-ed]:hover{outline-color:var(--ink-2)}
 body.editing [data-ed]:focus{outline:2px solid var(--ring); outline-offset:3px; background:var(--surface)}
+body:not(.editing) [data-ed].txt-empty{display:none}
 body.editing{caret-color:var(--ink)}
 
 /* ---------- Druck / PDF ---------- */
@@ -620,7 +629,7 @@ body.editing{caret-color:var(--ink)}
   .stat b{font-size:18px}
   section{padding:16px 0 0}
   section + section{border-top:none}
-  #quali,#personal,#routenplan,#finale,#routenbau,#wege{break-before:page}
+  #quali,#personal,#routenplan,#finale{break-before:page}
   #melde{padding-top:6px}
   h2{font-size:20px}
   .lede,p{font-size:13px; max-width:none}
@@ -628,6 +637,8 @@ body.editing{caret-color:var(--ink)}
   .gantt-inner{min-width:0 !important}
   .flowwrap svg{min-width:0 !important; width:100% !important; height:auto !important}
   .gantt,.tblwrap,.flowwrap,.card,.note,.route,.readout{break-inside:avoid; box-shadow:none}
+  .route .route-body{display:flex !important}
+  .route-summary::before{display:none}
   .grow,tr,.rail .step{break-inside:avoid}
   table{font-size:11.5px; min-width:0}
   th,td{padding:5px 8px}
@@ -764,6 +775,11 @@ body.editing{caret-color:var(--ink)}
   <button type="button" id="fmtBold" title="Fett"><b>F</b></button>
   <input type="number" id="fmtSize" min="6" max="200" placeholder="px" title="Schriftgröße in Pixel">
   <button type="button" id="fmtSizeGo" title="Größe anwenden">✓</button>
+</div>
+
+<div class="fmt-toolbar" id="blockToolbar" hidden>
+  <button type="button" id="blockAdd" title="Neuen Textbaustein danach einfügen">+ Baustein</button>
+  <button type="button" id="blockDel" title="Diesen Textbaustein entfernen">× Entfernen</button>
 </div>
 
 <!-- ============ START ============ -->
@@ -975,6 +991,11 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
 
+    <h3>Wege der Startgruppen</h3>
+    <p class="lede">Wer geht wann von welcher Route auf welche: dieselben Daten wie oben, nur andersherum sortiert – eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
+    <div class="flowwrap" id="flow"></div>
+    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
+
     <div class="cards g2">
       <div class="card">
         <h4>Wie die Klassen ihre drei Routen abarbeiten</h4>
@@ -1132,50 +1153,6 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
-<!-- ============ ROUTENBAU ============ -->
-<section id="routenbau" data-views="bau orga" data-tab="mehr">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Routenbau · Paul Ballsuweit</p>
-      <h2>18 Routen stehen am Freitag</h2>
-    </div>
-    <div class="cards g3">
-      <div class="card"><h4>1 · Demovideos nur für die Quali</h4><p style="font-size:14.5px;margin-bottom:0">Die Videos am Vorabend betreffen die <strong>elf Qualirouten</strong>. Die sieben Finalrouten müssen ungesehen bleiben: kein Video, und am Wettkampftag bis 13:30 abgehängt oder abgetrennt.</p></div>
-      <div class="card"><h4>2 · Belastung einplanen</h4><p style="font-size:14.5px;margin-bottom:0">Q6 wird 24-mal geklettert, Q3 20-mal, Q8 16-mal, Q5 13-mal. Griffe fest anziehen, nicht zu fingerlastig – Q6 läuft zweieinhalb Stunden fast ohne Unterbrechung.</p></div>
-      <div class="card"><h4>3 · Toprope oder Vorstieg</h4><p style="font-size:14.5px;margin-bottom:0">Q1–Q8 und F1–F5 sind Toprope (U9, U11, U13), Q9–Q11 und F6/F7 Vorstieg (U15). Umlenkungen und Exen entsprechend vorbereiten.</p></div>
-    </div>
-    <div class="cards g2">
-      <div class="card"><h4>Prioritäten aus deiner Skizze</h4>
-        <ul style="font-size:14.5px">
-          <li>Ungewöhnliche Bewegungsprobleme statt Kraftkletterei</li>
-          <li>Differenzierung über die gesamte Routenlänge</li>
-          <li>Herausfordernd <em>und</em> komplex</li>
-          <li>Zone und Top als echte Hürde, nicht als Formsache</li>
-        </ul></div>
-      <div class="card"><h4>Die drei gemischten Routen Q3, Q6 und Q9</h4>
-        <ul style="font-size:14.5px">
-          <li><strong>Kein Wandsprung.</strong> Wird es an einer Stelle plötzlich hart, fällt das halbe Feld am selben Zug und die Wertung ist wertlos.</li>
-          <li><strong>Beide Wertungsgruppen müssen sich spreizen</strong> – in der U13 sind 16 von 24 Gemeldeten Mädchen, in der U11 13 von 20.</li>
-          <li><strong>Zone im mittleren Drittel</strong>, Top so, dass ihn nur wenige halten.</li>
-        </ul></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ WEGE ============ -->
-<section id="wege" data-views="teams sport orga" data-tab="zeitplan">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Wege der Startgruppen</p>
-      <h2>Wer geht wann von welcher Route auf welche</h2>
-      <p class="lede">Dieselben Daten wie oben, nur andersherum sortiert: eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
-    </div>
-    <div class="flowwrap" id="flow"></div>
-    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
-
-  </div>
-</section>
-
 <!-- ============ WETTKÄMPFE (ADMIN) ============ -->
 <section id="compAdmin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
@@ -1277,7 +1254,7 @@ body.editing{caret-color:var(--ink)}
     <div class="dlbar">
       <button class="fbtn big" id="pdfbtn" type="button">PDF herunterladen</button>
       <button class="fbtn" id="printbtn" type="button">Drucken</button>
-      <p><strong>PDF herunterladen</strong> baut die Datei direkt hier im Browser: sechs Seiten im Querformat – Kennzahlen, Meldezahlen, Tagesablauf und Routenübersicht · Quali-Zeitplan mit Laufkarte · Team-Zeitplan · Finale mit Quoten · Wegediagramm · Routenbau und offene Punkte. Immer mit dem Stand, den der Plan gerade hat, samt deiner geänderten Meldezahlen und Texte. <strong>Drucken</strong> öffnet stattdessen den Druckdialog des Browsers.</p>
+      <p><strong>PDF herunterladen</strong> baut die Datei direkt hier im Browser: fünf Seiten im Querformat – Kennzahlen, Meldezahlen, Tagesablauf und Routenübersicht · Quali-Zeitplan mit Laufkarte · Team-Zeitplan · Finale mit Quoten · Wegediagramm. Immer mit dem Stand, den der Plan gerade hat, samt deiner geänderten Meldezahlen und Texte. <strong>Drucken</strong> öffnet stattdessen den Druckdialog des Browsers.</p>
       <p class="pdfmsg" id="pdfmsg" role="status"></p>
     </div>
   </div>
@@ -1380,6 +1357,7 @@ var CFG0={
   people:[],
   helferSoll:0,
   teamPers:3,
+  routeNotes:{},
   seq:100
 };
 var CFG=clone(CFG0);
@@ -1402,7 +1380,7 @@ function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG)
 try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
   if(_c&&_c.classes&&_c.classes.length){
     CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
-    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3;
+    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
     ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(CFG.win[k]==null) CFG.win[k]=CFG0.win[k]; });
   }}catch(e){}
 reindex();
@@ -2181,8 +2159,13 @@ function renderFinalTab(){
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 
+var routeNoteTimer=null;
 function renderRoutePlan(plan,list){
   var box=document.querySelector("#routenplan .routes"); if(!box) return;
+  var wasOpen={};
+  Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
+    if(d.open) wasOpen[d.getAttribute("data-id")]=true;
+  });
   var h="";
   plan.rows.forEach(function(r){
     var uses=list.filter(function(b){return b.r===r.id;});
@@ -2190,14 +2173,26 @@ function renderRoutePlan(plan,list){
     var mins=starts*CLIMB;
     var lo=uses.length?Math.min.apply(null,uses.map(function(b){return b.s;})):null;
     var hi=uses.length?Math.max.apply(null,uses.map(function(b){return b.e;})):null;
-    h+='<div class="route" data-ac="'+esc(ACOF[r.cls]||"c7")+'"><div class="route-id"><b>'+esc(r.id)+'</b>'+
-       '<span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></div>'+
-       '<span class="tag'+(r.allow==="w"?" w":"")+'">'+esc(allowTxt(r))+'</span>'+
-       '<div class="route-meta"><span>'+starts+' Starts</span><span>'+mins+' Min</span>'+
-         (uses.length?'<span>'+fmt(lo)+'–'+fmt(hi)+'</span>':'<span>noch nicht eingeplant</span>')+
-       '</div></div>';
+    h+='<details class="route" data-ac="'+esc(ACOF[r.cls]||"c7")+'" data-id="'+esc(r.id)+'"'+(wasOpen[r.id]?" open":"")+'>'+
+       '<summary class="route-summary"><b>'+esc(r.id)+'</b> <span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></summary>'+
+       '<div class="route-body">'+
+         '<span class="tag'+(r.allow==="w"?" w":"")+'">'+esc(allowTxt(r))+'</span>'+
+         '<div class="route-meta"><span>'+starts+' Starts</span><span>'+mins+' Min</span>'+
+           (uses.length?'<span>'+fmt(lo)+'–'+fmt(hi)+'</span>':'<span>noch nicht eingeplant</span>')+
+         '</div>'+
+         '<label class="route-note-label" for="rn-'+esc(r.id)+'">Notiz</label>'+
+         '<textarea class="route-note" id="rn-'+esc(r.id)+'" data-route="'+esc(r.id)+'" rows="2" placeholder="Beschreibung oder Notiz zu dieser Route …">'+esc((CFG.routeNotes&&CFG.routeNotes[r.id])||"")+'</textarea>'+
+       '</div></details>';
   });
   box.innerHTML=h||'<p class="hint">Noch keine Routen angelegt.</p>';
+  Array.prototype.forEach.call(box.querySelectorAll(".route-note"),function(ta){
+    ta.oninput=function(){
+      CFG.routeNotes=CFG.routeNotes||{};
+      CFG.routeNotes[this.getAttribute("data-route")]=this.value;
+      clearTimeout(routeNoteTimer);
+      routeNoteTimer=setTimeout(saveCfg,400);
+    };
+  });
 }
 
 /* ================= Instanzen ================= */
@@ -2379,9 +2374,9 @@ function editables(){
   var list=Array.prototype.slice.call(document.querySelectorAll(sel)).filter(function(el){
     return !el.closest(".gantt,.tblwrap,.readout,.editor,.addbox,.toolbar,.flowwrap,.dlbar,.textbar,.legend");
   });
-  /* Routenbau darf nur die Texte in "Routenplan" und "Routenbau" bearbeiten */
+  /* Routenbau darf nur die Texte in "Routenplan" bearbeiten */
   if(PROFILE&&PROFILE.category==="routenbau"){
-    list=list.filter(function(el){ return !!el.closest("#routenplan,#routenbau"); });
+    list=list.filter(function(el){ return !!el.closest("#routenplan"); });
   }
   return list;
 }
@@ -2392,31 +2387,135 @@ function sanitize(html){
 }
 var TXT={};
 try{TXT=JSON.parse(localStorage.getItem(TXTKEY)||"{}")||{};}catch(e){TXT={};}
+var TXTBLOCKKEY="kidscup-textblocks-v1", TXTBLOCKS={added:[],hidden:[]};
+try{
+  var _tb=JSON.parse(localStorage.getItem(TXTBLOCKKEY)||"null");
+  if(_tb&&typeof _tb==="object") TXTBLOCKS={added:_tb.added||[], hidden:_tb.hidden||[]};
+}catch(e){}
+function cssEsc(s){ return (window.CSS&&CSS.escape)?CSS.escape(s):String(s).replace(/[^a-zA-Z0-9_-]/g,"\\$&"); }
+function updateEmptyFlag(el){ el.classList.toggle("txt-empty", !el.textContent.trim()); }
+function renderAddedBlocks(){
+  var pending=TXTBLOCKS.added.slice(), guard=0;
+  while(pending.length&&guard++<50){
+    var next=[];
+    pending.forEach(function(b){
+      if(document.querySelector('[data-ed="'+cssEsc(b.key)+'"]')) return;
+      var anchor=document.querySelector('[data-ed="'+cssEsc(b.afterKey)+'"]');
+      if(!anchor){ next.push(b); return; }
+      var el=document.createElement(b.tag);
+      el.setAttribute("data-ed",b.key);
+      el.classList.add("txt-added");
+      if(TXT[b.key]!=null) el.innerHTML=sanitize(TXT[b.key]);
+      anchor.parentNode.insertBefore(el,anchor.nextSibling);
+    });
+    pending=next;
+  }
+}
+function applyHiddenBlocks(){
+  TXTBLOCKS.hidden.forEach(function(key){
+    var el=document.querySelector('[data-ed="'+cssEsc(key)+'"]');
+    if(el) el.hidden=true;
+  });
+}
+function saveTextBlocks(){
+  try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
+  pushState("textblocks",TXTBLOCKS);
+}
 function initTexts(){
   editables().forEach(function(el,i){
     var k="t"+i; el.setAttribute("data-ed",k);
     if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
+    updateEmptyFlag(el);
   });
+  renderAddedBlocks();
+  document.querySelectorAll(".txt-added[data-ed]").forEach(updateEmptyFlag);
+  applyHiddenBlocks();
 }
 var txtTimer=null;
 function markText(el){
   TXT[el.getAttribute("data-ed")]=el.innerHTML;
+  updateEmptyFlag(el);
   clearTimeout(txtTimer);
   txtTimer=setTimeout(function(){
     try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
     pushState("texts",TXT);
   },400);
 }
+
+/* ---- Textbausteine hinzufügen/entfernen ---- */
+function newBlockKey(){ return "n"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function addBlockAfter(el){
+  var key=newBlockKey(), tag=el.tagName.toLowerCase();
+  var neu=document.createElement(tag);
+  neu.setAttribute("data-ed",key);
+  neu.classList.add("txt-added");
+  neu.setAttribute("contenteditable","true");
+  neu.textContent="Neuer Text …";
+  el.parentNode.insertBefore(neu,el.nextSibling);
+  TXTBLOCKS.added.push({key:key, afterKey:el.getAttribute("data-ed"), tag:tag});
+  TXT[key]=neu.innerHTML;
+  saveTextBlocks();
+  try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+  pushState("texts",TXT);
+  updateEmptyFlag(neu);
+  neu.focus();
+  var range=document.createRange(); range.selectNodeContents(neu);
+  var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+}
+function deleteBlock(el){
+  var key=el.getAttribute("data-ed"); if(!key) return;
+  if(TXTBLOCKS.hidden.indexOf(key)<0) TXTBLOCKS.hidden.push(key);
+  el.hidden=true;
+  saveTextBlocks();
+  hideBlockToolbar();
+}
+
+/* ---- Schwebende Leiste zum Hinzufügen/Entfernen von Textbausteinen ---- */
+var blockActiveEl=null, blockHideTimer=null;
+function hideBlockToolbar(){
+  document.getElementById("blockToolbar").hidden=true;
+  blockActiveEl=null;
+}
+function showBlockToolbar(el){
+  blockActiveEl=el;
+  var tb=document.getElementById("blockToolbar");
+  tb.hidden=false;
+  var rect=el.getBoundingClientRect();
+  var left=Math.min(Math.max(8,rect.left),window.innerWidth-tb.offsetWidth-8);
+  tb.style.left=left+"px";
+  tb.style.top=Math.max(8,rect.top-tb.offsetHeight-8)+"px";
+}
+document.addEventListener("focusin",function(ev){
+  if(!editing) return;
+  var el=ev.target.closest&&ev.target.closest('[data-ed][contenteditable="true"]');
+  if(el){ clearTimeout(blockHideTimer); showBlockToolbar(el); }
+});
+document.addEventListener("focusout",function(ev){
+  if(!editing) return;
+  clearTimeout(blockHideTimer);
+  blockHideTimer=setTimeout(function(){
+    var a=document.activeElement, tb=document.getElementById("blockToolbar");
+    if(tb.contains(a)) return;
+    if(a&&a.closest&&a.closest('[data-ed][contenteditable="true"]')) return;
+    hideBlockToolbar();
+  },120);
+});
+document.getElementById("blockAdd").onmousedown=function(ev){ ev.preventDefault(); if(blockActiveEl) addBlockAfter(blockActiveEl); };
+document.getElementById("blockDel").onmousedown=function(ev){ ev.preventDefault(); if(blockActiveEl) deleteBlock(blockActiveEl); };
+
 var editing=false;
 function setEditing(on){
   editing=on;
   document.body.classList.toggle("editing",on);
   editables().forEach(function(el){ if(on) el.setAttribute("contenteditable","true"); else el.removeAttribute("contenteditable"); });
+  Array.prototype.forEach.call(document.querySelectorAll(".txt-added[data-ed]"),function(el){
+    if(on) el.setAttribute("contenteditable","true"); else el.removeAttribute("contenteditable");
+  });
   var b=document.getElementById("txtToggle");
   b.setAttribute("aria-pressed",on?"true":"false");
   b.textContent=on?"Textbearbeitung beenden":"Texte bearbeiten";
   document.getElementById("txtHint").hidden=!on;
-  if(!on) hideFmtToolbar();
+  if(!on){ hideFmtToolbar(); hideBlockToolbar(); }
 }
 initTexts();
 document.addEventListener("input",function(ev){
@@ -2425,7 +2524,9 @@ document.addEventListener("input",function(ev){
 });
 document.getElementById("txtToggle").onclick=function(){setEditing(!editing);};
 document.getElementById("txtReset").onclick=function(){
-  TXT={}; try{localStorage.removeItem(TXTKEY);}catch(e){}
+  TXT={}; TXTBLOCKS={added:[],hidden:[]};
+  try{localStorage.removeItem(TXTKEY);}catch(e){}
+  try{localStorage.removeItem(TXTBLOCKKEY);}catch(e){}
   location.reload();
 };
 
@@ -2855,7 +2956,8 @@ function createCompetition(){
           {key:"cfg",data:CFG0},
           {key:"quali",data:{rows:QROWS,groups:QGROUPS,blocks:QBLOCKS,seq:1000}},
           {key:"finale",data:{rows:FROWS,groups:FGROUPS,blocks:FBLOCKS,seq:1000}},
-          {key:"texts",data:{}}
+          {key:"texts",data:{}},
+          {key:"textblocks",data:{added:[],hidden:[]}}
         ]);
     seedP.then(function(rows){
       var payload=(rows||[]).map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
@@ -2890,13 +2992,14 @@ function pullState(){
     if(r.error||!r.data) return;
     var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
     if(by.cfg&&by.quali&&by.finale){
-      applySnapshot({cfg:by.cfg, texts:by.texts||{}, q:by.quali, f:by.finale});
+      applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
     } else {
       /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
       pushState("cfg",CFG);
       pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
       pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
       pushState("texts",TXT);
+      pushState("textblocks",TXTBLOCKS);
     }
   }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
 }
@@ -3579,9 +3682,10 @@ function snapshot(){
 }
 function applySnapshot(s){
   if(!s||!s.cfg||!s.q||!s.f) return false;
-  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3;
+  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
   reindex(); saveCfg();
   TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+  TXTBLOCKS=s.textblocks||{added:[],hidden:[]}; try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
   pq.rows=s.q.rows; pq.groups=s.q.groups; pq.blocks=s.q.blocks; pq.seq=s.q.seq||1000; pq.sel=null;
   pf.rows=s.f.rows; pf.groups=s.f.groups; pf.blocks=s.f.blocks; pf.seq=s.f.seq||1000; pf.sel=null;
   pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
@@ -3591,6 +3695,9 @@ function applySnapshot(s){
   document.querySelectorAll("[data-ed]").forEach(function(el){
     var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
   });
+  renderAddedBlocks();
+  applyHiddenBlocks();
+  document.querySelectorAll("[data-ed]").forEach(updateEmptyFlag);
   return true;
 }
 function dstr(iso){
@@ -4287,43 +4394,6 @@ function buildPDF(){
   });
   foot();
 
-  /* --- Seite 6: Routenbau (mit deinen Texten) --- */
-  function secItems(id){
-    var out=[], root=document.getElementById(id);
-    if(!root) return out;
-    Array.prototype.forEach.call(root.querySelectorAll("h3,h4,p,li"),function(el){
-      if(el.classList.contains("hint")||el.classList.contains("eyebrow")) return;
-      if(el.closest(".toolbar,.dlbar,.textbar,.tblwrap,.gantt,.editor,.addbox,.readout")) return;
-      var t=el.textContent.replace(/\s+/g," ").trim();
-      if(t) out.push({k:(el.tagName==="H3"||el.tagName==="H4")?"h":(el.tagName==="LI"?"li":"p"), t:t});
-    });
-    return out;
-  }
-  function secTitle(id){
-    var el=document.querySelector("#"+id+" h2");
-    return el?el.textContent.replace(/\s+/g," ").trim():id;
-  }
-  y=head("Routenbau","Die Texte aus dem Plan – inklusive deiner Änderungen");
-  var colW=(CW-10)/2, cx0=[ML,ML+colW+10], ci=0, cy=y, TOP=y, BOT=PH-14;
-  function put(kind,txt){
-    var fs2=kind==="h"?8.5:7.4, lead=kind==="h"?3.4:3.1;
-    doc.setFont("helvetica",kind==="h"?"bold":"normal"); doc.setFontSize(fs2);
-    doc.setTextColor.apply(doc,kind==="p"||kind==="li"?PDFCOL.ink:PDFCOL.ink);
-    var ind=kind==="li"?3.2:0;
-    var L=doc.splitTextToSize((kind==="li"?"· ":"")+txt,colW-ind);
-    var need=L.length*lead+(kind==="h"?2.6:1.8);
-    if(cy+need>BOT){ ci++; if(ci>1) return false; cy=TOP; }
-    if(kind==="h") cy+=2.2;
-    doc.text(L,cx0[ci]+ind,cy+lead*0.78,{lineHeightFactor:lead/(fs2*0.3528)});
-    cy+=L.length*lead+(kind==="h"?1.2:1.8);
-    return true;
-  }
-  ["routenbau"].forEach(function(id){
-    put("h",secTitle(id));
-    secItems(id).forEach(function(it){ put(it.k,it.t); });
-    cy+=2;
-  });
-  foot();
   return doc;
 }
 var busy=false;

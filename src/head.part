@@ -147,11 +147,19 @@ li{margin-bottom:6px}
 .pill.ok{color:var(--ok); border-color:var(--ok)}
 
 .routes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(234px,1fr))}
-.route{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--ac); border-radius:var(--r-md); padding:14px 15px 13px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px}
-.route-id{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
-.route-id b{font-family:var(--disp); font-weight:600; font-size:21px; color:var(--ac)}
+.route{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--ac); border-radius:var(--r-md); padding:14px 15px 13px; box-shadow:var(--shadow)}
+.route-summary{list-style:none; cursor:pointer; display:flex; align-items:baseline; gap:9px; margin:0}
+.route-summary::-webkit-details-marker{display:none}
+.route-summary::before{content:"▸"; color:var(--muted); font-size:12px; flex:0 0 auto; transition:transform .12s ease}
+.route[open] .route-summary::before{transform:rotate(90deg)}
+.route-summary b{font-family:var(--disp); font-weight:600; font-size:21px; color:var(--ac)}
 .route-who{font-family:var(--disp); font-size:14px; font-weight:400; color:var(--ink)}
+.route-body{margin-top:10px; display:flex; flex-direction:column; gap:8px}
 .route-meta{display:flex; flex-wrap:wrap; gap:6px 10px; font-family:var(--mono); font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.route-note-label{font-family:var(--disp); font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:2px 0 0}
+.route-note{font-family:var(--serif); font-size:13.5px; padding:8px 10px; border-radius:var(--r-sm); border:1px solid var(--line-strong);
+  background:var(--sunken); color:var(--ink); resize:vertical; width:100%}
+.route-note:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .route-desc{font-size:14px; color:var(--ink-2); margin:0}
 
 /* ---------- Gantt ---------- */
@@ -555,6 +563,7 @@ td.pcell{font-size:13.5px; line-height:1.5}
 body.editing [data-ed]{outline:1px dashed var(--line-strong); outline-offset:3px; border-radius:var(--r-sm)}
 body.editing [data-ed]:hover{outline-color:var(--ink-2)}
 body.editing [data-ed]:focus{outline:2px solid var(--ring); outline-offset:3px; background:var(--surface)}
+body:not(.editing) [data-ed].txt-empty{display:none}
 body.editing{caret-color:var(--ink)}
 
 /* ---------- Druck / PDF ---------- */
@@ -597,7 +606,7 @@ body.editing{caret-color:var(--ink)}
   .stat b{font-size:18px}
   section{padding:16px 0 0}
   section + section{border-top:none}
-  #quali,#personal,#routenplan,#finale,#routenbau,#wege{break-before:page}
+  #quali,#personal,#routenplan,#finale{break-before:page}
   #melde{padding-top:6px}
   h2{font-size:20px}
   .lede,p{font-size:13px; max-width:none}
@@ -605,6 +614,8 @@ body.editing{caret-color:var(--ink)}
   .gantt-inner{min-width:0 !important}
   .flowwrap svg{min-width:0 !important; width:100% !important; height:auto !important}
   .gantt,.tblwrap,.flowwrap,.card,.note,.route,.readout{break-inside:avoid; box-shadow:none}
+  .route .route-body{display:flex !important}
+  .route-summary::before{display:none}
   .grow,tr,.rail .step{break-inside:avoid}
   table{font-size:11.5px; min-width:0}
   th,td{padding:5px 8px}
@@ -739,6 +750,11 @@ body.editing{caret-color:var(--ink)}
   <button type="button" id="fmtBold" title="Fett"><b>F</b></button>
   <input type="number" id="fmtSize" min="6" max="200" placeholder="px" title="Schriftgröße in Pixel">
   <button type="button" id="fmtSizeGo" title="Größe anwenden">✓</button>
+</div>
+
+<div class="fmt-toolbar" id="blockToolbar" hidden>
+  <button type="button" id="blockAdd" title="Neuen Textbaustein danach einfügen">+ Baustein</button>
+  <button type="button" id="blockDel" title="Diesen Textbaustein entfernen">× Entfernen</button>
 </div>
 
 <!-- ============ START ============ -->
@@ -950,6 +966,11 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
 
+    <h3>Wege der Startgruppen</h3>
+    <p class="lede">Wer geht wann von welcher Route auf welche: dieselben Daten wie oben, nur andersherum sortiert – eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
+    <div class="flowwrap" id="flow"></div>
+    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
+
     <div class="cards g2">
       <div class="card">
         <h4>Wie die Klassen ihre drei Routen abarbeiten</h4>
@@ -1107,50 +1128,6 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
-<!-- ============ ROUTENBAU ============ -->
-<section id="routenbau" data-views="bau orga" data-tab="mehr">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Routenbau · Paul Ballsuweit</p>
-      <h2>18 Routen stehen am Freitag</h2>
-    </div>
-    <div class="cards g3">
-      <div class="card"><h4>1 · Demovideos nur für die Quali</h4><p style="font-size:14.5px;margin-bottom:0">Die Videos am Vorabend betreffen die <strong>elf Qualirouten</strong>. Die sieben Finalrouten müssen ungesehen bleiben: kein Video, und am Wettkampftag bis 13:30 abgehängt oder abgetrennt.</p></div>
-      <div class="card"><h4>2 · Belastung einplanen</h4><p style="font-size:14.5px;margin-bottom:0">Q6 wird 24-mal geklettert, Q3 20-mal, Q8 16-mal, Q5 13-mal. Griffe fest anziehen, nicht zu fingerlastig – Q6 läuft zweieinhalb Stunden fast ohne Unterbrechung.</p></div>
-      <div class="card"><h4>3 · Toprope oder Vorstieg</h4><p style="font-size:14.5px;margin-bottom:0">Q1–Q8 und F1–F5 sind Toprope (U9, U11, U13), Q9–Q11 und F6/F7 Vorstieg (U15). Umlenkungen und Exen entsprechend vorbereiten.</p></div>
-    </div>
-    <div class="cards g2">
-      <div class="card"><h4>Prioritäten aus deiner Skizze</h4>
-        <ul style="font-size:14.5px">
-          <li>Ungewöhnliche Bewegungsprobleme statt Kraftkletterei</li>
-          <li>Differenzierung über die gesamte Routenlänge</li>
-          <li>Herausfordernd <em>und</em> komplex</li>
-          <li>Zone und Top als echte Hürde, nicht als Formsache</li>
-        </ul></div>
-      <div class="card"><h4>Die drei gemischten Routen Q3, Q6 und Q9</h4>
-        <ul style="font-size:14.5px">
-          <li><strong>Kein Wandsprung.</strong> Wird es an einer Stelle plötzlich hart, fällt das halbe Feld am selben Zug und die Wertung ist wertlos.</li>
-          <li><strong>Beide Wertungsgruppen müssen sich spreizen</strong> – in der U13 sind 16 von 24 Gemeldeten Mädchen, in der U11 13 von 20.</li>
-          <li><strong>Zone im mittleren Drittel</strong>, Top so, dass ihn nur wenige halten.</li>
-        </ul></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ WEGE ============ -->
-<section id="wege" data-views="teams sport orga" data-tab="zeitplan">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Wege der Startgruppen</p>
-      <h2>Wer geht wann von welcher Route auf welche</h2>
-      <p class="lede">Dieselben Daten wie oben, nur andersherum sortiert: eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
-    </div>
-    <div class="flowwrap" id="flow"></div>
-    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
-
-  </div>
-</section>
-
 <!-- ============ WETTKÄMPFE (ADMIN) ============ -->
 <section id="compAdmin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
@@ -1252,7 +1229,7 @@ body.editing{caret-color:var(--ink)}
     <div class="dlbar">
       <button class="fbtn big" id="pdfbtn" type="button">PDF herunterladen</button>
       <button class="fbtn" id="printbtn" type="button">Drucken</button>
-      <p><strong>PDF herunterladen</strong> baut die Datei direkt hier im Browser: sechs Seiten im Querformat – Kennzahlen, Meldezahlen, Tagesablauf und Routenübersicht · Quali-Zeitplan mit Laufkarte · Team-Zeitplan · Finale mit Quoten · Wegediagramm · Routenbau und offene Punkte. Immer mit dem Stand, den der Plan gerade hat, samt deiner geänderten Meldezahlen und Texte. <strong>Drucken</strong> öffnet stattdessen den Druckdialog des Browsers.</p>
+      <p><strong>PDF herunterladen</strong> baut die Datei direkt hier im Browser: fünf Seiten im Querformat – Kennzahlen, Meldezahlen, Tagesablauf und Routenübersicht · Quali-Zeitplan mit Laufkarte · Team-Zeitplan · Finale mit Quoten · Wegediagramm. Immer mit dem Stand, den der Plan gerade hat, samt deiner geänderten Meldezahlen und Texte. <strong>Drucken</strong> öffnet stattdessen den Druckdialog des Browsers.</p>
       <p class="pdfmsg" id="pdfmsg" role="status"></p>
     </div>
   </div>
