@@ -564,6 +564,9 @@ body.editing [data-ed]{outline:1px dashed var(--line-strong); outline-offset:3px
 body.editing [data-ed]:hover{outline-color:var(--ink-2)}
 body.editing [data-ed]:focus{outline:2px solid var(--ring); outline-offset:3px; background:var(--surface)}
 body:not(.editing) [data-ed].txt-empty{display:none}
+body:not(.editing) .card.box-empty,
+body:not(.editing) .note.box-empty,
+body:not(.editing) .cards.box-empty{display:none}
 body.editing{caret-color:var(--ink)}
 
 /* ---------- Druck / PDF ---------- */
@@ -741,7 +744,12 @@ body.editing{caret-color:var(--ink)}
   <div class="textbar">
     <button class="fbtn" id="txtToggle" type="button" aria-pressed="false">Texte bearbeiten</button>
     <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
-    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Markiere ein Textstück, um Schriftgröße oder -dicke nur dafür zu ändern. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
+    <button class="fbtn" id="txtRestoreToggle" type="button" hidden>Ausgeblendete Bausteine</button>
+    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Markiere ein Textstück, um Schriftgröße oder -dicke nur dafür zu ändern. Fokussiere einen Textbaustein, um über die schwebende Leiste einen neuen danach einzufügen oder ihn zu entfernen. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
+    <div class="addbox" id="txtRestoreBox" hidden style="flex-basis:100%; margin-top:10px">
+      <h4 style="margin:0 0 10px">Ausgeblendete Textbausteine</h4>
+      <div id="txtRestoreList"></div>
+    </div>
   </div>
   <nav class="jumpnav" id="jumpNav" aria-label="Sprungnavigation"></nav>
 </div>

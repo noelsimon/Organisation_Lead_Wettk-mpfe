@@ -587,6 +587,9 @@ body.editing [data-ed]{outline:1px dashed var(--line-strong); outline-offset:3px
 body.editing [data-ed]:hover{outline-color:var(--ink-2)}
 body.editing [data-ed]:focus{outline:2px solid var(--ring); outline-offset:3px; background:var(--surface)}
 body:not(.editing) [data-ed].txt-empty{display:none}
+body:not(.editing) .card.box-empty,
+body:not(.editing) .note.box-empty,
+body:not(.editing) .cards.box-empty{display:none}
 body.editing{caret-color:var(--ink)}
 
 /* ---------- Druck / PDF ---------- */
@@ -766,7 +769,12 @@ body.editing{caret-color:var(--ink)}
   <div class="textbar">
     <button class="fbtn" id="txtToggle" type="button" aria-pressed="false">Texte bearbeiten</button>
     <button class="fbtn" id="txtReset" type="button">Texte zurücksetzen</button>
-    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Markiere ein Textstück, um Schriftgröße oder -dicke nur dafür zu ändern. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
+    <button class="fbtn" id="txtRestoreToggle" type="button" hidden>Ausgeblendete Bausteine</button>
+    <p id="txtHint" hidden>Alle Überschriften, Absätze und Listenpunkte sind jetzt <strong>direkt beschreibbar</strong> – hineinklicken und tippen wie in einem Textdokument. Markiere ein Textstück, um Schriftgröße oder -dicke nur dafür zu ändern. Fokussiere einen Textbaustein, um über die schwebende Leiste einen neuen danach einzufügen oder ihn zu entfernen. Was du änderst, bleibt in diesem Browser gespeichert und wandert mit ins PDF.</p>
+    <div class="addbox" id="txtRestoreBox" hidden style="flex-basis:100%; margin-top:10px">
+      <h4 style="margin:0 0 10px">Ausgeblendete Textbausteine</h4>
+      <div id="txtRestoreList"></div>
+    </div>
   </div>
   <nav class="jumpnav" id="jumpNav" aria-label="Sprungnavigation"></nav>
 </div>
@@ -2394,6 +2402,20 @@ try{
 }catch(e){}
 function cssEsc(s){ return (window.CSS&&CSS.escape)?CSS.escape(s):String(s).replace(/[^a-zA-Z0-9_-]/g,"\\$&"); }
 function updateEmptyFlag(el){ el.classList.toggle("txt-empty", !el.textContent.trim()); }
+function updateEmptyContainers(){
+  document.querySelectorAll("main .card, main .note").forEach(function(box){
+    var texts=box.querySelectorAll("[data-ed]");
+    var allGone=texts.length>0 && Array.prototype.every.call(texts,function(el){
+      return el.hidden||el.classList.contains("txt-empty");
+    });
+    box.classList.toggle("box-empty",allGone);
+  });
+  document.querySelectorAll("main .cards").forEach(function(grid){
+    var cards=grid.querySelectorAll(":scope > .card");
+    var allGone=cards.length>0 && Array.prototype.every.call(cards,function(c){ return c.classList.contains("box-empty"); });
+    grid.classList.toggle("box-empty",allGone);
+  });
+}
 function renderAddedBlocks(){
   var pending=TXTBLOCKS.added.slice(), guard=0;
   while(pending.length&&guard++<50){
@@ -2430,11 +2452,13 @@ function initTexts(){
   renderAddedBlocks();
   document.querySelectorAll(".txt-added[data-ed]").forEach(updateEmptyFlag);
   applyHiddenBlocks();
+  updateEmptyContainers();
 }
 var txtTimer=null;
 function markText(el){
   TXT[el.getAttribute("data-ed")]=el.innerHTML;
   updateEmptyFlag(el);
+  updateEmptyContainers();
   clearTimeout(txtTimer);
   txtTimer=setTimeout(function(){
     try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
@@ -2458,6 +2482,7 @@ function addBlockAfter(el){
   try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
   pushState("texts",TXT);
   updateEmptyFlag(neu);
+  updateEmptyContainers();
   neu.focus();
   var range=document.createRange(); range.selectNodeContents(neu);
   var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
@@ -2467,7 +2492,34 @@ function deleteBlock(el){
   if(TXTBLOCKS.hidden.indexOf(key)<0) TXTBLOCKS.hidden.push(key);
   el.hidden=true;
   saveTextBlocks();
+  updateEmptyContainers();
   hideBlockToolbar();
+  renderRestoreList();
+}
+function restoreBlock(key){
+  var el=document.querySelector('[data-ed="'+cssEsc(key)+'"]');
+  if(el) el.hidden=false;
+  var idx=TXTBLOCKS.hidden.indexOf(key);
+  if(idx>=0) TXTBLOCKS.hidden.splice(idx,1);
+  saveTextBlocks();
+  if(el) updateEmptyFlag(el);
+  updateEmptyContainers();
+  renderRestoreList();
+}
+function renderRestoreList(){
+  var box=document.getElementById("txtRestoreList"); if(!box) return;
+  var hiddenEls=Array.prototype.slice.call(document.querySelectorAll("[data-ed][hidden]"));
+  if(!hiddenEls.length){ box.innerHTML='<p class="hint" style="margin:0">Keine ausgeblendeten Textbausteine.</p>'; return; }
+  box.innerHTML=hiddenEls.map(function(el){
+    var key=el.getAttribute("data-ed");
+    var preview=el.textContent.trim().slice(0,70)||"(leer)";
+    return '<div class="cfgrow" style="margin:0 0 8px; align-items:center">'+
+      '<span style="flex:1; font-size:13.5px">'+esc(preview)+'</span>'+
+      '<button class="fbtn" type="button" data-restorebtn="'+esc(key)+'">Wiederherstellen</button></div>';
+  }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll("[data-restorebtn]"),function(b){
+    b.onclick=function(){ restoreBlock(this.getAttribute("data-restorebtn")); };
+  });
 }
 
 /* ---- Schwebende Leiste zum Hinzufügen/Entfernen von Textbausteinen ---- */
@@ -2515,7 +2567,9 @@ function setEditing(on){
   b.setAttribute("aria-pressed",on?"true":"false");
   b.textContent=on?"Textbearbeitung beenden":"Texte bearbeiten";
   document.getElementById("txtHint").hidden=!on;
-  if(!on){ hideFmtToolbar(); hideBlockToolbar(); }
+  document.getElementById("txtRestoreToggle").hidden=!on;
+  if(!on){ hideFmtToolbar(); hideBlockToolbar(); document.getElementById("txtRestoreBox").hidden=true; }
+  else { renderRestoreList(); }
 }
 initTexts();
 document.addEventListener("input",function(ev){
@@ -2528,6 +2582,11 @@ document.getElementById("txtReset").onclick=function(){
   try{localStorage.removeItem(TXTKEY);}catch(e){}
   try{localStorage.removeItem(TXTBLOCKKEY);}catch(e){}
   location.reload();
+};
+document.getElementById("txtRestoreToggle").onclick=function(){
+  var box=document.getElementById("txtRestoreBox");
+  box.hidden=!box.hidden;
+  if(!box.hidden) renderRestoreList();
 };
 
 /* ---- Schriftgröße/-dicke für markierten Text in der Textbearbeitung ---- */
@@ -3698,6 +3757,8 @@ function applySnapshot(s){
   renderAddedBlocks();
   applyHiddenBlocks();
   document.querySelectorAll("[data-ed]").forEach(updateEmptyFlag);
+  updateEmptyContainers();
+  if(editing) renderRestoreList();
   return true;
 }
 function dstr(iso){
