@@ -1507,8 +1507,6 @@ function applyCategoryUI(){
   if(!hadView) setView(CATVIEW[PROFILE.category]||"alles");
   var admin=document.getElementById("admin");
   if(admin) admin.hidden=!PROFILE.is_admin;
-  var compAdmin=document.getElementById("compAdmin");
-  if(compAdmin) compAdmin.hidden=!PROFILE.is_admin;
   var soll=document.getElementById("stHelferSoll");
   if(soll) soll.disabled=!(PROFILE.is_admin||PROFILE.category==="orga");
   if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); loadPayouts(); subscribePayouts(); }

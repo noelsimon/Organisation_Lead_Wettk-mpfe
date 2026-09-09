@@ -502,10 +502,7 @@ body[data-cat]:not([data-cat="orga"]) main section #pdfbtn,
 body[data-cat]:not([data-cat="orga"]) main section #printbtn,
 body[data-cat]:not([data-cat="orga"]) main section#admin input,
 body[data-cat]:not([data-cat="orga"]) main section#admin select,
-body[data-cat]:not([data-cat="orga"]) main section#admin button,
-body[data-cat]:not([data-cat="orga"]) main section#compAdmin input,
-body[data-cat]:not([data-cat="orga"]) main section#compAdmin select,
-body[data-cat]:not([data-cat="orga"]) main section#compAdmin button{
+body[data-cat]:not([data-cat="orga"]) main section#admin button{
   pointer-events:auto; opacity:1; cursor:pointer;
 }
 body[data-cat]:not([data-cat="orga"]):not([data-cat="routenbau"]) .textbar{display:none}
@@ -616,7 +613,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
-  #staende,#admin,#compAdmin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
+  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -1035,11 +1032,11 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ PERSONAL ============ -->
-<section id="personal" data-views="orga teams" data-tab="team">
+<section id="personal" data-views="orga bau teams sport" data-tab="team">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Personal</p>
-      <p class="lede">Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
+      <p class="eyebrow">Kontakte</p>
+      <p class="lede">Personal, Team-Zuordnung und Anwesenheit an einem Ort. Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
     </div>
 
     <div class="cfgbox">
@@ -1092,23 +1089,18 @@ body.editing{caret-color:var(--ink)}
       <div class="card"><h4>Der Peak dauert zehn Minuten</h4><p style="font-size:14.5px;margin-bottom:0">Sieben gleichzeitige Routen gibt es nur 11:23–11:30 und 12:00–12:03. Zieh den U13-Mädchen-Block auf Q6 auf 11:32 und den U15-Mädchen-Block auf Q11 auf 12:05: dann sind es <strong>6 Teams = 18 Personen</strong>, die Quali endet 13:08 statt 12:59.</p></div>
       <div class="card"><h4>Dazu fix</h4><p style="font-size:14.5px;margin-bottom:0">Meldebüro, zentrale Auswertung, ISO-Aufsicht ab 13:55 und Moderation kommen zu den Routen-Teams hinzu.</p></div>
     </div>
-  </div>
-</section>
 
-<!-- ============ ANWESENHEIT ============ -->
-<section id="anwesenheit" data-views="orga bau teams sport" data-tab="team">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Anwesenheit &amp; Kontakt</p>
+    <div id="anwesenheit">
+      <h3>Anwesenheit &amp; Kontakt</h3>
       <p class="lede">Jede Person setzt ihren eigenen Status selbst. Telefonnummern stammen aus dem eigenen Profil (Button „Profil" oben in der Kopfzeile).</p>
+      <p class="att-summary" id="attSummary"></p>
+      <div class="scroller att-filters" id="attFilters"></div>
+      <div class="tblwrap"><table id="attab">
+        <thead><tr><th>Name</th><th>Kategorie</th><th>Telefon</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="pdfmsg" id="attMsg" role="status"></p>
     </div>
-    <p class="att-summary" id="attSummary"></p>
-    <div class="scroller att-filters" id="attFilters"></div>
-    <div class="tblwrap"><table id="attab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Telefon</th><th>Status</th></tr></thead>
-      <tbody></tbody>
-    </table></div>
-    <p class="pdfmsg" id="attMsg" role="status"></p>
   </div>
 </section>
 
@@ -1146,13 +1138,16 @@ body.editing{caret-color:var(--ink)}
   </div>
 </section>
 
-<!-- ============ WETTKÄMPFE (ADMIN) ============ -->
-<section id="compAdmin" data-views="orga" data-tab="mehr" hidden>
+<!-- ============ ADMIN ============ -->
+<section id="admin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Wettkämpfe anlegen und verwalten</p>
-      <p class="lede">Jeder Wettkampf hat einen eigenen Link zum Teilen. Personen einem Wettkampf zuordnen geht unten bei den Anmeldungen.</p>
+      <p class="eyebrow">Admin</p>
+      <p class="lede">Wettkämpfe anlegen, Anmeldungen freigeben, Kategorie- und Admin-Rechte verwalten, Auszahlung und Verpflegung.</p>
     </div>
+
+    <h3>Wettkämpfe</h3>
+    <p class="lede">Jeder Wettkampf hat einen eigenen Link zum Teilen. Personen einem Wettkampf zuordnen geht unten bei den Anmeldungen.</p>
     <div class="tblwrap"><table id="comptab">
       <thead><tr><th>Wettkampf</th><th>Link</th><th class="num">Mitglieder</th><th></th></tr></thead>
       <tbody></tbody>
@@ -1178,16 +1173,9 @@ body.editing{caret-color:var(--ink)}
       <p class="hint" style="margin:10px 0 0">„Von Vorlage" startet mit den Standard-Wertungsklassen und dem Standard-Zeitplan (wie ein frischer Wettkampf). „Duplizieren" übernimmt Wertungsklassen, Zeitplan-Gerüst und Texte eines bestehenden Wettkampfs – keine Personen, Aufgaben oder Speicherstände.</p>
       <p class="pdfmsg" id="ccMsg" role="status"></p>
     </div>
-  </div>
-</section>
 
-<!-- ============ ADMIN ============ -->
-<section id="admin" data-views="orga" data-tab="mehr" hidden>
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="eyebrow">Anmeldungen freigeben, Kategorie und Admin-Rechte verwalten</p>
-      <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie, Admin-Rechte und Wettkampf-Zuordnung lassen sich jederzeit ändern.</p>
-    </div>
+    <h3>Anmeldungen</h3>
+    <p class="lede">Neu registrierte Personen sehen den Plan erst, nachdem du sie hier freigibst. Kategorie, Admin-Rechte und Wettkampf-Zuordnung lassen sich jederzeit ändern.</p>
     <div class="tblwrap"><table id="admintab">
       <thead><tr><th>Name</th><th>E-Mail</th><th>Kategorie</th><th>Wettkämpfe</th><th>Status</th><th>Angemeldet</th><th></th></tr></thead>
       <tbody></tbody>
@@ -2817,8 +2805,6 @@ function applyCategoryUI(){
   if(!hadView) setView(CATVIEW[PROFILE.category]||"alles");
   var admin=document.getElementById("admin");
   if(admin) admin.hidden=!PROFILE.is_admin;
-  var compAdmin=document.getElementById("compAdmin");
-  if(compAdmin) compAdmin.hidden=!PROFILE.is_admin;
   var soll=document.getElementById("stHelferSoll");
   if(soll) soll.disabled=!(PROFILE.is_admin||PROFILE.category==="orga");
   if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); loadPayouts(); subscribePayouts(); }
