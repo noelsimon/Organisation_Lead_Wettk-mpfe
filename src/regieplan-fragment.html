@@ -2397,9 +2397,21 @@ function saveTextBlocks(){
   try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
   pushState("textblocks",TXTBLOCKS);
 }
+/* Schlüssel je Element: an den Abschnitt (nicht an die Position im
+   Dokument) gebunden, damit eine Änderung an anderer Stelle der Seite
+   (neuer Abschnitt, gelöschter Abschnitt, umsortierter Block) nicht
+   die Nummerierung alter Elemente verschiebt und damit gelöschte/
+   bearbeitete Textbausteine an einem völlig anderen Element wieder
+   auftauchen lässt. Zählt pro (Abschnitt, Tag) getrennt hoch. */
 function initTexts(){
-  editables().forEach(function(el,i){
-    var k="t"+i; el.setAttribute("data-ed",k);
+  var counters={};
+  editables().forEach(function(el){
+    var host=el.closest("section[id]")||el.closest("header,footer");
+    var scope=host?(host.id||host.tagName.toLowerCase()):"root";
+    var group=scope+"_"+el.tagName;
+    counters[group]=(counters[group]||0)+1;
+    var k=group+"_"+counters[group];
+    el.setAttribute("data-ed",k);
     if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
     updateEmptyFlag(el);
   });
