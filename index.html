@@ -315,6 +315,23 @@ footer p{max-width:74ch; margin-bottom:8px}
   text-decoration:none}
 .jumpnav a:hover{background:var(--sunken)}
 .jumpnav a:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+/* ---------- Modal / Popup ---------- */
+.modal-overlay{display:none; position:fixed; inset:0; z-index:80; background:rgba(16,21,28,.45);
+  align-items:center; justify-content:center; padding:20px}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--surface); border-radius:var(--r-lg); box-shadow:var(--shadow);
+  max-width:480px; width:100%; max-height:calc(100vh - 40px); overflow-y:auto; padding:24px 22px 20px; position:relative}
+.modal-sheet h3{margin-top:0}
+.modal-close{position:absolute; top:12px; right:12px; width:30px; height:30px; border-radius:50%; border:none;
+  background:var(--surface-2); color:var(--ink-2); font-size:16px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; padding:0}
+.modal-close:hover{background:var(--line); color:var(--ink)}
+.modal-close:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+@media (max-width:760px){
+  .modal-overlay{align-items:flex-end; padding:0}
+  .modal-sheet{max-width:none; border-radius:var(--r-lg) var(--r-lg) 0 0; max-height:88vh;
+    padding:24px 18px calc(20px + env(safe-area-inset-bottom,0px))}
+}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
@@ -514,13 +531,25 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .attToggle .attBtn[aria-pressed="true"]:hover{color:#fff}
 .attToggle .attBtn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
 .person-cell{display:flex; align-items:center; gap:10px}
+.person-cell.clickable{cursor:pointer}
+.person-cell.clickable:hover .tk-avatar{outline:2px solid var(--brand-tint-2)}
+.att-summary{margin:-6px 0 12px; font-size:13px; color:var(--muted)}
+.att-filters{display:flex; gap:8px; margin:0 0 14px; overflow-x:auto; scrollbar-width:none}
+.att-filters::-webkit-scrollbar{display:none}
+.att-filters button{flex:0 0 auto; padding:7px 14px; border-radius:var(--r-pill); border:1px solid var(--line-strong);
+  background:var(--surface); color:var(--ink-2); font-family:var(--disp); font-size:12.5px; font-weight:500; cursor:pointer}
+.att-filters button[aria-pressed="true"]{background:var(--brand); color:#fff; border-color:var(--brand)}
+.att-filters button:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+@media (max-width:760px){
+  #anwesenheit .lede{display:none}
+}
 .tel-btn{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
   background:var(--brand-tint); color:var(--brand); vertical-align:middle; margin-right:6px}
 .tel-btn svg{stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
 .tel-btn:hover{background:var(--brand-tint-2)}
 @media (max-width:760px){
-  .tblwrap:has(#attab){overflow-x:visible; border:none; box-shadow:none; background:none; margin-bottom:8px}
-  #attab, #attab thead, #attab tbody, #attab tr, #attab td{display:block; width:100%}
+  .tblwrap:has(#attab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #attab, #attab thead, #attab tbody, #attab tr, #attab td{display:block; width:100%; min-width:0}
   #attab thead{display:none}
   #attab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
     padding:12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
@@ -1045,6 +1074,8 @@ body.editing{caret-color:var(--ink)}
       <h2>Wer ist heute da – und wie erreicht man wen</h2>
       <p class="lede">Jede Person setzt ihren eigenen Status selbst. Telefonnummern stammen aus dem eigenen Profil (Button „Profil" oben in der Kopfzeile).</p>
     </div>
+    <p class="att-summary" id="attSummary"></p>
+    <div class="scroller att-filters" id="attFilters"></div>
     <div class="tblwrap"><table id="attab">
       <thead><tr><th>Name</th><th>Kategorie</th><th>Telefon</th><th>Status</th></tr></thead>
       <tbody></tbody>
@@ -1260,6 +1291,13 @@ body.editing{caret-color:var(--ink)}
     <p>Geprüft auf Routen-Doppelbelegung, Pausenzeiten, gleichzeitige Routen je Klasse und Endzeiten: 0 Konflikte, 804 Kletterminuten, jede Klasse mit höchstens zwei Routen gleichzeitig, Quali-Ende 12:59.</p>
   </div>
 </footer>
+
+<div class="modal-overlay" id="modalOverlay" aria-hidden="true">
+  <div class="modal-sheet" id="modalSheet" role="dialog" aria-modal="true">
+    <button type="button" class="modal-close" id="modalClose" aria-label="Schließen">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <nav class="tabnav" id="tabNav" aria-label="Hauptnavigation">
   <button type="button" data-tabbtn="start" aria-pressed="true">
@@ -2294,6 +2332,28 @@ function setTab(t,skipScroll){
 tabBtns.forEach(function(b){b.onclick=function(){setTab(b.getAttribute("data-tabbtn"));};});
 setTab("start",true);
 
+/* ---- Modal / Popup ---- */
+var profileBoxHome=null;
+function openModal(){
+  document.getElementById("modalOverlay").classList.add("open");
+  document.getElementById("modalOverlay").setAttribute("aria-hidden","false");
+}
+function closeModal(){
+  document.getElementById("modalOverlay").classList.remove("open");
+  document.getElementById("modalOverlay").setAttribute("aria-hidden","true");
+  var box=document.getElementById("profileBox");
+  if(box&&box.parentNode===document.getElementById("modalBody")){
+    box.hidden=true;
+    if(profileBoxHome) profileBoxHome.parent.insertBefore(box,profileBoxHome.next);
+  }
+  document.getElementById("modalBody").innerHTML="";
+}
+document.getElementById("modalClose").onclick=closeModal;
+document.getElementById("modalOverlay").onclick=function(ev){ if(ev.target===this) closeModal(); };
+document.addEventListener("keydown",function(ev){
+  if(ev.key==="Escape"&&document.getElementById("modalOverlay").classList.contains("open")) closeModal();
+});
+
 function renderFilterBtns(){
   var bar=document.getElementById("fbar"); if(!bar) return;
   bar.innerHTML='<button class="fbtn" type="button" data-f="all" aria-pressed="'+(pq.filter?"false":"true")+'">Alle</button>'+
@@ -2569,15 +2629,15 @@ function openProfileBox(){
   prev.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) prev.src=PROFILE.avatar_url;
   document.getElementById("pfAvatarFile").value="";
   profileSay("");
-  document.getElementById("profileBox").hidden=false;
+  var box=document.getElementById("profileBox");
+  if(!profileBoxHome) profileBoxHome={parent:box.parentNode, next:box.nextSibling};
+  document.getElementById("modalBody").appendChild(box);
+  box.hidden=false;
+  openModal();
 }
 document.getElementById("btnProfile").onclick=openProfileBox;
-document.getElementById("mastheadProfileBtn").onclick=function(){
-  openProfileBox();
-  var box=document.getElementById("profileBox");
-  if(box) box.scrollIntoView({behavior:"smooth",block:"start"});
-};
-document.getElementById("pfCancel").onclick=function(){ document.getElementById("profileBox").hidden=true; };
+document.getElementById("mastheadProfileBtn").onclick=openProfileBox;
+document.getElementById("pfCancel").onclick=closeModal;
 document.getElementById("pfSave").onclick=function(){
   if(!sbClient||!PROFILE) return;
   var name=document.getElementById("pfName").value.trim();
@@ -2605,7 +2665,7 @@ document.getElementById("pfSave").onclick=function(){
     renderUserbarIdentity();
     loadAttendance();
     profileSay("Gespeichert.");
-    document.getElementById("profileBox").hidden=true;
+    closeModal();
   }).catch(function(err){ profileSay("Speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
 };
 function applyCategoryUI(){
@@ -2968,12 +3028,35 @@ function loadAttendance(){
       renderAttendance(); renderStart();
     }).catch(function(err){ attSay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
+var attCatFilter=null;
+function renderAttSummary(){
+  var el=document.getElementById("attSummary"); if(!el) return;
+  var da=ATTENDANCE.filter(function(m){return m.attendance==="da";}).length;
+  var unterwegs=ATTENDANCE.filter(function(m){return m.attendance==="unterwegs";}).length;
+  el.textContent=ATTENDANCE.length?(da+" vor Ort · "+unterwegs+" auf dem Weg · "+ATTENDANCE.length+" gesamt"):"";
+}
+function renderAttFilters(){
+  var box=document.getElementById("attFilters"); if(!box) return;
+  var cats=[];
+  ATTENDANCE.forEach(function(m){ var c=m.profiles&&m.profiles.category; if(c&&cats.indexOf(c)<0) cats.push(c); });
+  if(attCatFilter&&cats.indexOf(attCatFilter)<0) attCatFilter=null;
+  box.innerHTML='<button type="button" data-cat="" aria-pressed="'+(!attCatFilter?"true":"false")+'">Alle</button>'+
+    cats.map(function(c){
+      return '<button type="button" data-cat="'+esc(c)+'" aria-pressed="'+(attCatFilter===c?"true":"false")+'">'+esc(CATLABEL[c]||c)+'</button>';
+    }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){
+    b.onclick=function(){ attCatFilter=this.getAttribute("data-cat")||null; renderAttendance(); };
+  });
+}
 function renderAttendance(){
   var body=document.querySelector("#attab tbody"); if(!body) return;
+  renderAttSummary(); renderAttFilters();
+  var isAdmin=!!(PROFILE&&PROFILE.is_admin);
+  var rows=attCatFilter?ATTENDANCE.filter(function(m){return m.profiles&&m.profiles.category===attCatFilter;}):ATTENDANCE;
   var h="";
-  ATTENDANCE.forEach(function(m){
+  rows.forEach(function(m){
     var p=m.profiles, mine=!!(PROFILE&&p.id===PROFILE.id);
-    h+='<tr'+(mine?' style="background:var(--sunken)"':'')+'><td><div class="person-cell">'+
+    h+='<tr'+(mine?' style="background:var(--sunken)"':'')+'><td><div class="person-cell" data-pid="'+esc(p.id)+'">'+
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
@@ -2983,9 +3066,48 @@ function renderAttendance(){
          : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
        '</td></tr>';
   });
-  if(!ATTENDANCE.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine freigegebenen Mitglieder.</td></tr>';
+  if(!rows.length) h='<tr><td colspan="4" style="color:var(--muted)">'+(ATTENDANCE.length?"Keine Treffer für diesen Filter.":"Noch keine freigegebenen Mitglieder.")+'</td></tr>';
   body.innerHTML=h;
   wireAttendanceToggle(body);
+  if(isAdmin){
+    Array.prototype.forEach.call(body.querySelectorAll(".person-cell"),function(cell){
+      cell.classList.add("clickable");
+      cell.onclick=function(){ openPersonEdit(this.getAttribute("data-pid")); };
+    });
+  }
+}
+function personEditHtml(p){
+  return '<h3>'+esc(p.full_name)+'</h3>'+
+    '<p class="hint" style="margin-top:-8px">'+esc(p.email||"")+'</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<label>Kategorie <select class="cin sel" id="pdCat">'+
+        Object.keys(CATLABEL).map(function(c){return '<option value="'+c+'"'+(c===p.category?" selected":"")+'>'+CATLABEL[c]+'</option>';}).join("")+
+      '</select></label>'+
+    '</div>'+
+    '<div class="cfgrow" style="margin-top:12px">'+
+      (p.status!=="approved"?'<button class="fbtn" id="pdApprove" type="button">Freigeben</button>':'')+
+      (p.status!=="rejected"?'<button class="fbtn" id="pdReject" type="button">Ablehnen</button>':'')+
+      '<button class="fbtn" id="pdAdminToggle" type="button">'+(p.is_admin?"Admin entziehen":"Admin machen")+'</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="pdMsg" role="status"></p>';
+}
+function openPersonEdit(profileId){
+  if(!PROFILE||!PROFILE.is_admin||!profileId) return;
+  var p=ADMINROWS.filter(function(x){return x.id===profileId;})[0];
+  if(!p) return;
+  document.getElementById("modalBody").innerHTML=personEditHtml(p);
+  function pdSay(msg,bad){ var m=document.getElementById("pdMsg"); if(m){ m.textContent=msg||""; m.className="pdfmsg"+(bad?" bad":""); } }
+  function upd(patch){
+    sbClient.from("profiles").update(patch).eq("id",p.id).then(function(r){
+      if(r.error){ pdSay(r.error.message,true); return; }
+      loadAdmin(); loadAttendance(); closeModal();
+    }).catch(function(err){ pdSay(String((err&&err.message)||err),true); });
+  }
+  var catSel=document.getElementById("pdCat"); if(catSel) catSel.onchange=function(){ upd({category:this.value}); };
+  var ap=document.getElementById("pdApprove"); if(ap) ap.onclick=function(){ upd({status:"approved",approved_at:new Date().toISOString(),approved_by:PROFILE.id}); };
+  var rj=document.getElementById("pdReject"); if(rj) rj.onclick=function(){ upd({status:"rejected"}); };
+  var at=document.getElementById("pdAdminToggle"); if(at) at.onclick=function(){ upd({is_admin: !p.is_admin}); };
+  openModal();
 }
 var attSub=null;
 function subscribeAttendance(){
