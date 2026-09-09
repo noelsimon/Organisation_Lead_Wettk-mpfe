@@ -2,9 +2,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Poppins:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
 :root{
-  --bg:#F2F4F0; --surface:#FFFFFF; --surface-2:#E9ECE6; --sunken:#EDEFEA;
-  --ink:#141815; --ink-2:#3F4642; --muted:#6C756F;
-  --line:#D9DED6; --line-strong:#B4BCB2;
+  --brand:#114A7A; --brand-dark:#0B3459; --brand-light:#3E7CB1; --brand-ink:#114A7A;
+  --brand-tint:#EAF1F8; --brand-tint-2:#D3E3F0;
+  --bg:#F3F6FA; --surface:#FFFFFF; --surface-2:#EAF1F8; --sunken:#EEF3F9;
+  --ink:#10151C; --ink-2:#3A4A5E; --muted:#5E7086;
+  --line:#DCE6F0; --line-strong:#AFC2D6;
   --c0:#B87708;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
   --c1:#1F7A55; --c1-m-bg:#EDF7F2; --c1-m-br:#C4E0D3; --c1-w-bg:#CBE7D9; --c1-w-br:#8FC3A9;
   --c2:#2559A6; --c2-m-bg:#EEF4FC; --c2-m-br:#C7D9F0; --c2-w-bg:#CFE0F4; --c2-w-br:#98BAE1;
@@ -13,9 +15,9 @@
   --c5:#0D7480; --c5-m-bg:#EAF7F8; --c5-m-br:#BFDFE3; --c5-w-bg:#C6E7EA; --c5-w-br:#88C0C7;
   --c6:#83592C; --c6-m-bg:#FAF4EB; --c6-m-br:#E2D3BC; --c6-w-bg:#ECDCC4; --c6-w-br:#C9AE83;
   --c7:#4A5666; --c7-m-bg:#F1F3F6; --c7-m-br:#D3D9E1; --c7-w-bg:#D6DCE4; --c7-w-br:#AAB4C1;
-  --ok:#1F7A55; --warn:#B87708; --bad:#A93B34; --grid:#D9DED6;
-  --ring:#141815;
-  --shadow:0 1px 2px rgba(20,24,21,.05), 0 8px 24px -18px rgba(20,24,21,.35);
+  --ok:#1D8A5D; --warn:#B7791B; --bad:#C0342B; --grid:#DCE6F0;
+  --ring:#114A7A;
+  --shadow:0 1px 2px rgba(16,21,28,.06), 0 12px 28px -18px rgba(16,21,28,.32);
   --r-sm:8px; --r-md:14px; --r-lg:20px; --r-pill:999px;
   --serif:"Poppins","Segoe UI",system-ui,sans-serif;
   --disp:"Poppins","Arial Narrow",system-ui,sans-serif;
@@ -24,9 +26,11 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#121513; --surface:#1A1E1B; --surface-2:#232823; --sunken:#161A17;
-    --ink:#E9EDE7; --ink-2:#BCC4BE; --muted:#8B958E;
-    --line:#2C322E; --line-strong:#454E48;
+    --brand:#114A7A; --brand-dark:#0B3459; --brand-light:#3E7CB1; --brand-ink:#6FA8D9;
+    --brand-tint:#16283A; --brand-tint-2:#1D3550;
+    --bg:#0E1620; --surface:#16212E; --surface-2:#1D2C3D; --sunken:#131D28;
+    --ink:#EAF1F8; --ink-2:#B7C6D8; --muted:#8496AC;
+    --line:#26374A; --line-strong:#3C5268;
     --c0:#E0A63C;  --c0-m-bg:#2A2110; --c0-m-br:#4A3A18; --c0-w-bg:#3E2E10; --c0-w-br:#715620;
     --c1:#4FBB89; --c1-m-bg:#0E2B20; --c1-m-br:#1C4B38; --c1-w-bg:#134532; --c1-w-br:#2A7355;
     --c2:#6C9FE0; --c2-m-bg:#13202F; --c2-m-br:#223A5B; --c2-w-bg:#1B3150; --c2-w-br:#345880;
@@ -35,16 +39,18 @@
     --c5:#49B7C4; --c5-m-bg:#0E2A2E; --c5-m-br:#1B484F; --c5-w-bg:#134048; --c5-w-br:#276C77;
     --c6:#C79A63; --c6-m-bg:#291F13; --c6-m-br:#48371F; --c6-w-bg:#3B2B16; --c6-w-br:#6B5029;
     --c7:#9AA8BB; --c7-m-bg:#1B2029; --c7-m-br:#333C49; --c7-w-bg:#252D3A; --c7-w-br:#4A5768;
-    --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#2C322E;
-    --ring:#E9EDE7;
+    --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#26374A;
+    --ring:#6FA8D9;
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#121513; --surface:#1A1E1B; --surface-2:#232823; --sunken:#161A17;
-  --ink:#E9EDE7; --ink-2:#BCC4BE; --muted:#8B958E;
-  --line:#2C322E; --line-strong:#454E48;
+  --brand:#114A7A; --brand-dark:#0B3459; --brand-light:#3E7CB1; --brand-ink:#6FA8D9;
+  --brand-tint:#16283A; --brand-tint-2:#1D3550;
+  --bg:#0E1620; --surface:#16212E; --surface-2:#1D2C3D; --sunken:#131D28;
+  --ink:#EAF1F8; --ink-2:#B7C6D8; --muted:#8496AC;
+  --line:#26374A; --line-strong:#3C5268;
   --c0:#E0A63C;  --c0-m-bg:#2A2110; --c0-m-br:#4A3A18; --c0-w-bg:#3E2E10; --c0-w-br:#715620;
   --c1:#4FBB89; --c1-m-bg:#0E2B20; --c1-m-br:#1C4B38; --c1-w-bg:#134532; --c1-w-br:#2A7355;
   --c2:#6C9FE0; --c2-m-bg:#13202F; --c2-m-br:#223A5B; --c2-w-bg:#1B3150; --c2-w-br:#345880;
@@ -53,8 +59,8 @@
   --c5:#49B7C4; --c5-m-bg:#0E2A2E; --c5-m-br:#1B484F; --c5-w-bg:#134048; --c5-w-br:#276C77;
   --c6:#C79A63; --c6-m-bg:#291F13; --c6-m-br:#48371F; --c6-w-bg:#3B2B16; --c6-w-br:#6B5029;
   --c7:#9AA8BB; --c7-m-bg:#1B2029; --c7-m-br:#333C49; --c7-w-bg:#252D3A; --c7-w-br:#4A5768;
-  --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#2C322E;
-  --ring:#E9EDE7;
+  --ok:#4FBB89; --warn:#E0A63C; --bad:#E5766C; --grid:#26374A;
+  --ring:#6FA8D9;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.9);
   color-scheme:dark;
 }
@@ -64,22 +70,35 @@ body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--serif);
 .wrap{max-width:1140px; margin:0 auto; padding:0 24px}
 @media (max-width:640px){ .wrap{padding:0 16px} }
 
-.masthead{background:var(--surface); border-bottom:1px solid var(--line); padding:44px 0 0}
+.masthead{background:linear-gradient(165deg, var(--brand) 0%, var(--brand-dark) 100%); border-bottom:none;
+  padding:40px 0 26px; color:#fff; border-radius:0 0 var(--r-lg) var(--r-lg);
+  box-shadow:0 16px 32px -20px rgba(11,52,89,.45)}
 .eyebrow{font-family:var(--disp); font-weight:500; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:0 0 10px}
+.masthead .eyebrow{color:rgba(255,255,255,.78)}
 h1{font-family:var(--disp); font-weight:600; letter-spacing:-.005em; font-size:clamp(34px,5.2vw,54px); line-height:1.03; margin:0; text-wrap:balance}
+.masthead h1{color:#fff}
 .dek{font-size:clamp(16px,2vw,19px); color:var(--ink-2); max-width:62ch; margin:16px 0 0}
 .dek strong{color:var(--ink); font-weight:600}
+.masthead .dek{color:rgba(255,255,255,.88)}
+.masthead .dek strong{color:#fff}
 .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:1px; background:var(--line); border-top:1px solid var(--line); margin-top:34px}
+.masthead .stats{background:rgba(255,255,255,.22); border-top-color:rgba(255,255,255,.22); border-radius:var(--r-md); overflow:hidden}
 .stat{background:var(--surface); padding:16px 4px 18px}
+.masthead .stat{background:rgba(255,255,255,.08)}
 .stat{text-align:center}
 .stat b{display:block; font-family:var(--mono); font-weight:500; font-size:23px; letter-spacing:-.02em; font-variant-numeric:tabular-nums; white-space:nowrap}
+.masthead .stat b{color:#fff}
 .stat>span{display:block; font-family:var(--disp); font-size:11px; font-weight:400; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-top:3px}
+.masthead .stat>span{color:rgba(255,255,255,.74)}
 .stat-edit{font-family:inherit; font-weight:inherit; font-size:.85em; letter-spacing:inherit; width:1.7em; text-align:center;
   border:none; border-bottom:1px dashed var(--line-strong); background:transparent; color:inherit; padding:0; vertical-align:baseline;
   -moz-appearance:textfield}
+.masthead .stat-edit{border-bottom-color:rgba(255,255,255,.5)}
 .stat-edit::-webkit-outer-spin-button,.stat-edit::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
 .stat-edit:disabled{border-bottom-color:transparent; opacity:.75; cursor:default}
+.masthead .stat-edit:disabled{border-bottom-color:transparent}
 .stat-edit:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.masthead .stat-edit:focus-visible{outline-color:#fff}
 
 section{padding:52px 0 4px}
 section + section{border-top:1px solid var(--line)}
@@ -132,7 +151,10 @@ li{margin-bottom:6px}
 .toolbar .lbl{font-family:var(--disp); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-right:2px}
 .fbtn{font-family:var(--disp); font-size:12.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:5px 12px; border-radius:var(--r-sm); cursor:pointer; background:var(--surface); color:var(--ink-2); border:1px solid var(--line-strong)}
 .fbtn:hover{border-color:var(--ink-2); color:var(--ink)}
-.fbtn[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.fbtn[aria-pressed="true"]{background:var(--brand); color:#fff; border-color:var(--brand)}
+.fbtn.big{font-size:14px; padding:10px 20px; background:var(--brand); color:#fff; border-color:var(--brand)}
+.fbtn.big:hover{background:var(--brand-dark); border-color:var(--brand-dark); color:#fff}
+.fbtn.big[aria-pressed="true"]{background:var(--brand-dark); border-color:var(--brand-dark)}
 .fbtn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
 .readout{display:flex; flex-wrap:wrap; gap:6px 18px; align-items:baseline; padding:10px 14px; margin:0 0 12px;
   background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md); font-size:13.5px}
@@ -226,8 +248,6 @@ footer p{max-width:74ch; margin-bottom:8px}
 /* ---------- Download-Leiste ---------- */
 .dlbar{display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px; margin:26px 0 8px;
   background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); padding:18px 20px; box-shadow:var(--shadow)}
-.dlbar .fbtn.big{font-size:14px; padding:10px 20px; background:var(--ink); color:var(--bg); border-color:var(--ink)}
-.dlbar .fbtn.big:hover{opacity:.88}
 .dlbar p{margin:0; font-size:13.5px; color:var(--muted); max-width:62ch}
 .dlbar .pdfmsg{flex-basis:100%; font-family:var(--mono); font-size:12.5px; color:var(--ok)}
 .dlbar .pdfmsg:empty{display:none}
@@ -264,6 +284,33 @@ footer p{max-width:74ch; margin-bottom:8px}
   text-decoration:none}
 .jumpnav a:hover{background:var(--sunken)}
 .jumpnav a:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+/* ---------- Bottom-Tab-Navigation (Handy) ---------- */
+.tabnav{display:none}
+@media (max-width:760px){
+  #jumpNav{display:none}
+  body{padding-bottom:78px}
+  .chat-bubble{bottom:86px}
+  .chat-panel{bottom:150px; max-height:calc(100vh - 186px)}
+  .tabnav{display:flex; position:fixed; left:0; right:0; bottom:0; z-index:65;
+    background:var(--surface); border-top:1px solid var(--line);
+    box-shadow:0 -4px 16px rgba(16,21,28,.08);
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom,0px))}
+  .tabnav button{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; padding:4px 2px; color:var(--muted); cursor:pointer;
+    font-family:var(--disp); font-size:10.5px; font-weight:500; position:relative}
+  .tabnav button svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+  .tabnav button[aria-pressed="true"]{color:var(--brand); font-weight:600}
+  .tabnav button:focus-visible{outline:2px solid var(--ring); outline-offset:2px; border-radius:var(--r-sm)}
+  .tabnav .tabnav-dot{position:absolute; top:2px; right:calc(50% - 16px); width:8px; height:8px; border-radius:50%; background:var(--bad); display:none}
+  .tabnav .tabnav-dot.on{display:block}
+
+  body[data-tabactive="start"]    main :is(section,details)[data-tab]:not([data-tab~="start"]),
+  body[data-tabactive="zeitplan"] main :is(section,details)[data-tab]:not([data-tab~="zeitplan"]),
+  body[data-tabactive="aufgaben"] main :is(section,details)[data-tab]:not([data-tab~="aufgaben"]),
+  body[data-tabactive="team"]     main :is(section,details)[data-tab]:not([data-tab~="team"]),
+  body[data-tabactive="mehr"]     main :is(section,details)[data-tab]:not([data-tab~="mehr"])
+  { display:none }
+}
 /* ---------- Startansicht ---------- */
 .startitem{padding:4px 0; font-size:13.5px; border-bottom:1px solid var(--line)}
 .startitem:last-child{border-bottom:none}
@@ -334,9 +381,10 @@ body:not([data-auth="ok"]) main{display:none}
 body:not([data-auth="ok"]) .chat-bubble,
 body:not([data-auth="ok"]) .chat-panel{display:none !important}
 .chat-bubble{position:fixed; right:20px; bottom:20px; z-index:60; width:52px; height:52px; border-radius:50%;
-  background:var(--ink); color:var(--bg); display:flex; align-items:center; justify-content:center;
-  font-size:22px; line-height:1; cursor:pointer; box-shadow:var(--shadow); border:none; padding:0}
-.chat-bubble:hover{opacity:.9}
+  background:var(--brand); color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:22px; line-height:1; cursor:pointer;
+  box-shadow:0 8px 18px rgba(11,52,89,.38), 0 3px 6px rgba(11,52,89,.24); border:none; padding:0}
+.chat-bubble:hover{background:var(--brand-dark)}
 .chat-badge{position:absolute; top:-3px; right:-3px; background:var(--bad); color:#fff; font-family:var(--disp);
   font-size:11px; font-weight:600; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center;
   justify-content:center; padding:0 4px}
@@ -426,9 +474,11 @@ body.editing{caret-color:var(--ink)}
 @media print{
   @page{size:A4 landscape; margin:11mm}
   :root, :root:not([data-theme="light"]), :root[data-theme="dark"]{
-    --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F0F2EE; --sunken:#F5F6F3;
-    --ink:#141815; --ink-2:#3F4642; --muted:#5F6863;
-    --line:#D2D7CE; --line-strong:#A9B1A7;
+    --brand:#114A7A; --brand-dark:#0B3459; --brand-light:#3E7CB1; --brand-ink:#114A7A;
+    --brand-tint:#EEF3F9; --brand-tint-2:#DCE6F0;
+    --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#EEF3F9; --sunken:#F3F6FA;
+    --ink:#10151C; --ink-2:#3A4A5E; --muted:#57667A;
+    --line:#D4DEE8; --line-strong:#A7B7C7;
     --c0:#8C5A06;  --c0-m-bg:#FBF3E2; --c0-m-br:#DFD0AC; --c0-w-bg:#EEDDB2; --c0-w-br:#C9AC72;
     --c1:#186045; --c1-m-bg:#EAF5EF; --c1-m-br:#BADAC9; --c1-w-bg:#C4E3D4; --c1-w-br:#85BCA1;
     --c2:#1D4A8C; --c2-m-bg:#EBF2FB; --c2-m-br:#BFD4EE; --c2-w-bg:#C9DCF2; --c2-w-br:#8DB2DD;
@@ -442,13 +492,18 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav{display:none !important}
   #staende,#admin,#compAdmin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
   .printonly{display:block; font-family:var(--mono); font-size:11px; color:var(--muted); margin:0 0 10px}
-  .masthead{padding-top:0; border-bottom:1px solid var(--line-strong)}
+  .masthead{background:var(--surface) !important; box-shadow:none !important; border-radius:0 !important;
+    padding-top:0; border-bottom:1px solid var(--line-strong)}
+  .masthead .eyebrow,.masthead h1,.masthead .dek,.masthead .dek strong,.masthead .stat b,.masthead .stat>span{color:inherit !important}
+  .masthead .stats{background:var(--line) !important; border-top-color:var(--line) !important}
+  .masthead .stat{background:var(--surface) !important}
+  .masthead .stat-edit{border-bottom-color:var(--line-strong) !important}
   h1{font-size:30px}
   .dek{font-size:14px; max-width:none}
   .stats{margin-top:16px}
@@ -594,7 +649,7 @@ body.editing{caret-color:var(--ink)}
 </div>
 
 <!-- ============ START ============ -->
-<section id="start" data-views="orga bau teams sport">
+<section id="start" data-views="orga bau teams sport" data-tab="start">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Für dich</p>
@@ -609,7 +664,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <div class="wrap">
-  <details id="taskBox" class="task-box">
+  <details id="taskBox" class="task-box" data-tab="aufgaben">
     <summary class="task-summary"><span>Aufgaben</span><span class="dot-new" id="taskSummaryDot" hidden title="Neue Aktivität"></span><span class="pill" id="taskBadge">–</span></summary>
     <div class="task-body">
       <div class="toolbar" id="taskToolbar" hidden>
@@ -681,7 +736,7 @@ body.editing{caret-color:var(--ink)}
 </div>
 
 <!-- ============ WERTUNGSKLASSEN ============ -->
-<section id="melde" data-views="orga">
+<section id="melde" data-views="orga" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
@@ -732,7 +787,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ TAGESABLAUF ============ -->
-<section id="tag" data-views="orga teams sport">
+<section id="tag" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Tagesablauf</p>
@@ -756,7 +811,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ QUALI ============ -->
-<section id="quali" data-views="orga teams sport">
+<section id="quali" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Zeitplan Qualifikation</p>
@@ -832,7 +887,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ PERSONAL ============ -->
-<section id="personal" data-views="orga teams">
+<section id="personal" data-views="orga teams" data-tab="team">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Personal</p>
@@ -894,7 +949,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ ANWESENHEIT ============ -->
-<section id="anwesenheit" data-views="orga bau teams sport">
+<section id="anwesenheit" data-views="orga bau teams sport" data-tab="team">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Anwesenheit &amp; Kontakt</p>
@@ -910,7 +965,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ ROUTENPLAN ============ -->
-<section id="routenplan" data-views="orga bau">
+<section id="routenplan" data-views="orga bau" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Routenplan</p>
@@ -923,7 +978,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ FINALE ============ -->
-<section id="finale" data-views="orga teams sport">
+<section id="finale" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Finale · 14:15 – 15:29</p>
@@ -958,7 +1013,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ ROUTENBAU ============ -->
-<section id="routenbau" data-views="bau orga">
+<section id="routenbau" data-views="bau orga" data-tab="mehr">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Routenbau · Paul Ballsuweit</p>
@@ -988,7 +1043,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ WEGE ============ -->
-<section id="wege" data-views="teams sport orga">
+<section id="wege" data-views="teams sport orga" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Wege der Startgruppen</p>
@@ -1002,7 +1057,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ WETTKÄMPFE (ADMIN) ============ -->
-<section id="compAdmin" data-views="orga" hidden>
+<section id="compAdmin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Nur für Admins</p>
@@ -1038,7 +1093,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ ADMIN ============ -->
-<section id="admin" data-views="orga" hidden>
+<section id="admin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Nur für Admins</p>
@@ -1067,7 +1122,7 @@ body.editing{caret-color:var(--ink)}
 </section>
 
 <!-- ============ SPEICHERSTÄNDE ============ -->
-<section id="staende" data-views="orga bau teams sport">
+<section id="staende" data-views="orga bau teams sport" data-tab="mehr">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Speicherstände</p>
@@ -1116,6 +1171,30 @@ body.editing{caret-color:var(--ink)}
     <p>Geprüft auf Routen-Doppelbelegung, Pausenzeiten, gleichzeitige Routen je Klasse und Endzeiten: 0 Konflikte, 804 Kletterminuten, jede Klasse mit höchstens zwei Routen gleichzeitig, Quali-Ende 12:59.</p>
   </div>
 </footer>
+
+<nav class="tabnav" id="tabNav" aria-label="Hauptnavigation">
+  <button type="button" data-tabbtn="start" aria-pressed="true">
+    <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg>
+    <span>Start</span>
+  </button>
+  <button type="button" data-tabbtn="zeitplan" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+    <span>Zeitplan</span>
+  </button>
+  <button type="button" data-tabbtn="aufgaben" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m4 6 1.3 1.3L7.8 5"/><path d="m4 12 1.3 1.3 2.5-2.6"/><path d="m4 18 1.3 1.3 2.5-2.6"/></svg>
+    <span class="tabnav-dot" id="tabDotAufgaben"></span>
+    <span>Aufgaben</span>
+  </button>
+  <button type="button" data-tabbtn="team" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 19.5c0-3.3 2.7-5.7 6.2-5.7s6.2 2.4 6.2 5.7"/><circle cx="17.5" cy="9" r="2.6"/><path d="M15.6 13.9c2.6.3 4.6 2.4 4.6 5.1"/></svg>
+    <span>Team</span>
+  </button>
+  <button type="button" data-tabbtn="mehr" aria-pressed="false">
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    <span>Mehr</span>
+  </button>
+</nav>
 
 <button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
 

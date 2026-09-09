@@ -975,6 +975,20 @@ function setView(v){
 vbtns.forEach(function(b){b.onclick=function(){setView(b.getAttribute("data-v"));};});
 var v0="alles"; try{v0=localStorage.getItem(VIEWKEY)||"alles";}catch(e){}
 setView(v0);
+
+/* ---- Tab-Navigation (Handy) ---- */
+var tabBtns=Array.prototype.slice.call(document.querySelectorAll(".tabnav [data-tabbtn]"));
+function setTab(t,skipScroll){
+  document.body.setAttribute("data-tabactive",t);
+  tabBtns.forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-tabbtn")===t?"true":"false");});
+  if(!skipScroll){
+    var m=document.querySelector("main");
+    if(m) window.scrollTo({top:Math.max(0,m.offsetTop-1),behavior:"smooth"});
+  }
+}
+tabBtns.forEach(function(b){b.onclick=function(){setTab(b.getAttribute("data-tabbtn"));};});
+setTab("start",true);
+
 function renderFilterBtns(){
   var bar=document.getElementById("fbar"); if(!bar) return;
   bar.innerHTML='<button class="fbtn" type="button" data-f="all" aria-pressed="'+(pq.filter?"false":"true")+'">Alle</button>'+
@@ -1723,6 +1737,7 @@ function renderTasks(){
   var badge=document.getElementById("taskBadge");
   if(badge) badge.textContent=openN+" offen"+(newN?" · "+newN+" neu":"")+(TASKS.length?" · "+TASKS.length+" gesamt":"");
   var sdot=document.getElementById("taskSummaryDot"); if(sdot) sdot.hidden=!newN;
+  var tdot=document.getElementById("tabDotAufgaben"); if(tdot) tdot.classList.toggle("on",!!newN);
   var isOrga=!!(PROFILE&&PROFILE.category==="orga");
   var toolbar=document.getElementById("taskToolbar"); if(toolbar) toolbar.hidden=!isOrga;
 
