@@ -1001,9 +1001,11 @@ body.editing{caret-color:var(--ink)}
     <div class="flowwrap" id="flow"></div>
     <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
 
-    <h3>Routenplan</h3>
-    <p class="lede">Alle Qualirouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
-    <div class="routes" id="routenplan" style="margin-bottom:22px"></div>
+    <div id="routenplan">
+      <h3>Routenplan</h3>
+      <p class="lede">Alle Qualirouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
+      <div class="routes" id="routenplanCards" style="margin-bottom:22px"></div>
+    </div>
 
     <div class="cards g2">
       <div class="card">
