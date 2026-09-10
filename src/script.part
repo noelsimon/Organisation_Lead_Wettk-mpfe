@@ -335,9 +335,10 @@ Plan.prototype.render=function(){
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
+         (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken" aria-label="Startreihenfolge '+
          (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken">'+
          (r.dir==="ab"?"n→1":"1→n")+'</button>'+
-       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'" aria-label="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
        '</span></b>'+
        '<span>'+esc(self.desc(r))+'</span></div>';
     h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
@@ -724,7 +725,7 @@ function renderMeld(){
          '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
        '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
-       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
+       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
      '<td></td><td></td><td class="num">'+tot.n+'</td><td class="num">'+tot.min+'</td><td></td></tr>';
@@ -800,7 +801,7 @@ function renderCats(){
     h+='<tr><td><input class="cin katin" data-k="'+k.id+'" value="'+esc(k.name)+'"></td>'+
        '<td class="num">'+n+'</td>'+
        '<td class="num"><input class="nin katneed" data-k="'+k.id+'" type="number" min="0" max="99" value="'+(k.need||0)+'"></td>'+
-       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen">×</button></td></tr>';
+       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen" aria-label="Kategorie '+esc(k.name||k.id)+' löschen">×</button></td></tr>';
   });
   if(!CFG.cats.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
   body.innerHTML=h;
@@ -839,7 +840,7 @@ function renderPeople(){
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
-       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen">×</button></td></tr>';
+       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
   if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
@@ -1994,7 +1995,7 @@ function renderAttendance(){
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
-       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
        '<td>'+(mine
          ? attendanceToggleHtml(m.attendance)
          : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
@@ -2006,7 +2007,13 @@ function renderAttendance(){
   if(isAdmin){
     Array.prototype.forEach.call(body.querySelectorAll(".person-cell"),function(cell){
       cell.classList.add("clickable");
+      cell.setAttribute("role","button");
+      cell.setAttribute("tabindex","0");
+      cell.setAttribute("aria-label","Profil von "+cell.querySelector("span:last-child").textContent.trim()+" bearbeiten");
       cell.onclick=function(){ openPersonEdit(this.getAttribute("data-pid")); };
+      cell.onkeydown=function(ev){
+        if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openPersonEdit(this.getAttribute("data-pid")); }
+      };
     });
   }
 }

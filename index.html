@@ -30,7 +30,7 @@ window.SUPABASE_ANON_KEY = "sb_publishable_sQXelgboln7pcrQ3d3p4gg_dKm8TvXg";
   --bg:#F3F6FA; --surface:#FFFFFF; --surface-2:#EAF1F8; --sunken:#EEF3F9;
   --ink:#10151C; --ink-2:#3A4A5E; --muted:#5E7086;
   --line:#DCE6F0; --line-strong:#AFC2D6;
-  --c0:#B87708;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
+  --c0:#9A6407;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
   --c1:#1F7A55; --c1-m-bg:#EDF7F2; --c1-m-br:#C4E0D3; --c1-w-bg:#CBE7D9; --c1-w-br:#8FC3A9;
   --c2:#2559A6; --c2-m-bg:#EEF4FC; --c2-m-br:#C7D9F0; --c2-w-bg:#CFE0F4; --c2-w-br:#98BAE1;
   --c3:#A93B34; --c3-m-bg:#FDF0EE; --c3-m-br:#EDCBC6; --c3-w-bg:#F2D3CE; --c3-w-br:#DBA199;
@@ -38,7 +38,7 @@ window.SUPABASE_ANON_KEY = "sb_publishable_sQXelgboln7pcrQ3d3p4gg_dKm8TvXg";
   --c5:#0D7480; --c5-m-bg:#EAF7F8; --c5-m-br:#BFDFE3; --c5-w-bg:#C6E7EA; --c5-w-br:#88C0C7;
   --c6:#83592C; --c6-m-bg:#FAF4EB; --c6-m-br:#E2D3BC; --c6-w-bg:#ECDCC4; --c6-w-br:#C9AE83;
   --c7:#4A5666; --c7-m-bg:#F1F3F6; --c7-m-br:#D3D9E1; --c7-w-bg:#D6DCE4; --c7-w-br:#AAB4C1;
-  --ok:#1D8A5D; --warn:#B7791B; --bad:#C0342B; --grid:#DCE6F0;
+  --ok:#1B7E55; --warn:#986516; --bad:#C0342B; --grid:#DCE6F0;
   --ring:#114A7A;
   --shadow:0 1px 2px rgba(16,21,28,.06), 0 12px 28px -18px rgba(16,21,28,.32);
   --r-sm:8px; --r-md:14px; --r-lg:20px; --r-pill:999px;
@@ -541,6 +541,7 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .person-cell{display:flex; align-items:center; gap:10px}
 .person-cell.clickable{cursor:pointer}
 .person-cell.clickable:hover .tk-avatar{outline:2px solid var(--brand-tint-2)}
+.person-cell.clickable:focus-visible{outline:2px solid var(--ring); outline-offset:2px; border-radius:var(--r-sm)}
 .att-summary{margin:-6px 0 12px; font-size:13px; color:var(--muted)}
 .att-filters{display:flex; gap:8px; margin:0 0 14px; overflow-x:auto; scrollbar-width:none}
 .att-filters::-webkit-scrollbar{display:none}
@@ -660,7 +661,7 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="masthead-top">
       <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
-      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten">
+      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten" aria-label="Profil bearbeiten">
         <img id="mastheadAvatarImg" alt="" hidden>
         <span id="mastheadAvatarInitial"></span>
       </button>
@@ -1289,7 +1290,7 @@ body.editing{caret-color:var(--ink)}
   </button>
 </nav>
 
-<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
+<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen" aria-label="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
 
 <div id="chatPanel" class="chat-panel" hidden>
   <div class="chat-panel-head">
@@ -1644,9 +1645,10 @@ Plan.prototype.render=function(){
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
+         (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken" aria-label="Startreihenfolge '+
          (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken">'+
          (r.dir==="ab"?"n→1":"1→n")+'</button>'+
-       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'" aria-label="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
        '</span></b>'+
        '<span>'+esc(self.desc(r))+'</span></div>';
     h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
@@ -2033,7 +2035,7 @@ function renderMeld(){
          '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
        '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
-       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
+       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
      '<td></td><td></td><td class="num">'+tot.n+'</td><td class="num">'+tot.min+'</td><td></td></tr>';
@@ -2109,7 +2111,7 @@ function renderCats(){
     h+='<tr><td><input class="cin katin" data-k="'+k.id+'" value="'+esc(k.name)+'"></td>'+
        '<td class="num">'+n+'</td>'+
        '<td class="num"><input class="nin katneed" data-k="'+k.id+'" type="number" min="0" max="99" value="'+(k.need||0)+'"></td>'+
-       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen">×</button></td></tr>';
+       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen" aria-label="Kategorie '+esc(k.name||k.id)+' löschen">×</button></td></tr>';
   });
   if(!CFG.cats.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
   body.innerHTML=h;
@@ -2148,7 +2150,7 @@ function renderPeople(){
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
-       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen">×</button></td></tr>';
+       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
   if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
@@ -3303,7 +3305,7 @@ function renderAttendance(){
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
-       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
        '<td>'+(mine
          ? attendanceToggleHtml(m.attendance)
          : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
@@ -3315,7 +3317,13 @@ function renderAttendance(){
   if(isAdmin){
     Array.prototype.forEach.call(body.querySelectorAll(".person-cell"),function(cell){
       cell.classList.add("clickable");
+      cell.setAttribute("role","button");
+      cell.setAttribute("tabindex","0");
+      cell.setAttribute("aria-label","Profil von "+cell.querySelector("span:last-child").textContent.trim()+" bearbeiten");
       cell.onclick=function(){ openPersonEdit(this.getAttribute("data-pid")); };
+      cell.onkeydown=function(ev){
+        if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openPersonEdit(this.getAttribute("data-pid")); }
+      };
     });
   }
 }
