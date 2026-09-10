@@ -232,6 +232,11 @@ li{margin-bottom:6px}
 .blk.clash{outline:2px solid var(--bad); outline-offset:-1px}
 .blk.warn{outline:2px dashed var(--warn); outline-offset:-1px}
 .blk.sel{outline:2px solid var(--ink); outline-offset:-1px; box-shadow:0 2px 10px -3px rgba(0,0,0,.35)}
+.blk-del{position:absolute; top:1px; right:1px; width:15px; height:15px; line-height:13px; text-align:center;
+  font-family:var(--serif); font-size:12px; padding:0; border:none; border-radius:50%; cursor:pointer;
+  background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease}
+.blk:hover .blk-del,.blk-del:focus-visible{opacity:1; color:var(--bad)}
+.blk-del:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
 .ed-head b{font-family:var(--disp); font-weight:600; font-size:17px; color:var(--ac)}
@@ -963,6 +968,7 @@ body.editing{caret-color:var(--ink)}
       <span id="fbar" style="display:contents"></span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addQtoggle">+ Route</button>
+      <button class="fbtn" id="addQBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetQ">Zurücksetzen</button>
     </div>
 
@@ -976,6 +982,15 @@ body.editing{caret-color:var(--ink)}
           <select id="addQmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
         <label><button class="fbtn" id="addQgo" type="button">Route anlegen</button></label>
         <label><button class="fbtn" id="addQcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
+    <div class="addbox" id="addQBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addQBlockCls"></select></label>
+        <label>Route <select id="addQBlockRoute"></select></label>
+        <label><button class="fbtn" id="addQBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addQBlockCancel" type="button">Abbrechen</button></label>
       </div>
     </div>
 
@@ -1121,6 +1136,7 @@ body.editing{caret-color:var(--ink)}
       <span class="lbl">Finale</span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addFtoggle">+ Route</button>
+      <button class="fbtn" id="addFBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetF">Zurücksetzen</button>
     </div>
 
@@ -1134,6 +1150,15 @@ body.editing{caret-color:var(--ink)}
           <select id="addFmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
         <label><button class="fbtn" id="addFgo" type="button">Route anlegen</button></label>
         <label><button class="fbtn" id="addFcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
+    <div class="addbox" id="addFBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addFBlockCls"></select></label>
+        <label>Route <select id="addFBlockRoute"></select></label>
+        <label><button class="fbtn" id="addFBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addFBlockCancel" type="button">Abbrechen</button></label>
       </div>
     </div>
 
@@ -1601,6 +1626,30 @@ Plan.prototype.delRoute=function(id){
   this.rows=this.rows.filter(function(r){return r.id!==id;});
   this.render(); this.save(); return true;
 };
+/* Manuell einen weiteren Balken für eine Klasse anlegen - anders als
+   addClass() KEINE neuen Gruppen, sondern ein zusätzlicher Termin für die
+   schon vorhandene männliche/weibliche Gruppe dieser Klasse (dasselbe
+   Muster wie die zwei Balken, die addClass() für Quali bereits auf zwei
+   Routen verteilt). Ohne vorhandene Gruppe für eine Seite (Klasse in
+   diesem Plan noch gar nicht angelegt) wird diese Seite übersprungen. */
+Plan.prototype.addBlock=function(cls,routeId,start){
+  if(!this.row(routeId)) return false;
+  var self=this, added=false;
+  ["m","w"].forEach(function(gender){
+    var g=self.groups.filter(function(x){return x.cls===cls&&x.gender===gender;})[0];
+    if(!g) return;
+    self.blocks.push({id:"b"+(++self.seq), gid:g.id, r:routeId, s:Math.round(start/SNAP)*SNAP});
+    added=true;
+  });
+  if(!added) return false;
+  this.render(); this.save(); return true;
+};
+Plan.prototype.delBlock=function(blockId){
+  if(!this.blocks.some(function(b){return b.id===blockId;})) return false;
+  this.blocks=this.blocks.filter(function(b){return b.id!==blockId;});
+  if(this.sel===blockId) this.sel=null;
+  this.render(); this.save(); return true;
+};
 Plan.prototype.toggleDir=function(id){
   var r=this.row(id); if(!r) return;
   r.dir=r.dir==="ab"?"auf":"ab";
@@ -1690,7 +1739,7 @@ Plan.prototype.mount=function(b){
   var d=document.createElement("div");
   d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
   d.setAttribute("tabindex","0"); d.setAttribute("role","button");
-  d.innerHTML='<b></b><span></span>';
+  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(b.r)+' löschen">×</button>';
   t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
 };
 Plan.prototype.position=function(){
@@ -1741,6 +1790,13 @@ Plan.prototype.bind=function(d,b){
     window.removeEventListener("pointerup",onUp);
     window.removeEventListener("pointercancel",onUp);
     if(!moved) self.select(b.id); else {self.save(); if(self.sel===b.id) self.editor();}
+  }
+  var delBtn=d.querySelector(".blk-del");
+  if(delBtn){
+    /* pointerdown muss VOR dem Drag-Handler des Balkens selbst gestoppt
+       werden, sonst startet ein Klick auf "×" zusätzlich einen Drag. */
+    delBtn.addEventListener("pointerdown",function(ev){ ev.stopPropagation(); });
+    delBtn.addEventListener("click",function(ev){ ev.stopPropagation(); self.delBlock(b.id); });
   }
   d.addEventListener("pointerdown",function(ev){
     if(ev.button!==0&&ev.pointerType==="mouse") return;
@@ -2369,6 +2425,31 @@ document.getElementById("addFgo").onclick=function(){
   addBoxF.hidden=true;
 };
 document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
+
+/* ---- Balken manuell hinzufügen ---- */
+function fillAddBlock(clsSelId,routeSelId,plan){
+  document.getElementById(clsSelId).innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  document.getElementById(routeSelId).innerHTML=plan.rows.map(function(r){return '<option value="'+r.id+'">'+esc(r.id)+' – '+esc(plan.desc(r))+'</option>';}).join("");
+}
+var addBoxQBlock=document.getElementById("addQBlock");
+document.getElementById("addQBlockToggle").onclick=function(){
+  addBoxQBlock.hidden=!addBoxQBlock.hidden; if(!addBoxQBlock.hidden) fillAddBlock("addQBlockCls","addQBlockRoute",pq);
+};
+document.getElementById("addQBlockGo").onclick=function(){
+  pq.addBlock(document.getElementById("addQBlockCls").value,document.getElementById("addQBlockRoute").value,pq.o.start);
+  addBoxQBlock.hidden=true;
+};
+document.getElementById("addQBlockCancel").onclick=function(){addBoxQBlock.hidden=true;};
+
+var addBoxFBlock=document.getElementById("addFBlock");
+document.getElementById("addFBlockToggle").onclick=function(){
+  addBoxFBlock.hidden=!addBoxFBlock.hidden; if(!addBoxFBlock.hidden) fillAddBlock("addFBlockCls","addFBlockRoute",pf);
+};
+document.getElementById("addFBlockGo").onclick=function(){
+  pf.addBlock(document.getElementById("addFBlockCls").value,document.getElementById("addFBlockRoute").value,pf.o.start);
+  addBoxFBlock.hidden=true;
+};
+document.getElementById("addFBlockCancel").onclick=function(){addBoxFBlock.hidden=true;};
 
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");

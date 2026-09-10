@@ -246,6 +246,31 @@ document.getElementById("addFgo").onclick=function(){
 };
 document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
 
+/* ---- Balken manuell hinzufügen ---- */
+function fillAddBlock(clsSelId,routeSelId,plan){
+  document.getElementById(clsSelId).innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  document.getElementById(routeSelId).innerHTML=plan.rows.map(function(r){return '<option value="'+r.id+'">'+esc(r.id)+' – '+esc(plan.desc(r))+'</option>';}).join("");
+}
+var addBoxQBlock=document.getElementById("addQBlock");
+document.getElementById("addQBlockToggle").onclick=function(){
+  addBoxQBlock.hidden=!addBoxQBlock.hidden; if(!addBoxQBlock.hidden) fillAddBlock("addQBlockCls","addQBlockRoute",pq);
+};
+document.getElementById("addQBlockGo").onclick=function(){
+  pq.addBlock(document.getElementById("addQBlockCls").value,document.getElementById("addQBlockRoute").value,pq.o.start);
+  addBoxQBlock.hidden=true;
+};
+document.getElementById("addQBlockCancel").onclick=function(){addBoxQBlock.hidden=true;};
+
+var addBoxFBlock=document.getElementById("addFBlock");
+document.getElementById("addFBlockToggle").onclick=function(){
+  addBoxFBlock.hidden=!addBoxFBlock.hidden; if(!addBoxFBlock.hidden) fillAddBlock("addFBlockCls","addFBlockRoute",pf);
+};
+document.getElementById("addFBlockGo").onclick=function(){
+  pf.addBlock(document.getElementById("addFBlockCls").value,document.getElementById("addFBlockRoute").value,pf.o.start);
+  addBoxFBlock.hidden=true;
+};
+document.getElementById("addFBlockCancel").onclick=function(){addBoxFBlock.hidden=true;};
+
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");
 document.getElementById("addClsToggle").onclick=function(){clsBox.hidden=!clsBox.hidden;};
