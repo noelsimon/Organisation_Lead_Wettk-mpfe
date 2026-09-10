@@ -927,7 +927,7 @@ function renderFinalTab(){
 
 var routeNoteTimer=null;
 function renderRoutePlan(plan,list){
-  var box=document.getElementById("routenplan"); if(!box) return;
+  var box=document.getElementById("routenplanCards"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;
@@ -1191,6 +1191,7 @@ function renderAddedBlocks(){
       if(!anchor){ next.push(b); return; }
       var el=document.createElement(b.tag);
       el.setAttribute("data-ed",b.key);
+      el.setAttribute("data-scope",b.scope||anchor.getAttribute("data-scope")||"root");
       el.classList.add("txt-added");
       if(TXT[b.key]!=null) el.innerHTML=sanitize(TXT[b.key]);
       anchor.parentNode.insertBefore(el,anchor.nextSibling);
@@ -1217,12 +1218,17 @@ function saveTextBlocks(){
 function initTexts(){
   var counters={};
   editables().forEach(function(el){
-    var host=el.closest("section[id]")||el.closest("header,footer");
+    /* #routenplan zuerst geprüft (auch wenn es selbst in einer section liegt):
+       das ist die Grenze, auf die die RLS-Policy für Routenbau eingrenzt
+       (siehe plan_texts, Migration 0010) - muss also der genauere Scope
+       sein, nicht die umschließende section (aktuell #quali). */
+    var host=el.closest("#routenplan, section[id]")||el.closest("header,footer");
     var scope=host?(host.id||host.tagName.toLowerCase()):"root";
     var group=scope+"_"+el.tagName;
     counters[group]=(counters[group]||0)+1;
     var k=group+"_"+counters[group];
     el.setAttribute("data-ed",k);
+    el.setAttribute("data-scope",scope);
     if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
     updateEmptyFlag(el);
   });
@@ -1231,33 +1237,50 @@ function initTexts(){
   applyHiddenBlocks();
   updateEmptyContainers();
 }
-var txtTimer=null;
+/* Jeder Textbaustein ist eine eigene Zeile in plan_texts (statt eines
+   einzigen JSON-Blobs) - nur so kann RLS Routenbau auf den
+   Routenplan-Bereich eingrenzen (siehe Migration 0010). pendingTextKeys
+   sammelt während der Debounce-Zeit alle geänderten Schlüssel (mit ihrem
+   scope), damit auch mehrere schnell hintereinander bearbeitete Felder
+   korrekt einzeln geschrieben werden. */
+var txtTimer=null, pendingTextKeys={};
+function pushText(key,html,scope){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
+  sbClient.from("plan_texts").upsert({competition_id:CURRENT_COMP.id,ed_key:key,scope:scope||"root",html:html,updated_by:PROFILE.id})
+    .then(function(r){ if(r.error) console.warn("Sync (Text "+key+") fehlgeschlagen:",r.error.message); });
+}
+function flushTextEdits(){
+  try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+  var pending=pendingTextKeys;
+  pendingTextKeys={};
+  Object.keys(pending).forEach(function(k){ pushText(k,TXT[k],pending[k]); });
+}
 function markText(el){
-  TXT[el.getAttribute("data-ed")]=el.innerHTML;
+  var k=el.getAttribute("data-ed");
+  TXT[k]=el.innerHTML;
   updateEmptyFlag(el);
   updateEmptyContainers();
+  pendingTextKeys[k]=el.getAttribute("data-scope")||"root";
   clearTimeout(txtTimer);
-  txtTimer=setTimeout(function(){
-    try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
-    pushState("texts",TXT);
-  },400);
+  txtTimer=setTimeout(flushTextEdits,400);
 }
 
 /* ---- Textbausteine hinzufügen/entfernen ---- */
 function newBlockKey(){ return "n"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function addBlockAfter(el){
-  var key=newBlockKey(), tag=el.tagName.toLowerCase();
+  var key=newBlockKey(), tag=el.tagName.toLowerCase(), scope=el.getAttribute("data-scope")||"root";
   var neu=document.createElement(tag);
   neu.setAttribute("data-ed",key);
+  neu.setAttribute("data-scope",scope);
   neu.classList.add("txt-added");
   neu.setAttribute("contenteditable","true");
   neu.textContent="Neuer Text …";
   el.parentNode.insertBefore(neu,el.nextSibling);
-  TXTBLOCKS.added.push({key:key, afterKey:el.getAttribute("data-ed"), tag:tag});
+  TXTBLOCKS.added.push({key:key, afterKey:el.getAttribute("data-ed"), tag:tag, scope:scope});
   TXT[key]=neu.innerHTML;
   saveTextBlocks();
   try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
-  pushState("texts",TXT);
+  pushText(key,neu.innerHTML,scope);
   updateEmptyFlag(neu);
   updateEmptyContainers();
   neu.focus();
@@ -1787,15 +1810,24 @@ function createCompetition(){
           {key:"cfg",data:CFG0},
           {key:"quali",data:{rows:QROWS,groups:QGROUPS,blocks:QBLOCKS,seq:1000}},
           {key:"finale",data:{rows:FROWS,groups:FGROUPS,blocks:FBLOCKS,seq:1000}},
-          {key:"texts",data:{}},
           {key:"textblocks",data:{added:[],hidden:[]}}
         ]);
-    seedP.then(function(rows){
-      var payload=(rows||[]).map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
-      if(!payload.length) return {error:null};
-      return sbClient.from("plan_state").insert(payload);
-    }).then(function(r3){
-      if(r3&&r3.error){ ccSay("Wettkampf angelegt, aber Struktur konnte nicht kopiert werden: "+r3.error.message,true); }
+    /* Texte liegen seit Migration 0010 nicht mehr im plan_state-Blob,
+       sondern als eigene Zeilen in plan_texts - beim Duplizieren also
+       getrennt mitkopieren. */
+    var seedTextsP = (src==="dup"&&dupFrom)
+      ? sbClient.from("plan_texts").select("ed_key,scope,html").eq("competition_id",dupFrom).then(function(r2){ return r2.data||[]; })
+      : Promise.resolve([]);
+    Promise.all([seedP,seedTextsP]).then(function(results){
+      var rows=results[0]||[], textRows=results[1]||[];
+      var payload=rows.map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
+      var textPayload=textRows.map(function(row){return {competition_id:comp.id, ed_key:row.ed_key, scope:row.scope, html:row.html};});
+      var p1=payload.length?sbClient.from("plan_state").insert(payload):Promise.resolve({error:null});
+      var p2=textPayload.length?sbClient.from("plan_texts").insert(textPayload):Promise.resolve({error:null});
+      return Promise.all([p1,p2]);
+    }).then(function(rs){
+      var err=(rs[0]&&rs[0].error)||(rs[1]&&rs[1].error);
+      if(err){ ccSay("Wettkampf angelegt, aber Struktur konnte nicht kopiert werden: "+err.message,true); }
       else ccSay('Wettkampf „'+name+'" angelegt: '+competitionLink(slug));
       resetCompForm(); loadAllCompetitions();
     }).catch(function(err){ ccSay("Fehler beim Anlegen der Struktur: "+((err&&err.message)||err),true); });
@@ -1819,18 +1851,30 @@ function pushState(key,data){
 }
 function pullState(){
   if(!sbClient||!CURRENT_COMP) return;
-  sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
+  var mainP=sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id);
+  /* Eigene Abfrage, eine Zeile je Textbaustein statt eines JSON-Blobs (siehe
+     plan_texts, Migration 0010). Läuft die Migration noch nicht, kommt hier
+     einfach ein Fehler zurück - texts bleibt dann leer, der Rest lädt
+     unbeeinflusst weiter. */
+  var textsP=sbClient.from("plan_texts").select("ed_key,html").eq("competition_id",CURRENT_COMP.id)
+    .then(function(r){ return (r.error||!r.data)?{}:r.data.reduce(function(acc,row){acc[row.ed_key]=row.html; return acc;},{}); })
+    .catch(function(){ return {}; });
+  Promise.all([mainP,textsP]).then(function(results){
+    var r=results[0], texts=results[1];
     if(r.error||!r.data) return;
     var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
     if(by.cfg&&by.quali&&by.finale){
-      applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
+      applySnapshot({cfg:by.cfg, texts:texts, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
     } else {
       /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
       pushState("cfg",CFG);
       pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
       pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
-      pushState("texts",TXT);
       pushState("textblocks",TXTBLOCKS);
+      Object.keys(TXT).forEach(function(k){
+        var el=document.querySelector('[data-ed="'+cssEsc(k)+'"]');
+        pushText(k,TXT[k],el?el.getAttribute("data-scope"):"root");
+      });
     }
   }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
 }
