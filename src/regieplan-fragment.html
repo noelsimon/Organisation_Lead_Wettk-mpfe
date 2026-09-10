@@ -580,6 +580,21 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .attToggle .attBtn:hover{color:var(--ink)}
 .attToggle .attBtn[aria-pressed="true"]:hover{color:#fff}
 .attToggle .attBtn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.tsw{position:relative; display:inline-flex; width:40px; height:24px; cursor:pointer; vertical-align:middle}
+.tsw input{position:absolute; inset:0; opacity:0; margin:0; cursor:pointer}
+.tsw-track{width:100%; height:100%; border-radius:var(--r-pill); background:var(--surface-2); border:1px solid var(--line-strong);
+  display:flex; align-items:center; padding:2px; transition:background .15s,border-color .15s}
+.tsw-thumb{width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(16,21,28,.3); transition:transform .15s}
+.tsw input:checked+.tsw-track{background:var(--brand); border-color:var(--brand)}
+.tsw input:checked+.tsw-track .tsw-thumb{transform:translateX(16px)}
+.tsw input:focus-visible+.tsw-track{outline:2px solid var(--ring); outline-offset:2px}
+.stepper{display:inline-flex; align-items:center; gap:8px; background:var(--bg); border-radius:var(--r-pill); padding:3px 3px 3px 12px}
+.stepper-val{font-family:var(--disp); font-weight:600; font-size:13.5px; min-width:52px; text-align:center; cursor:pointer; border-radius:var(--r-sm)}
+.stepper-val:hover,.stepper-val:focus-visible{background:var(--surface-2); outline:none}
+.stepper-btn{width:30px; height:30px; border-radius:50%; border:none; background:var(--surface); box-shadow:var(--shadow);
+  color:var(--ink-2); font-size:16px; font-weight:700; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center}
+.stepper-btn:hover{color:var(--ink)}
+.stepper-btn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
 .person-cell{display:flex; align-items:center; gap:10px}
 .person-cell.clickable{cursor:pointer}
 .person-cell.clickable:hover .tk-avatar{outline:2px solid var(--brand-tint-2)}
@@ -711,6 +726,22 @@ td.pcell{font-size:13.5px; line-height:1.5}
   #meldtab td:nth-child(11):not(:empty)::before{content:"Finale"}
   #meldtab td:nth-child(12){position:absolute; top:12px; right:12px}
   #meldtab tr.sum td:nth-child(8),#meldtab tr.sum td:nth-child(9){border-top:none; padding-top:0}
+
+  .tblwrap:has(#paytab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #paytab, #paytab thead, #paytab tbody, #paytab tr, #paytab td{display:block; width:100%; min-width:0}
+  #paytab thead{display:none}
+  #paytab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow);
+    padding:14px 16px; margin:0 0 10px; display:flex; flex-wrap:wrap; gap:10px}
+  #paytab td{border-bottom:none; padding:0}
+  #paytab td:nth-child(1){flex:1 1 100%}
+  #paytab td:nth-child(2){flex:1 1 100%; margin-top:-6px; padding-left:34px; font-size:12px; color:var(--muted)}
+  #paytab td:nth-child(3),#paytab td:nth-child(4),#paytab td:nth-child(5){
+    flex:1 1 100%; display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:var(--ink-2)}
+  #paytab td:nth-child(3){padding-top:10px; border-top:1px solid var(--line)}
+  #paytab td:nth-child(3)::before{content:"Auf Liste"}
+  #paytab td:nth-child(4)::before{content:"Honorar"}
+  #paytab td:nth-child(5)::before{content:"Getränkeliste"}
+  #payPdfBtn,#drinkPdfBtn{width:100%; border-radius:var(--r-pill); padding:14px; font-size:14px}
 }
 @media (max-width:760px){
   .masthead{padding-bottom:0}
@@ -4638,6 +4669,23 @@ function loadPayouts(){
     renderPayTab();
   }).catch(function(err){ paySay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
+/* Toggle-Switch statt Checkbox, +/- Stepper statt Zahlenfeld (Issue #50,
+   Design-Vorlage Auszahlung.dc.html) - Checkbox bleibt jeweils das echte
+   Formularelement (Tastatur/Screenreader-tauglich), nur optisch als
+   Schalter maskiert; das Antippen des Betrags selbst öffnet weiterhin
+   eine Eingabe für krumme Beträge, die der Stepper nicht in 5-€-Schritten
+   erreicht. */
+function toggleSwHtml(cls,id,checked,label){
+  return '<label class="tsw"><input type="checkbox" class="'+cls+'" data-p="'+esc(id)+'"'+(checked?" checked":"")+' aria-label="'+esc(label)+'">'+
+    '<span class="tsw-track"><span class="tsw-thumb"></span></span></label>';
+}
+function stepperHtml(id,amt){
+  return '<div class="stepper">'+
+    '<button type="button" class="stepper-btn stepper-minus" data-p="'+esc(id)+'" aria-label="Honorar verringern">−</button>'+
+    '<span class="stepper-val payamt" data-p="'+esc(id)+'" role="button" tabindex="0" title="Antippen für genauen Betrag">'+euro(amt)+'</span>'+
+    '<button type="button" class="stepper-btn stepper-plus" data-p="'+esc(id)+'" aria-label="Honorar erhöhen">+</button>'+
+  '</div>';
+}
 function renderPayTab(){
   var body=document.querySelector("#paytab tbody"); if(!body) return;
   var sumEl=document.getElementById("paySum");
@@ -4645,10 +4693,11 @@ function renderPayTab(){
   var list=sortedPeople(), h="", sum=0;
   list.forEach(function(p){
     var amt=payAmount(p); if(payOnList(p)) sum+=amt;
-    h+='<tr><td>'+esc(p.name)+'</td><td>'+esc(catName(p.cat))+'</td>'+
-       '<td class="num"><input type="checkbox" class="payonlist" data-p="'+esc(p.id)+'"'+(payOnList(p)?" checked":"")+'></td>'+
-       '<td class="num"><input class="nin payamt" data-p="'+esc(p.id)+'" type="number" min="0" max="9999" step="0.5" value="'+amt+'"></td>'+
-       '<td class="num"><input type="checkbox" class="paydrink" data-p="'+esc(p.id)+'"'+(payDrink(p)?" checked":"")+'></td></tr>';
+    h+='<tr><td><div class="person-cell"><span class="tk-avatar" style="background:'+avatarColor(p.name)+'">'+esc(initials(p.name))+'</span><span>'+esc(p.name)+'</span></div></td>'+
+       '<td>'+esc(catName(p.cat))+'</td>'+
+       '<td class="num">'+toggleSwHtml("payonlist",p.id,payOnList(p),"Auf Liste: "+p.name)+'</td>'+
+       '<td class="num">'+stepperHtml(p.id,amt)+'</td>'+
+       '<td class="num">'+toggleSwHtml("paydrink",p.id,payDrink(p),"Getränkeliste: "+p.name)+'</td></tr>';
   });
   if(!list.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
@@ -4656,6 +4705,13 @@ function renderPayTab(){
   function recalcSum(){
     var total=0; CFG.people.forEach(function(p){ if(payOnList(p)) total+=payAmount(p); });
     if(sumEl) sumEl.textContent=euro(total);
+  }
+  function setAmount(id,v){
+    v=Math.max(0,Math.min(9999,v));
+    PAYOUTS[id]=PAYOUTS[id]||{drink:true}; PAYOUTS[id].amount=v;
+    var el=document.querySelector('.payamt[data-p="'+cssEsc(id)+'"]'); if(el) el.textContent=euro(v);
+    recalcSum();
+    savePayout(id,{amount:v});
   }
   Array.prototype.forEach.call(document.querySelectorAll(".payonlist"),function(cb){
     cb.onchange=function(){
@@ -4665,14 +4721,20 @@ function renderPayTab(){
       savePayout(id,{on_list:on});
     };
   });
-  Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(inp){
-    inp.onchange=function(){
-      var v=Math.max(0,parseFloat(this.value)||0); this.value=v;
-      var id=this.getAttribute("data-p");
-      PAYOUTS[id]=PAYOUTS[id]||{drink:true}; PAYOUTS[id].amount=v;
-      recalcSum();
-      savePayout(id,{amount:v});
+  Array.prototype.forEach.call(document.querySelectorAll(".stepper-btn"),function(btn){
+    btn.onclick=function(){
+      var id=this.getAttribute("data-p"), delta=this.classList.contains("stepper-plus")?5:-5;
+      setAmount(id,payAmount({id:id})+delta);
     };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(el){
+    function askAmount(){
+      var id=el.getAttribute("data-p"), v=prompt("Honorar (€):",payAmount({id:id}));
+      if(v==null) return;
+      setAmount(id,parseFloat(String(v).replace(",","."))||0);
+    }
+    el.onclick=askAmount;
+    el.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); askAmount(); } };
   });
   Array.prototype.forEach.call(document.querySelectorAll(".paydrink"),function(cb){
     cb.onchange=function(){
