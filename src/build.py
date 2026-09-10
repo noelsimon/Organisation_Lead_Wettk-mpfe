@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Baut aus head.part + script.part die beiden Auslieferungen:
+"""Baut aus config.part + head.part + den script-*.part-Modulen die beiden
+   Auslieferungen:
    ../index.html            – vollständige, eigenständige Seite (GitHub Pages)
    regieplan-fragment.html  – Fragment für das Claude-Artifact (ohne doctype/head/body)
 
@@ -10,7 +11,28 @@ import io, os, re, sys
 P = os.path.dirname(os.path.abspath(__file__))
 config = io.open(os.path.join(P, "config.part"), encoding="utf-8").read()
 head = io.open(os.path.join(P, "head.part"), encoding="utf-8").read()
-script = io.open(os.path.join(P, "script.part"), encoding="utf-8").read()
+
+# script.part war eine einzelne ~3300-Zeilen-Datei ohne Modultrennung; jetzt
+# in thematische Teile aufgeteilt (Issue #4), unverändert in ihrer bisherigen
+# Reihenfolge zu einem einzigen <script> zusammengefügt - reines Aufteilen,
+# keine Verhaltensänderung. script-core.part öffnet das <script>-Tag und die
+# gemeinsame IIFE, ui-misc.part schließt sie wieder; die Module dazwischen
+# sind reine Anweisungsfolgen innerhalb dieser einen Closure (dieselbe
+# gemeinsame Variablen wie CFG/pq/pf/TXT bleiben so nach wie vor über alle
+# Module hinweg sichtbar, ganz ohne globale window-Zuweisungen).
+SCRIPT_MODULES = [
+    "script-core.part",     # Konstanten, CFG/CFG0, Stammdaten (QROWS/FROWS/…), ffix
+    "plan-engine.part",     # Plan-Engine, Teams, Wege-Diagramm, Meldezahlen/Finalquoten, Zeitfenster
+    "personal.part",        # Personal: Kategorien und Personen, Instanzen (pq/pf, Formulare)
+    "texte.part",           # Texte bearbeiten (Textbausteine, Formatierungsleiste)
+    "auth.part",            # Login und Freigabe (Supabase), Wettkämpfe, Sync
+    "aufgaben-chat.part",   # Aufgaben, Chat, Speicherstände
+    "pdf-export.part",      # PDF-Export, Auszahlung & Verpflegung
+    "ui-misc.part",         # Abschnitte einklappen, Sprungnavigation, Skript-Ende
+]
+script = "".join(
+    io.open(os.path.join(P, name), encoding="utf-8").read() for name in SCRIPT_MODULES
+)
 body = config + head + script
 
 # --- Artifact-Fragment -------------------------------------------------
