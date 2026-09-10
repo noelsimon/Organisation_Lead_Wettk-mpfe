@@ -303,6 +303,12 @@ footer p{max-width:74ch; margin-bottom:8px}
 #peotab:not(.show-email) .email-col{display:none}
 #cattab{min-width:320px}
 #standtab{min-width:600px}
+@media (max-width:760px){
+  /* ID-Selektoren wiegen technisch immer stärker als der generische table-Selektor
+     (CSS-Spezifität) - die Mindestbreiten oben müssen hier deshalb explizit je ID
+     zurückgesetzt werden, ein einfaches table{min-width:0} würde nicht greifen. */
+  #meldtab, #peotab, #standtab, #cattab, table{min-width:0}
+}
 
 /* ---------- Textbearbeitung ---------- */
 .textbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:22px 0 0;
