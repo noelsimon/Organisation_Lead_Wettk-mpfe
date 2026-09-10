@@ -71,6 +71,8 @@ function loadAssigneeOptions(compId){
 /* ---- Anwesenheit & Kontakt ---- */
 var ATTENDANCE=[];
 var ATTLABEL={da:"Vor Ort", unterwegs:"Auf dem Weg", abwesend:"Fällt aus"};
+var ATTPILLCLASS={da:"ok", unterwegs:"warn", abwesend:"bad"};
+function attPillClass(att){return ATTPILLCLASS[att]||"";}
 function attendanceToggleHtml(current){
   return '<div class="attToggle" role="group" aria-label="Anwesenheitsstatus">'+
     Object.keys(ATTLABEL).map(function(k){
@@ -146,14 +148,14 @@ function renderAttendance(){
   var h="";
   rows.forEach(function(m){
     var p=m.profiles, mine=!!(PROFILE&&p.id===PROFILE.id);
-    h+='<tr'+(mine?' style="background:var(--sunken)"':'')+'><td><div class="person-cell" data-pid="'+esc(p.id)+'">'+
+    h+='<tr data-status="'+(m.attendance||"")+'"'+(mine?' class="mine"':"")+'><td><div class="person-cell" data-pid="'+esc(p.id)+'">'+
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
-       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span class="no-phone" style="color:var(--muted)">—</span>')+'</td>'+
        '<td>'+(mine
          ? attendanceToggleHtml(m.attendance)
-         : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
+         : (m.attendance?'<span class="pill '+attPillClass(m.attendance)+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
        '</td></tr>';
   });
   if(!rows.length) h='<tr><td colspan="4" style="color:var(--muted)">'+(ATTENDANCE.length?"Keine Treffer für diesen Filter.":"Noch keine freigegebenen Mitglieder.")+'</td></tr>';

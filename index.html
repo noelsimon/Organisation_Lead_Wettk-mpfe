@@ -169,6 +169,7 @@ li{margin-bottom:6px}
 .pill{display:inline-block; font-family:var(--disp); font-size:10.5px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:2px 7px; border-radius:var(--r-pill); border:1px solid var(--line-strong); color:var(--muted); white-space:nowrap}
 .pill.bad{color:var(--bad); border-color:var(--bad)}
 .pill.ok{color:var(--ok); border-color:var(--ok)}
+.pill.warn{color:var(--warn); border-color:var(--warn)}
 
 .routes{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(234px,1fr))}
 .route{background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--ac); border-radius:var(--r-md); padding:14px 15px 13px; box-shadow:var(--shadow)}
@@ -616,13 +617,20 @@ td.pcell{font-size:13.5px; line-height:1.5}
   .tblwrap:has(#attab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
   #attab, #attab thead, #attab tbody, #attab tr, #attab td{display:block; width:100%; min-width:0}
   #attab thead{display:none}
-  #attab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
-    padding:12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
+  #attab tr{background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--line-strong); border-radius:var(--r-lg); box-shadow:var(--shadow);
+    padding:12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px}
+  #attab tr[data-status="da"]{border-left-color:var(--ok)}
+  #attab tr[data-status="unterwegs"]{border-left-color:var(--warn)}
+  #attab tr[data-status="abwesend"]{border-left-color:var(--bad)}
   #attab td{border-bottom:none; padding:0}
   #attab td:nth-child(1){flex:1 1 100%; order:1}
-  #attab td:nth-child(2){order:3; font-size:12.5px; color:var(--muted)}
-  #attab td:nth-child(3){order:2; flex:1 1 auto; display:flex; align-items:center}
+  #attab td:nth-child(2){order:2; flex:0 0 auto; font-size:12px; color:var(--muted)}
+  #attab td:nth-child(3){order:3; flex:0 1 auto; display:flex; align-items:center; font-size:12px; color:var(--muted)}
+  #attab td:nth-child(3):not(:has(.no-phone))::before{content:"· "}
+  #attab td:nth-child(3) .tel-btn{width:30px; height:30px}
   #attab td:nth-child(4){order:4; flex:0 0 auto; margin-left:auto}
+  #attab tr.mine{background:var(--sunken)}
+  #attab tr.mine td:nth-child(4){flex:1 1 100%; margin-left:0; order:5}
 }
 @media (max-width:760px){
   /* ---- Stände, Klassen, Personen, Meldung als Karten (gleiches Muster wie #attab oben) ---- */
@@ -3676,6 +3684,8 @@ function loadAssigneeOptions(compId){
 /* ---- Anwesenheit & Kontakt ---- */
 var ATTENDANCE=[];
 var ATTLABEL={da:"Vor Ort", unterwegs:"Auf dem Weg", abwesend:"Fällt aus"};
+var ATTPILLCLASS={da:"ok", unterwegs:"warn", abwesend:"bad"};
+function attPillClass(att){return ATTPILLCLASS[att]||"";}
 function attendanceToggleHtml(current){
   return '<div class="attToggle" role="group" aria-label="Anwesenheitsstatus">'+
     Object.keys(ATTLABEL).map(function(k){
@@ -3751,14 +3761,14 @@ function renderAttendance(){
   var h="";
   rows.forEach(function(m){
     var p=m.profiles, mine=!!(PROFILE&&p.id===PROFILE.id);
-    h+='<tr'+(mine?' style="background:var(--sunken)"':'')+'><td><div class="person-cell" data-pid="'+esc(p.id)+'">'+
+    h+='<tr data-status="'+(m.attendance||"")+'"'+(mine?' class="mine"':"")+'><td><div class="person-cell" data-pid="'+esc(p.id)+'">'+
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
-       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span class="no-phone" style="color:var(--muted)">—</span>')+'</td>'+
        '<td>'+(mine
          ? attendanceToggleHtml(m.attendance)
-         : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
+         : (m.attendance?'<span class="pill '+attPillClass(m.attendance)+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
        '</td></tr>';
   });
   if(!rows.length) h='<tr><td colspan="4" style="color:var(--muted)">'+(ATTENDANCE.length?"Keine Treffer für diesen Filter.":"Noch keine freigegebenen Mitglieder.")+'</td></tr>';
