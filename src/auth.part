@@ -435,27 +435,89 @@ document.getElementById("ccCancel").onclick=resetCompForm;
 document.getElementById("ccGo").onclick=createCompetition;
 
 /* ---- Plan-Zustand mit Supabase abgleichen (ersetzt localStorage als Quelle der Wahrheit) ---- */
+/* Sync-Konflikt-Erkennung (optimistisches Locking): STATEVER[key] hält die
+   zuletzt vom Server gesehene Versionsnummer. pushState() schreibt nur,
+   wenn der Server noch auf genau dieser Version steht (WHERE version=…);
+   betrifft das UPDATE 0 Zeilen, hat zwischenzeitlich jemand anderes
+   gespeichert - dann kommt der Sync-Konflikt-Hinweis statt eines stillen
+   Überschreibens. Ohne bekannte Version (frisch geladene Seite, brandneuer
+   Wettkampf) wird wie bisher per upsert geschrieben. Läuft die Migration
+   0009 noch nicht (Spalte "version" fehlt), meldet Postgres einen Fehler -
+   pushState fällt dann auf die bisherige Warnung zurück, ohne die Seite zu
+   blockieren; pullState() ist davon bewusst unabhängig (siehe unten). */
+var STATEVER={};
 function pushState(key,data){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
-  sbClient.from("plan_state").upsert({competition_id:CURRENT_COMP.id,key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
-    .then(function(r){ if(r.error) console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); });
+  var known=STATEVER[key];
+  var write=(known!=null)
+    ? sbClient.from("plan_state").update({data:data,updated_by:PROFILE.id})
+        .eq("competition_id",CURRENT_COMP.id).eq("key",key).eq("version",known).select("version")
+    : sbClient.from("plan_state").upsert({competition_id:CURRENT_COMP.id,key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
+        .select("version");
+  write.then(function(r){
+    if(r.error){ console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); return; }
+    if(known!=null&&(!r.data||!r.data.length)){ handleSyncConflict(key,data); return; }
+    if(r.data&&r.data[0]&&r.data[0].version!=null) STATEVER[key]=r.data[0].version;
+  }).catch(function(err){ console.warn("Sync ("+key+") fehlgeschlagen:",err); });
 }
+var SYNCKEYLABEL={cfg:"Wertungsklassen und Zeitplan", quali:"Zeitplan Qualifikation", finale:"Finale", texts:"Texte", textblocks:"Textbausteine"};
+var syncConflictQueue=[];
+function handleSyncConflict(key,data){
+  if(syncConflictQueue.some(function(c){return c.key===key;})) return;
+  syncConflictQueue.push({key:key,data:data});
+  if(syncConflictQueue.length===1) showNextSyncConflict();
+}
+function showNextSyncConflict(){
+  var c=syncConflictQueue[0], box=document.getElementById("syncToast"); if(!c||!box) return;
+  document.getElementById("syncToastMsg").textContent=
+    "Jemand hat „"+(SYNCKEYLABEL[c.key]||c.key)+"“ seit deinem letzten Speichern geändert. Deine Version behalten oder die andere übernehmen?";
+  box.hidden=false;
+}
+function resolveSyncConflict(keepMine){
+  var c=syncConflictQueue.shift();
+  var box=document.getElementById("syncToast"); if(box) box.hidden=true;
+  if(c){
+    if(keepMine){
+      sbClient.from("plan_state").select("version").eq("competition_id",CURRENT_COMP.id).eq("key",c.key).maybeSingle()
+        .then(function(r){ if(r.data&&r.data.version!=null) STATEVER[c.key]=r.data.version; pushState(c.key,c.data); })
+        .catch(function(){ pushState(c.key,c.data); });
+    } else {
+      pullState();
+    }
+  }
+  if(syncConflictQueue.length) showNextSyncConflict();
+}
+document.getElementById("syncToastKeep").onclick=function(){ resolveSyncConflict(true); };
+document.getElementById("syncToastTake").onclick=function(){ resolveSyncConflict(false); };
 function pullState(){
   if(!sbClient||!CURRENT_COMP) return;
-  sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
-    if(r.error||!r.data) return;
-    var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
-    if(by.cfg&&by.quali&&by.finale){
-      applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
-    } else {
-      /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
-      pushState("cfg",CFG);
-      pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
-      pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
-      pushState("texts",TXT);
-      pushState("textblocks",TXTBLOCKS);
-    }
-  }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
+  /* Erst die Versionsstände auffrischen (eigene, unkritische Abfrage - schlägt
+     sie fehl, z. B. weil Migration 0009 noch nicht angewendet ist, geht es
+     trotzdem weiter, Konflikterkennung ist dann schlicht noch aus), DANACH
+     erst die eigentlichen Daten laden. Reihenfolge ist wichtig: applySnapshot()
+     speichert direkt danach automatisch wieder (saveCfg()/pq.save()/pf.save()),
+     und dieser Re-Save muss schon die frische Version sehen - sonst würde er
+     mit einer veralteten Version schreiben und einen Konflikt vortäuschen, wo
+     gar keiner ist. */
+  sbClient.from("plan_state").select("key,version").eq("competition_id",CURRENT_COMP.id)
+    .then(function(r){
+      if(!r.error&&r.data) r.data.forEach(function(row){ if(row.version!=null) STATEVER[row.key]=row.version; });
+    }).catch(function(){}).then(function(){
+      sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
+        if(r.error||!r.data) return;
+        var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
+        if(by.cfg&&by.quali&&by.finale){
+          applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
+        } else {
+          /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
+          pushState("cfg",CFG);
+          pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
+          pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
+          pushState("texts",TXT);
+          pushState("textblocks",TXTBLOCKS);
+        }
+      }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
+    });
 }
 var planSub=null;
 function subscribePlanState(){
