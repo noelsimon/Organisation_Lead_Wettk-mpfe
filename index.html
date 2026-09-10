@@ -244,12 +244,18 @@ li{margin-bottom:6px}
 .ed-grid select:focus-visible,.ed-grid input:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .readout .flag.warn{border-color:var(--warn); color:var(--warn)}
 .rlabel b{display:flex; align-items:center; gap:6px}
-.rdel{margin-left:auto; font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
+.rbtns{margin-left:auto; display:flex; align-items:center; gap:6px}
+.rdel{font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
   border:1px solid transparent; border-radius:var(--r-sm); background:transparent; color:var(--muted); cursor:pointer; padding:0}
 .grow:hover .rdel:not(:disabled),.rdel:focus-visible{border-color:var(--line-strong); color:var(--bad)}
 .rdel:disabled{opacity:0; cursor:default}
 .grow:hover .rdel:disabled{opacity:.35}
 .rdel:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+.rdir,.ralt{font-family:var(--mono); font-size:10px; font-weight:600; line-height:1; padding:3px 7px; white-space:nowrap;
+  border-radius:var(--r-pill); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2); cursor:pointer}
+.rdir:hover,.ralt:hover{background:var(--sunken)}
+.ralt[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#fff}
+.rdir:focus-visible,.ralt:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .flowwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow); padding:8px 0 4px}
 .flowwrap svg{display:block; min-width:980px}
@@ -607,7 +613,7 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
   #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
@@ -973,7 +979,7 @@ body.editing{caret-color:var(--ink)}
     <div class="readout" id="roQ"></div>
     <div class="editor" id="edQ" hidden></div>
     <div class="gantt" id="gq" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gq-inner"></div></div></div>
-    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
+    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt. Bei gemischten Routen schaltet <strong>↔ m/w</strong> abwechselnden Start (m/w/m/w statt erst alle Jungs, dann alle Mädchen) ein und aus; <strong>1→n / n→1</strong> dreht die Startreihenfolge dieser Route um.</p>
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lk">
@@ -1003,9 +1009,9 @@ body.editing{caret-color:var(--ink)}
       <div class="card">
         <h4>Startreihenfolge</h4>
         <ul style="font-size:14.5px">
-          <li>Auf den gemischten Routen klettern <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken.</li>
+          <li>Standardmäßig klettern auf den gemischten Routen <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken. Mit dem Schalter <strong>↔ m/w</strong> an der Route lässt sich das auf abwechselnden Start (m/w/m/w) umstellen.</li>
           <li>Innerhalb einer Gruppe nach Ranking sortieren und in umgekehrter Reihenfolge starten: die Stärksten zuletzt.</li>
-          <li><strong>Dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich.</li>
+          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt.</li>
           <li>Individuelle Startzeit = Blockbeginn + Startnummer × 6 Minuten.</li>
         </ul>
       </div>
@@ -1110,12 +1116,28 @@ body.editing{caret-color:var(--ink)}
 
     <div class="toolbar">
       <span class="lbl">Finale</span>
+      <span style="flex:1"></span>
+      <button class="fbtn" id="addFtoggle">+ Route</button>
       <button class="fbtn" id="resetF">Zurücksetzen</button>
     </div>
+
+    <div class="addbox" id="addF" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse
+          <select id="addFcls"><option>U9</option><option>U11</option><option selected>U13</option><option>U15</option></select></label>
+        <label>Typ
+          <select id="addFallow"><option value="mw">gemischt</option><option value="m">nur männlich</option><option value="w">nur weiblich</option></select></label>
+        <label>Sicherung
+          <select id="addFmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
+        <label><button class="fbtn" id="addFgo" type="button">Route anlegen</button></label>
+        <label><button class="fbtn" id="addFcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
     <div class="readout" id="roF"></div>
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
-    <p class="hint">Besichtigung und ISO sind als Block fixiert; ihre Dauer stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen.</p>
+    <p class="hint">Besichtigung und ISO sind als Block fixiert; ihre Dauer stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
 
     <h3>Finalquoten</h3>
     <div class="tblwrap"><table id="finaltab">
@@ -1352,7 +1374,10 @@ try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
 reindex();
 function quota(n){ if(n<=0) return 0; return Math.min(n, n>=20?10:6); }
 function totalAth(){var t=0;CFG.classes.forEach(function(c){t+=(+c.m||0)+(+c.w||0);});return t;}
-function allowTxt(r){ return r.allow==="mw" ? "gemischt" : "nur "+gl(r.cls,r.allow); }
+function allowTxt(r){
+  if(r.allow!=="mw") return "nur "+gl(r.cls,r.allow);
+  return "gemischt"+(r.altStart?" · abwechselnd m/w":"");
+}
 
 /* ================= Stammdaten ================= */
 var QROWS=[
@@ -1428,7 +1453,11 @@ Plan.prototype.dur=function(b){return this.g(b.gid).n*CLIMB;};
 Plan.prototype.parts=function(g){return this.groups.filter(function(x){return x.cls===g.cls&&x.gender===g.gender;});};
 Plan.prototype.gname=function(g){return CLn(g.cls)+" "+gl(g.cls,g.gender);};
 Plan.prototype.label=function(g){var p=this.parts(g), n=this.gname(g);return p.length<2?n:n+" "+(p.indexOf(g)+1);};
-Plan.prototype.desc=function(r){return CLn(r.cls)+" · "+allowTxt(r)+" · "+r.mode;};
+Plan.prototype.desc=function(r){
+  var d=CLn(r.cls)+" · "+allowTxt(r)+" · "+r.mode;
+  if(r.dir==="ab") d+=" · Start n→1";
+  return d;
+};
 Plan.prototype.save=function(){
   var st={rows:this.rows,groups:this.groups,blocks:this.blocks,seq:this.seq};
   try{localStorage.setItem(this.o.store,JSON.stringify(st));}catch(e){}
@@ -1552,6 +1581,16 @@ Plan.prototype.delRoute=function(id){
   this.rows=this.rows.filter(function(r){return r.id!==id;});
   this.render(); this.save(); return true;
 };
+Plan.prototype.toggleDir=function(id){
+  var r=this.row(id); if(!r) return;
+  r.dir=r.dir==="ab"?"auf":"ab";
+  this.render(); this.save();
+};
+Plan.prototype.toggleAlt=function(id){
+  var r=this.row(id); if(!r||r.allow!=="mw") return;
+  r.altStart=!r.altStart;
+  this.render(); this.save();
+};
 
 /* ---- Rendern ---- */
 Plan.prototype.render=function(){
@@ -1562,7 +1601,14 @@ Plan.prototype.render=function(){
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
     h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+esc(r.id)+
-       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button></b>'+
+       '<span class="rbtns">'+
+       (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
+         '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
+       '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
+         (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken">'+
+         (r.dir==="ab"?"n→1":"1→n")+'</button>'+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
+       '</span></b>'+
        '<span>'+esc(self.desc(r))+'</span></div>';
     h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
   });
@@ -1571,6 +1617,12 @@ Plan.prototype.render=function(){
   Array.prototype.forEach.call(this.el.querySelectorAll(".track[data-route]"),function(t){self.tracks[t.getAttribute("data-route")]=t;});
   Array.prototype.forEach.call(this.el.querySelectorAll(".rdel"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.delRoute(btn.getAttribute("data-del"));};
+  });
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rdir"),function(btn){
+    btn.onclick=function(ev){ev.stopPropagation(); self.toggleDir(btn.getAttribute("data-dir"));};
+  });
+  Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
+    btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
   });
   this.nodes={};
   if(o.fixedGen) o.fixed=o.fixedGen(this);
@@ -2206,6 +2258,28 @@ document.getElementById("addQgo").onclick=function(){
   addBox.hidden=true;
 };
 document.getElementById("addQcancel").onclick=function(){addBox.hidden=true;};
+
+var addBoxF=document.getElementById("addF");
+document.getElementById("addFtoggle").onclick=function(){addBoxF.hidden=!addBoxF.hidden; if(!addBoxF.hidden) fillAddRouteF();};
+function fillAddRouteF(){
+  var s=document.getElementById("addFcls");
+  s.innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  syncAllowF();
+}
+function syncAllowF(){
+  var c=CL(document.getElementById("addFcls").value)||CFG.classes[0]; if(!c) return;
+  var a=document.getElementById("addFallow"), v=a.value;
+  a.innerHTML='<option value="mw">gemischt</option><option value="m">nur '+esc(c.lm)+'</option><option value="w">nur '+esc(c.lw)+'</option>';
+  a.value=v||"mw";
+  document.getElementById("addFmode").value=c.mode||"TR";
+}
+document.getElementById("addFcls").onchange=syncAllowF;
+fillAddRouteF();
+document.getElementById("addFgo").onclick=function(){
+  pf.addRoute(document.getElementById("addFcls").value,document.getElementById("addFallow").value,document.getElementById("addFmode").value);
+  addBoxF.hidden=true;
+};
+document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
 
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");

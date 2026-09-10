@@ -66,7 +66,10 @@ try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
 reindex();
 function quota(n){ if(n<=0) return 0; return Math.min(n, n>=20?10:6); }
 function totalAth(){var t=0;CFG.classes.forEach(function(c){t+=(+c.m||0)+(+c.w||0);});return t;}
-function allowTxt(r){ return r.allow==="mw" ? "gemischt" : "nur "+gl(r.cls,r.allow); }
+function allowTxt(r){
+  if(r.allow!=="mw") return "nur "+gl(r.cls,r.allow);
+  return "gemischt"+(r.altStart?" · abwechselnd m/w":"");
+}
 
 /* ================= Stammdaten ================= */
 var QROWS=[
@@ -142,7 +145,11 @@ Plan.prototype.dur=function(b){return this.g(b.gid).n*CLIMB;};
 Plan.prototype.parts=function(g){return this.groups.filter(function(x){return x.cls===g.cls&&x.gender===g.gender;});};
 Plan.prototype.gname=function(g){return CLn(g.cls)+" "+gl(g.cls,g.gender);};
 Plan.prototype.label=function(g){var p=this.parts(g), n=this.gname(g);return p.length<2?n:n+" "+(p.indexOf(g)+1);};
-Plan.prototype.desc=function(r){return CLn(r.cls)+" · "+allowTxt(r)+" · "+r.mode;};
+Plan.prototype.desc=function(r){
+  var d=CLn(r.cls)+" · "+allowTxt(r)+" · "+r.mode;
+  if(r.dir==="ab") d+=" · Start n→1";
+  return d;
+};
 Plan.prototype.save=function(){
   var st={rows:this.rows,groups:this.groups,blocks:this.blocks,seq:this.seq};
   try{localStorage.setItem(this.o.store,JSON.stringify(st));}catch(e){}
@@ -266,6 +273,16 @@ Plan.prototype.delRoute=function(id){
   this.rows=this.rows.filter(function(r){return r.id!==id;});
   this.render(); this.save(); return true;
 };
+Plan.prototype.toggleDir=function(id){
+  var r=this.row(id); if(!r) return;
+  r.dir=r.dir==="ab"?"auf":"ab";
+  this.render(); this.save();
+};
+Plan.prototype.toggleAlt=function(id){
+  var r=this.row(id); if(!r||r.allow!=="mw") return;
+  r.altStart=!r.altStart;
+  this.render(); this.save();
+};
 
 /* ---- Rendern ---- */
 Plan.prototype.render=function(){
@@ -276,7 +293,14 @@ Plan.prototype.render=function(){
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
     h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+esc(r.id)+
-       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button></b>'+
+       '<span class="rbtns">'+
+       (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
+         '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
+       '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
+         (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken">'+
+         (r.dir==="ab"?"n→1":"1→n")+'</button>'+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
+       '</span></b>'+
        '<span>'+esc(self.desc(r))+'</span></div>';
     h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
   });
@@ -285,6 +309,12 @@ Plan.prototype.render=function(){
   Array.prototype.forEach.call(this.el.querySelectorAll(".track[data-route]"),function(t){self.tracks[t.getAttribute("data-route")]=t;});
   Array.prototype.forEach.call(this.el.querySelectorAll(".rdel"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.delRoute(btn.getAttribute("data-del"));};
+  });
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rdir"),function(btn){
+    btn.onclick=function(ev){ev.stopPropagation(); self.toggleDir(btn.getAttribute("data-dir"));};
+  });
+  Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
+    btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
   });
   this.nodes={};
   if(o.fixedGen) o.fixed=o.fixedGen(this);
@@ -920,6 +950,28 @@ document.getElementById("addQgo").onclick=function(){
   addBox.hidden=true;
 };
 document.getElementById("addQcancel").onclick=function(){addBox.hidden=true;};
+
+var addBoxF=document.getElementById("addF");
+document.getElementById("addFtoggle").onclick=function(){addBoxF.hidden=!addBoxF.hidden; if(!addBoxF.hidden) fillAddRouteF();};
+function fillAddRouteF(){
+  var s=document.getElementById("addFcls");
+  s.innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  syncAllowF();
+}
+function syncAllowF(){
+  var c=CL(document.getElementById("addFcls").value)||CFG.classes[0]; if(!c) return;
+  var a=document.getElementById("addFallow"), v=a.value;
+  a.innerHTML='<option value="mw">gemischt</option><option value="m">nur '+esc(c.lm)+'</option><option value="w">nur '+esc(c.lw)+'</option>';
+  a.value=v||"mw";
+  document.getElementById("addFmode").value=c.mode||"TR";
+}
+document.getElementById("addFcls").onchange=syncAllowF;
+fillAddRouteF();
+document.getElementById("addFgo").onclick=function(){
+  pf.addRoute(document.getElementById("addFcls").value,document.getElementById("addFallow").value,document.getElementById("addFmode").value);
+  addBoxF.hidden=true;
+};
+document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
 
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");
