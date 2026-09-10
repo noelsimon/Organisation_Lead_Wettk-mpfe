@@ -400,6 +400,11 @@ body:not([data-auth="ok"]) main{display:none}
 .task-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
 .task-box[open] .task-summary::before{transform:rotate(90deg)}
 .task-body{padding:0 16px 16px}
+.stand-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
+  padding:8px 0; font-family:var(--disp); font-weight:500; font-size:14px}
+.stand-summary::-webkit-details-marker{display:none}
+.stand-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
+#standList[open] .stand-summary::before{transform:rotate(90deg)}
 .task-card{background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md);
   box-shadow:var(--shadow); padding:14px 16px; margin:0 0 12px}
 .task-card-head{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px}
@@ -1246,10 +1251,13 @@ body.editing{caret-color:var(--ink)}
     </div>
     <p class="pdfmsg" id="stMsg" role="status"></p>
 
-    <div class="tblwrap"><table id="standtab">
-      <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table></div>
+    <details id="standList">
+      <summary class="stand-summary">Gespeicherte Stände (<span id="standCount">0</span>)</summary>
+      <div class="tblwrap"><table id="standtab">
+        <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </details>
 
     <h4>Wer war zuletzt hier</h4>
     <div id="vlist" style="margin:0 0 8px"></div>
@@ -3972,6 +3980,7 @@ function renderStands(){
   });
   if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
   body.innerHTML=h;
+  var cnt=document.getElementById("standCount"); if(cnt) cnt.textContent=STANDS.length;
   Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
     b.onclick=function(){
       if(!isAdmin) return;
@@ -4014,6 +4023,13 @@ function logMe(what){
   if(!DB||!PROFILE) return;
   DB.doc("viewers/"+PROFILE.id).set({name:PROFILE.full_name, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
 }
+var STANDS_LIMIT=10;
+/* Ältere Stände über dem Limit ermitteln (jüngste zuerst behalten) - reine
+   Auswahl, löscht selbst nichts, damit sie für beide Pfade (geteilt/lokal)
+   gleich benutzt werden kann. */
+function excessStands(list){
+  return list.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).slice(STANDS_LIMIT);
+}
 function saveStand(){
   var t=document.getElementById("stTitle").value.trim()||("Stand "+dstr());
   var n=document.getElementById("stNote").value.trim();
@@ -4024,12 +4040,16 @@ function saveStand(){
       standSay('Stand „'+t+'" gespeichert – für alle sichtbar, die den Link haben.');
       document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
       logMe("gespeichert: "+t);
+      excessStands(STANDS.concat([rec])).forEach(function(s){ DB.doc("stands/"+s.id).delete().catch(function(){}); });
     }).catch(function(e){
       standSay("Speichern fehlgeschlagen"+(e&&e.code?" ("+e.code+")":"")+" – der Stand liegt jetzt nur lokal.",true);
       STANDS.push(rec); saveLocalStands(); renderStands();
     });
   } else {
-    STANDS.push(rec); saveLocalStands(); renderStands();
+    STANDS.push(rec);
+    var extra=excessStands(STANDS);
+    if(extra.length){ var ids=extra.map(function(s){return s.id;}); STANDS=STANDS.filter(function(s){return ids.indexOf(s.id)<0;}); }
+    saveLocalStands(); renderStands();
     standSay('Stand „'+t+'" lokal gespeichert (nur in diesem Browser).');
     document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
   }
