@@ -224,9 +224,29 @@ create table public.plan_state (
   data           jsonb not null,
   updated_at     timestamptz not null default now(),
   updated_by     uuid references public.profiles(id),
+  version        integer not null default 1,
   primary key (competition_id, key)
 );
 alter table public.plan_state enable row level security;
+
+-- Sync-Konflikt-Erkennung: version wird bei jedem UPDATE serverseitig
+-- hochgezählt, updated_at neu gesetzt. Der Client vergleicht vor dem
+-- Speichern seine zuletzt bekannte Version mit der aktuellen - stimmt sie
+-- nicht mehr, hat inzwischen jemand anderes gespeichert (siehe pushState()
+-- in src/script.part).
+create or replace function public.bump_plan_state_version()
+returns trigger language plpgsql as $$
+begin
+  new.version := coalesce(old.version, 0) + 1;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists before_plan_state_update on public.plan_state;
+create trigger before_plan_state_update
+  before update on public.plan_state
+  for each row execute function public.bump_plan_state_version();
 
 create policy "plan_state: Mitglieder oder Admin lesen" on public.plan_state
   for select using (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id)));
