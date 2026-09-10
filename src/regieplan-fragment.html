@@ -587,6 +587,85 @@ td.pcell{font-size:13.5px; line-height:1.5}
   #attab td:nth-child(4){order:4; flex:0 0 auto; margin-left:auto}
 }
 @media (max-width:760px){
+  /* ---- Stände, Klassen, Personen, Meldung als Karten (gleiches Muster wie #attab oben) ---- */
+  #standtab td:empty, #cattab td:empty, #peotab td:empty, #meldtab td:empty{display:none}
+
+  .tblwrap:has(#standtab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #standtab, #standtab thead, #standtab tbody, #standtab tr, #standtab td{display:block; width:100%; min-width:0}
+  #standtab thead{display:none}
+  #standtab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
+    padding:12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px}
+  #standtab td{border-bottom:none; padding:0}
+  #standtab td:nth-child(1){flex:1 1 100%; order:1}
+  #standtab td:nth-child(2){order:3; width:auto; font-size:12.5px; color:var(--muted)}
+  #standtab td:nth-child(2)::before{content:"von "}
+  #standtab td:nth-child(3){order:2; flex:1 1 auto; width:auto; font-size:12.5px; color:var(--muted)}
+  #standtab td:nth-child(4){order:4; flex:1 1 100%; display:flex; gap:8px}
+
+  .tblwrap:has(#cattab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #cattab, #cattab thead, #cattab tbody, #cattab tr, #cattab td{display:block; width:100%; min-width:0}
+  #cattab thead{display:none}
+  #cattab tr{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
+    padding:12px 44px 12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px}
+  #cattab td{border-bottom:none; padding:0}
+  #cattab td:nth-child(1){flex:1 1 100%; order:1}
+  #cattab td:nth-child(1) .cin{width:100%; font-weight:600}
+  #cattab td:nth-child(2){order:2; width:auto; font-size:12.5px; color:var(--muted)}
+  #cattab td:nth-child(2)::before{content:"Ist: "}
+  #cattab td:nth-child(3){order:3; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted)}
+  #cattab td:nth-child(3)::before{content:"Soll: "}
+  #cattab td:nth-child(4){position:absolute; top:10px; right:10px}
+
+  .tblwrap:has(#peotab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #peotab, #peotab thead, #peotab tbody, #peotab tr, #peotab td{display:block; width:100%; min-width:0}
+  #peotab thead{display:none}
+  #peotab tr{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
+    padding:12px 44px 12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
+  #peotab td{border-bottom:none; padding:0}
+  #peotab td:nth-child(1){flex:1 1 100%; order:1}
+  #peotab td:nth-child(1) .cin{width:100%; font-weight:600}
+  #peotab td:nth-child(2){order:2; flex:0 0 auto; width:auto}
+  #peotab td:nth-child(3){order:3; flex:0 0 auto; width:auto}
+  #peotab td:nth-child(4){order:4; flex:1 1 100%}
+  #peotab td:nth-child(4) .cin{width:100%}
+  #peotab td:nth-child(4)::before{content:"Notiz: "; font-size:11.5px; color:var(--muted); display:block; margin-bottom:2px}
+  #peotab td.email-col{order:5; flex:1 1 100%}
+  #peotab td.email-col .cin{width:100%}
+  #peotab td.email-col:not(:empty)::before{content:"E-Mail: "; font-size:11.5px; color:var(--muted); display:block; margin-bottom:2px}
+  #peotab td:nth-child(6){position:absolute; top:10px; right:10px}
+
+  .tblwrap:has(#meldtab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #meldtab, #meldtab thead, #meldtab tbody, #meldtab tr, #meldtab td{display:block; width:100%; min-width:0}
+  #meldtab thead{display:none}
+  #meldtab tr{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
+    padding:12px 44px 12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px}
+  #meldtab tr.sum{background:var(--sunken); font-weight:600}
+  #meldtab td{border-bottom:none; padding:0}
+  #meldtab td:nth-child(1){flex:1 1 100%; order:1}
+  #meldtab td:nth-child(1) .cin{width:100%; font-weight:600}
+  #meldtab td:nth-child(2){order:2; flex:0 0 auto; width:auto}
+  #meldtab td:nth-child(2) .cin{width:130px}
+  #meldtab td:nth-child(2):not(:empty)::before{content:"Gruppe 1: "; font-size:11px; color:var(--muted); display:block}
+  #meldtab td:nth-child(3){order:3; flex:0 0 auto; width:auto}
+  #meldtab td:nth-child(3):not(:empty)::before{content:"TN: "; font-size:11px; color:var(--muted); display:block}
+  #meldtab td:nth-child(4){order:4; flex:0 0 auto; width:auto}
+  #meldtab td:nth-child(4) .cin{width:130px}
+  #meldtab td:nth-child(4):not(:empty)::before{content:"Gruppe 2: "; font-size:11px; color:var(--muted); display:block}
+  #meldtab td:nth-child(5){order:5; flex:0 0 auto; width:auto}
+  #meldtab td:nth-child(5):not(:empty)::before{content:"TN: "; font-size:11px; color:var(--muted); display:block}
+  #meldtab td:nth-child(6){order:6; flex:0 0 auto; width:auto}
+  #meldtab td:nth-child(7){order:7; flex:0 0 auto; width:auto}
+  #meldtab td:nth-child(8){order:8; flex:0 0 auto; width:auto; font-size:12.5px; color:var(--muted)}
+  #meldtab td:nth-child(8):not(:empty)::before{content:"Gesamt: "}
+  #meldtab td:nth-child(9){order:9; flex:0 0 auto; width:auto; font-size:12.5px; color:var(--muted)}
+  #meldtab td:nth-child(9):not(:empty)::before{content:" · Kletter-Min: "}
+  #meldtab td:nth-child(10){order:10; flex:0 0 auto; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px}
+  #meldtab td:nth-child(10):not(:empty)::before{content:"Quali"}
+  #meldtab td:nth-child(11){order:11; flex:0 0 auto; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px; margin-left:14px}
+  #meldtab td:nth-child(11):not(:empty)::before{content:"Finale"}
+  #meldtab td:nth-child(12){position:absolute; top:10px; right:10px}
+}
+@media (max-width:760px){
   .masthead{padding-bottom:0}
   .masthead .stats{position:relative; z-index:3; margin-top:30px; margin-bottom:-52px;
     background:var(--line); border-top:none; box-shadow:var(--shadow); border-radius:var(--r-md)}
