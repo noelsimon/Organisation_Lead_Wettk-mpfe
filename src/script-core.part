@@ -1,0 +1,129 @@
+<script>
+(function(){
+"use strict";
+var CLIMB=6, SNAP=5;
+var TEAMNAMES=["Wölfe","Falken","Luchse","Uhus","Fischotter","Dachse","Kraniche","Habichte","Biber","Reiher","Steinadler","Wanderfalken","Gämsen","Murmeltiere"];
+function fmt(t){var h=Math.floor(t/60),m=Math.round(t%60);return (h<10?"0":"")+h+":"+(m<10?"0":"")+m;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c];});}
+var M=function(h,m){return h*60+m;};
+function parseTime(v){var p=(v||"").split(":");if(p.length<2)return null;var h=+p[0],m=+p[1];if(isNaN(h)||isNaN(m))return null;return h*60+m;}
+var GTXT={m:"männlich",w:"weiblich",mw:"m + w"};
+var PALETTE=[{k:"c0",n:"Ocker"},{k:"c1",n:"Grün"},{k:"c2",n:"Blau"},{k:"c3",n:"Rot"},
+             {k:"c4",n:"Violett"},{k:"c5",n:"Petrol"},{k:"c6",n:"Braun"},{k:"c7",n:"Schiefer"}];
+var PDFCOL={
+ c0:{ac:[184,119,8],  m:[252,246,232], w:[241,225,184]},
+ c1:{ac:[31,122,85],  m:[237,247,242], w:[203,231,217]},
+ c2:{ac:[37,89,166],  m:[238,244,252], w:[207,224,244]},
+ c3:{ac:[169,59,52],  m:[253,240,238], w:[242,211,206]},
+ c4:{ac:[118,62,150], m:[247,241,251], w:[227,211,240]},
+ c5:{ac:[13,116,128], m:[234,247,248], w:[198,231,234]},
+ c6:{ac:[131,89,44],  m:[250,244,235], w:[236,220,196]},
+ c7:{ac:[74,86,102],  m:[241,243,246], w:[214,220,228]},
+ ink:[20,24,21], muted:[108,117,111], line:[210,215,206], soft:[240,242,238]
+};
+var clone=function(x){return JSON.parse(JSON.stringify(x));};
+
+/* ================= Konfiguration: Wertungsklassen, Zeitfenster, Personal ================= */
+var CFG0={
+  classes:[
+    {id:"U9",  name:"U9",  color:0, lm:"männlich", lw:"weiblich", m:4, w:6,  mode:"TR"},
+    {id:"U11", name:"U11", color:1, lm:"männlich", lw:"weiblich", m:7, w:13, mode:"TR"},
+    {id:"U13", name:"U13", color:2, lm:"männlich", lw:"weiblich", m:8, w:16, mode:"TR"},
+    {id:"U15", name:"U15", color:3, lm:"männlich", lw:"weiblich", m:5, w:8,  mode:"Vorstieg"}
+  ],
+  win:{qs:M(10,15), qe:M(13,45), fs:M(13,30), fe:M(15,45), bes:25, iso:20},
+  cats:[{id:"k1",name:"Sicherung"},{id:"k2",name:"Ergebnisdienst"},{id:"k3",name:"Routenbau"},
+        {id:"k4",name:"Orga-Team"},{id:"k5",name:"Buffet"}],
+  people:[],
+  helferSoll:0,
+  teamPers:3,
+  routeNotes:{},
+  seq:100
+};
+var CFG=clone(CFG0);
+var CLASSES=[], ACOF={}, FIELD={}, LABS={}, CNAME={};
+function reindex(){
+  CLASSES=[]; ACOF={}; FIELD={}; LABS={}; CNAME={};
+  CFG.classes.forEach(function(c){
+    CLASSES.push(c.id);
+    ACOF[c.id]=PALETTE[(c.color||0)%PALETTE.length].k;
+    FIELD[c.id]={m:c.m,w:c.w};
+    LABS[c.id]={m:c.lm||"männlich", w:c.lw||"weiblich", mw:(c.lm||"m")+" + "+(c.lw||"w")};
+    CNAME[c.id]=c.name;
+  });
+}
+function CL(id){for(var i=0;i<CFG.classes.length;i++) if(CFG.classes[i].id===id) return CFG.classes[i]; return null;}
+function CLn(id){return CNAME[id]||id;}
+function gl(id,g){return (LABS[id]&&LABS[id][g])||GTXT[g]||g;}
+function newId(p){return p+(++CFG.seq);}
+function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG));}catch(e){} pushState("cfg",CFG);}
+try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
+  if(_c&&_c.classes&&_c.classes.length){
+    CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
+    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
+    ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(CFG.win[k]==null) CFG.win[k]=CFG0.win[k]; });
+  }}catch(e){}
+reindex();
+function quota(n){ if(n<=0) return 0; return Math.min(n, n>=20?10:6); }
+function totalAth(){var t=0;CFG.classes.forEach(function(c){t+=(+c.m||0)+(+c.w||0);});return t;}
+function allowTxt(r){ return r.allow==="mw" ? "gemischt" : "nur "+gl(r.cls,r.allow); }
+
+/* ================= Stammdaten ================= */
+var QROWS=[
+ {id:"Q1", cls:"U9",  allow:"mw", mode:"TR"},{id:"Q2", cls:"U9",  allow:"mw", mode:"TR"},
+ {id:"Q3", cls:"U11", allow:"mw", mode:"TR"},{id:"Q4", cls:"U11", allow:"m",  mode:"TR"},
+ {id:"Q5", cls:"U11", allow:"w",  mode:"TR"},{id:"Q6", cls:"U13", allow:"mw", mode:"TR"},
+ {id:"Q7", cls:"U13", allow:"m",  mode:"TR"},{id:"Q8", cls:"U13", allow:"w",  mode:"TR"},
+ {id:"Q9", cls:"U15", allow:"mw", mode:"Vorstieg"},{id:"Q10",cls:"U15", allow:"m",  mode:"Vorstieg"},
+ {id:"Q11",cls:"U15", allow:"w",  mode:"Vorstieg"}
+];
+var QGROUPS=[
+ {id:"g1", base:"U9 männlich",  cls:"U9",  gender:"m", n:4},
+ {id:"g2", base:"U9 weiblich",  cls:"U9",  gender:"w", n:6},
+ {id:"g3", base:"U11 männlich", cls:"U11", gender:"m", n:7},
+ {id:"g4", base:"U11 weiblich", cls:"U11", gender:"w", n:13},
+ {id:"g5", base:"U13 männlich", cls:"U13", gender:"m", n:8},
+ {id:"g6", base:"U13 weiblich", cls:"U13", gender:"w", n:16},
+ {id:"g7", base:"U15 männlich", cls:"U15", gender:"m", n:5},
+ {id:"g8", base:"U15 weiblich", cls:"U15", gender:"w", n:8}
+];
+var QBLOCKS=[
+ {id:"b1", gid:"g1", r:"Q1", s:M(10,30)}, {id:"b2", gid:"g1", r:"Q2", s:M(11,45)},
+ {id:"b3", gid:"g2", r:"Q1", s:M(10,54)}, {id:"b4", gid:"g2", r:"Q2", s:M(12,9)},
+ {id:"b5", gid:"g3", r:"Q3", s:M(10,30)}, {id:"b6", gid:"g3", r:"Q4", s:M(11,48)},
+ {id:"b7", gid:"g4", r:"Q5", s:M(10,30)}, {id:"b8", gid:"g4", r:"Q3", s:M(11,18)},
+ {id:"b9", gid:"g5", r:"Q6", s:M(10,30)}, {id:"b10",gid:"g5", r:"Q7", s:M(12,11)},
+ {id:"b11",gid:"g6", r:"Q8", s:M(10,30)}, {id:"b12",gid:"g6", r:"Q6", s:M(11,23)},
+ {id:"b13",gid:"g7", r:"Q9", s:M(10,30)}, {id:"b14",gid:"g7", r:"Q10",s:M(11,15)},
+ {id:"b15",gid:"g8", r:"Q9", s:M(11,15)}, {id:"b16",gid:"g8", r:"Q11",s:M(12,0)}
+];
+var FROWS=[
+ {id:"F1", cls:"U9",  allow:"mw", mode:"TR"},{id:"F2", cls:"U11", allow:"w",  mode:"TR"},
+ {id:"F3", cls:"U11", allow:"m",  mode:"TR"},{id:"F4", cls:"U13", allow:"w",  mode:"TR"},
+ {id:"F5", cls:"U13", allow:"m",  mode:"TR"},{id:"F6", cls:"U15", allow:"w",  mode:"Vorstieg"},
+ {id:"F7", cls:"U15", allow:"m",  mode:"Vorstieg"}
+];
+var FGROUPS=[
+ {id:"h1", base:"U9 m + w",     cls:"U9",  gender:"mw", n:10},
+ {id:"h2", base:"U11 weiblich", cls:"U11", gender:"w",  n:6},
+ {id:"h3", base:"U11 männlich", cls:"U11", gender:"m",  n:6},
+ {id:"h4", base:"U13 weiblich", cls:"U13", gender:"w",  n:6},
+ {id:"h5", base:"U13 männlich", cls:"U13", gender:"m",  n:6},
+ {id:"h6", base:"U15 weiblich", cls:"U15", gender:"w",  n:6},
+ {id:"h7", base:"U15 männlich", cls:"U15", gender:"m",  n:5}
+];
+var FBLOCKS=[
+ {id:"c1",gid:"h1",r:"F1",s:M(14,15)}, {id:"c2",gid:"h2",r:"F2",s:M(14,15)},
+ {id:"c3",gid:"h3",r:"F3",s:M(14,53)}, {id:"c4",gid:"h4",r:"F4",s:M(14,15)},
+ {id:"c5",gid:"h5",r:"F5",s:M(14,15)}, {id:"c6",gid:"h6",r:"F6",s:M(14,15)},
+ {id:"c7",gid:"h7",r:"F7",s:M(14,53)}
+];
+function ffix(plan){
+  var out=[], s=plan.o.start, b=+CFG.win.bes||0, i=+CFG.win.iso||0;
+  plan.rows.forEach(function(row){
+    if(b>0) out.push({r:row.id, cls:row.cls, dur:b, s:s, lab:"Besichtigung"});
+    if(i>0) out.push({r:row.id, cls:row.cls, dur:i, s:s+b, lab:"ISO"});
+  });
+  return out;
+}
+
