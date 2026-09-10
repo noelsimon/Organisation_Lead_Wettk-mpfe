@@ -25,8 +25,11 @@ document.querySelectorAll("section[id]").forEach(function(sec){
 /* ---- Sprungnavigation ---- */
 function renderJumpNav(){
   var bar=document.getElementById("jumpNav"); if(!bar) return;
+  var v=document.body.getAttribute("data-view")||"alles";
   bar.innerHTML=Array.prototype.slice.call(document.querySelectorAll("section[id]")).filter(function(s){
-    return !s.hidden;
+    if(s.hidden) return false;
+    var dv=s.getAttribute("data-views")||"";
+    return v==="alles"||dv.indexOf(v)>=0;
   }).map(function(s){
     var eb=s.querySelector(".sec-head .eyebrow");
     var label=eb?eb.textContent:s.id;

@@ -410,6 +410,10 @@ footer p{max-width:74ch; margin-bottom:8px}
 .vbar .lbl{font-family:var(--disp); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); margin-right:4px}
 .vbar p{flex-basis:100%; margin:0; font-size:12.5px; color:var(--muted)}
 #roleBar .jumpnav{margin:0}
+body[data-view="orga"]  main section:not([data-views~="orga"]),
+body[data-view="bau"]   main section:not([data-views~="bau"]),
+body[data-view="teams"] main section:not([data-views~="teams"]),
+body[data-view="sport"] main section:not([data-views~="sport"]){display:none}
 
 /* ---------- Login / Freigabe ---------- */
 body:not([data-auth="ok"]) main{display:none}
@@ -2951,6 +2955,7 @@ var sbClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_K
   ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
 var SESSION=null, PROFILE=null, authTab="login", CURRENT_COMP=null, MYCOMPS=[];
 var CATLABEL={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
+var CATVIEW={orga:"alles", routenbau:"bau", sicherung:"teams", ergebnisdienst:"teams", buffet:"teams"};
 
 function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; n.textContent=msg||""; n.className="pdfmsg"+(bad?" bad":""); }
 
@@ -3122,6 +3127,7 @@ document.getElementById("pfSave").onclick=function(){
 function applyCategoryUI(){
   if(!PROFILE) return;
   document.body.setAttribute("data-cat",PROFILE.category);
+  document.body.setAttribute("data-view",CATVIEW[PROFILE.category]||"alles");
   var admin=document.getElementById("admin");
   if(admin) admin.hidden=!PROFILE.is_admin;
   var soll=document.getElementById("stHelferSoll");
@@ -5002,8 +5008,11 @@ document.querySelectorAll("section[id]").forEach(function(sec){
 /* ---- Sprungnavigation ---- */
 function renderJumpNav(){
   var bar=document.getElementById("jumpNav"); if(!bar) return;
+  var v=document.body.getAttribute("data-view")||"alles";
   bar.innerHTML=Array.prototype.slice.call(document.querySelectorAll("section[id]")).filter(function(s){
-    return !s.hidden;
+    if(s.hidden) return false;
+    var dv=s.getAttribute("data-views")||"";
+    return v==="alles"||dv.indexOf(v)>=0;
   }).map(function(s){
     var eb=s.querySelector(".sec-head .eyebrow");
     var label=eb?eb.textContent:s.id;
