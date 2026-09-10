@@ -6,6 +6,7 @@
     "build": "python3 src/build.py",
     "test": "vitest run",
     "pretest": "npm run build",
+    "prelint": "npm run build",
     "lint": "node scripts/extract-js.mjs && eslint eslint.config.js .eslint-tmp/script.part.js tests scripts"
   },
   "devDependencies": {
