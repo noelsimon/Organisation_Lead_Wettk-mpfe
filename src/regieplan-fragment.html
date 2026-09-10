@@ -4622,5 +4622,15 @@ document.getElementById("jumpNav").onclick=function(ev){
 };
 renderJumpNav();
 
+/* Testhaken (Issue #1 "Test- und Lint-Grundgerüst"): stellt die reinen
+   Rechenfunktionen und die Plan-Engine für Vitest bereit, ohne die
+   bestehende Logik anzufassen. Läuft nur, wenn ein Test vorher
+   window.__TEST__=true gesetzt hat – auf der echten Seite bleibt
+   window.__TEST_EXPORTS__ undefiniert. */
+if(typeof window!=="undefined"&&window.__TEST__){
+  window.__TEST_EXPORTS__={fmt:fmt, parseTime:parseTime, quota:quota, ffix:ffix, Plan:Plan,
+    CFG:CFG, CLIMB:CLIMB, CLn:CLn, gl:gl, allowTxt:allowTxt, esc:esc, reindex:reindex};
+}
+
 })();
 </script>
