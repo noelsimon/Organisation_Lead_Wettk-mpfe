@@ -3178,7 +3178,7 @@ function renderCompAdmin(){
     h+='<tr><td>'+esc(c.name)+(c.is_default?' <span class="pill ok">Standard</span>':'')+'</td>'+
        '<td><span class="mono" style="font-size:12px">'+esc(link)+'</span> <button class="fbtn compcopy" data-link="'+esc(link)+'" type="button">Kopieren</button></td>'+
        '<td class="num">'+((c.competition_members||[]).length)+'</td>'+
-       '<td></td></tr>';
+       '<td><button class="fbtn compdel" type="button" data-id="'+esc(c.id)+'"'+(c.is_default?' disabled title="Standard-Wettkampf lässt sich nicht löschen"':'')+'>Löschen</button></td></tr>';
   });
   if(!ALLCOMPS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Wettkampf.</td></tr>';
   body.innerHTML=h;
@@ -3190,8 +3190,53 @@ function renderCompAdmin(){
         .catch(function(){ prompt("Link kopieren:",link); });
     };
   });
+  Array.prototype.forEach.call(body.querySelectorAll(".compdel"),function(b){
+    b.onclick=function(){ openCompetitionDelete(this.getAttribute("data-id")); };
+  });
   var dupSel=document.getElementById("ccDupFrom");
   if(dupSel) dupSel.innerHTML=ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join("");
+}
+function competitionDeleteHtml(c){
+  return '<h3>Wettkampf löschen</h3>'+
+    '<p class="hint" style="margin-top:-8px">Wettkampf „'+esc(c.name)+'" wirklich löschen? Das entfernt unwiderruflich Zeitplan, Personen, Chat, Aufgaben und Speicherstände dieses Wettkampfs.</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<button class="fbtn" id="compDelConfirm" type="button">Endgültig löschen</button>'+
+      '<button class="fbtn" id="compDelCancel" type="button">Abbrechen</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="compDelMsg" role="status"></p>';
+}
+/* Fremdschlüssel auf competitions sind in supabase/schema.sql bereits
+   "on delete cascade" (plan_state, competition_members, tasks, chat,
+   payouts, attendance, people_contacts, ...) - keine weitere
+   Aufräum-Logik hier nötig. */
+function openCompetitionDelete(id){
+  if(!PROFILE||!PROFILE.is_admin||!id) return;
+  var c=ALLCOMPS.filter(function(x){return x.id===id;})[0]; if(!c) return;
+  if(c.is_default){
+    ccSay('„'+c.name+'" ist der Standard-Wettkampf (erreichbar ohne ?w=-Link) und lässt sich nicht löschen, solange kein anderer Wettkampf als Standard gesetzt ist.',true);
+    return;
+  }
+  document.getElementById("modalBody").innerHTML=competitionDeleteHtml(c);
+  function cdSay(msg,bad){ var m=document.getElementById("compDelMsg"); if(m){ m.textContent=msg||""; m.className="pdfmsg"+(bad?" bad":""); } }
+  document.getElementById("compDelCancel").onclick=closeModal;
+  document.getElementById("compDelConfirm").onclick=function(){
+    var btn=this; btn.disabled=true; cdSay("Lösche …");
+    sbClient.from("competitions").delete().eq("id",c.id).then(function(r){
+      if(r.error){ cdSay(r.error.message,true); btn.disabled=false; return; }
+      closeModal();
+      if(CURRENT_COMP&&CURRENT_COMP.id===c.id){
+        /* War der gerade angezeigte Wettkampf: ?w=<gelöschter-slug> zeigt
+           jetzt ins Leere. Link ohne ?w= neu laden - das lässt
+           resolveCompetition() ganz regulär auf den Standard-Wettkampf
+           auflösen, wie beim ersten Besuch ohne Link. */
+        var url=new URL(location.href); url.searchParams.delete("w");
+        location.href=url.pathname+(url.search||"")+url.hash;
+      } else {
+        loadAllCompetitions();
+      }
+    }).catch(function(err){ cdSay(String((err&&err.message)||err),true); btn.disabled=false; });
+  };
+  openModal();
 }
 function resetCompForm(){
   document.getElementById("ccName").value=""; document.getElementById("ccSlug").value="";
