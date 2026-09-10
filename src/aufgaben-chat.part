@@ -1,0 +1,888 @@
+/* ================= Aufgaben ================= */
+var TASKS=[], APPROVEDPROFILES=[];
+var PRIOLABEL={niedrig:"niedrig", mittel:"mittel", hoch:"hoch"};
+var CATSHORT={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
+var taskFilter={cat:"", person:"", status:""}, taskView="list";
+var TASKSEENKEY="kidscup-taskseen", TASKSEEN={};
+try{TASKSEEN=JSON.parse(localStorage.getItem(TASKSEENKEY)||"{}")||{};}catch(e){TASKSEEN={};}
+
+function taskSay(msg,bad){ authSay("tkMsg",msg,bad); }
+
+/* letzte Aktivität = neuste von: zuletzt geändert, letzter Kommentar */
+function taskActivity(t){
+  var last=t.updated_at||t.created_at;
+  (t.task_comments||[]).forEach(function(c){ if(c.created_at>last) last=c.created_at; });
+  return last;
+}
+function isTaskNew(t){ var seen=TASKSEEN[t.id]; return !seen || taskActivity(t)>seen; }
+function markOneSeen(id){
+  var t=TASKS.filter(function(x){return x.id===id;})[0]; if(!t) return;
+  TASKSEEN[id]=taskActivity(t);
+  try{localStorage.setItem(TASKSEENKEY,JSON.stringify(TASKSEEN));}catch(e){}
+  renderTasks();
+}
+function markOneUnseen(id){
+  delete TASKSEEN[id];
+  try{localStorage.setItem(TASKSEENKEY,JSON.stringify(TASKSEEN));}catch(e){}
+  renderTasks();
+}
+var taskBoxEl=document.getElementById("taskBox");
+
+function loadTasks(){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
+  sbClient.from("tasks")
+    .select("*, task_assignees(profile_id, profiles(full_name)), task_comments(id,author,body,created_at, profiles(full_name))")
+    .eq("competition_id",CURRENT_COMP.id)
+    .order("created_at",{ascending:false})
+    .then(function(r){
+      if(r.error){ console.warn("Aufgaben laden fehlgeschlagen:",r.error.message); return; }
+      TASKS=r.data||[];
+      TASKS.forEach(function(t){
+        (t.task_comments||[]).sort(function(a,b){return String(a.created_at).localeCompare(String(b.created_at));});
+      });
+      renderTasks(); renderStats();
+    }).catch(function(err){ console.warn("Aufgaben laden fehlgeschlagen:",err); });
+}
+var taskSub=null;
+function subscribeTasks(){
+  if(!sbClient||taskSub||!CURRENT_COMP) return;
+  /* task_assignees/task_comments haben keine eigene competition_id-Spalte
+     (nur über task_id) – Realtime kann dort nicht serverseitig filtern;
+     loadTasks() filtert beim Nachladen aber ohnehin auf CURRENT_COMP. */
+  taskSub=sbClient.channel("tasks-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"tasks",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ loadTasks(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"task_assignees"},function(){ loadTasks(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"task_comments"},function(){ loadTasks(); })
+    .subscribe();
+}
+
+function loadAssigneeOptions(compId){
+  if(!sbClient||!PROFILE||PROFILE.category!=="orga"||!compId) return;
+  sbClient.from("competition_members").select("profiles(id,full_name,category,status)").eq("competition_id",compId).then(function(r){
+    if(r.error) return;
+    APPROVEDPROFILES=(r.data||[]).map(function(x){return x.profiles;})
+      .filter(function(p){return p&&p.status==="approved";})
+      .sort(function(a,b){return String(a.full_name).localeCompare(String(b.full_name));});
+    var s=document.getElementById("tkAssignees");
+    if(s) s.innerHTML=APPROVEDPROFILES.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.full_name)+' ('+esc(CATSHORT[p.category]||p.category)+')</option>';}).join("");
+  });
+}
+
+/* ---- Anwesenheit & Kontakt ---- */
+var ATTENDANCE=[];
+var ATTLABEL={da:"Vor Ort", unterwegs:"Auf dem Weg", abwesend:"Fällt aus"};
+function attendanceToggleHtml(current){
+  return '<div class="attToggle" role="group" aria-label="Anwesenheitsstatus">'+
+    Object.keys(ATTLABEL).map(function(k){
+      return '<button type="button" class="attBtn" data-att="'+k+'" aria-pressed="'+(current===k?"true":"false")+'">'+ATTLABEL[k]+'</button>';
+    }).join("")+
+  '</div>';
+}
+function wireAttendanceToggle(box){
+  Array.prototype.forEach.call(box.querySelectorAll(".attToggle .attBtn"),function(b){
+    b.onclick=function(){ setMyAttendance(this.getAttribute("data-att")); };
+  });
+}
+function initials(name){
+  var parts=String(name||"").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "?";
+  return (parts[0][0]+(parts[1]?parts[1][0]:"")).toUpperCase();
+}
+var AVATAR_COLORS=["#114A7A","#0F7A6B","#B7791B","#6B4E9E","#3E7CB1","#C0483B"];
+function avatarColor(name){
+  var s=String(name||""), h=0;
+  for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+  return AVATAR_COLORS[h%AVATAR_COLORS.length];
+}
+var PHONE_SVG='<svg viewBox="0 0 24 24" width="14" height="14"><path d="M6.5 4h3l1.5 4-2 1.5a12 12 0 0 0 5.5 5.5l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 6.2 2 2 0 0 1 6.5 4Z"/></svg>';
+function setMyAttendance(val){
+  if(!sbClient||!PROFILE||!CURRENT_COMP) return;
+  sbClient.from("competition_members").update({attendance:val||null, attendance_at:new Date().toISOString()})
+    .eq("competition_id",CURRENT_COMP.id).eq("profile_id",PROFILE.id)
+    .then(function(r){ if(r.error){ attSay("Status speichern fehlgeschlagen: "+r.error.message,true); } })
+    .catch(function(err){ attSay("Status speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function attSay(msg,bad){
+  var el=document.getElementById("attMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function loadAttendance(){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
+  sbClient.from("competition_members")
+    .select("profile_id,attendance,attendance_at,profiles(id,full_name,category,phone,status)")
+    .eq("competition_id",CURRENT_COMP.id)
+    .then(function(r){
+      if(r.error){ attSay("Laden fehlgeschlagen: "+r.error.message,true); return; }
+      ATTENDANCE=(r.data||[]).filter(function(x){return x.profiles&&x.profiles.status==="approved";})
+        .sort(function(a,b){return String(a.profiles.full_name).localeCompare(String(b.profiles.full_name),"de");});
+      renderAttendance(); renderStart();
+    }).catch(function(err){ attSay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+var attCatFilter=null;
+function renderAttSummary(){
+  var el=document.getElementById("attSummary"); if(!el) return;
+  var da=ATTENDANCE.filter(function(m){return m.attendance==="da";}).length;
+  var unterwegs=ATTENDANCE.filter(function(m){return m.attendance==="unterwegs";}).length;
+  el.textContent=ATTENDANCE.length?(da+" vor Ort · "+unterwegs+" auf dem Weg · "+ATTENDANCE.length+" gesamt"):"";
+}
+function renderAttFilters(){
+  var box=document.getElementById("attFilters"); if(!box) return;
+  var cats=[];
+  ATTENDANCE.forEach(function(m){ var c=m.profiles&&m.profiles.category; if(c&&cats.indexOf(c)<0) cats.push(c); });
+  if(attCatFilter&&cats.indexOf(attCatFilter)<0) attCatFilter=null;
+  box.innerHTML='<button type="button" data-cat="" aria-pressed="'+(!attCatFilter?"true":"false")+'">Alle</button>'+
+    cats.map(function(c){
+      return '<button type="button" data-cat="'+esc(c)+'" aria-pressed="'+(attCatFilter===c?"true":"false")+'">'+esc(CATLABEL[c]||c)+'</button>';
+    }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){
+    b.onclick=function(){ attCatFilter=this.getAttribute("data-cat")||null; renderAttendance(); };
+  });
+}
+function renderAttendance(){
+  var body=document.querySelector("#attab tbody"); if(!body) return;
+  renderAttSummary(); renderAttFilters();
+  var isAdmin=!!(PROFILE&&PROFILE.is_admin);
+  var rows=attCatFilter?ATTENDANCE.filter(function(m){return m.profiles&&m.profiles.category===attCatFilter;}):ATTENDANCE;
+  var h="";
+  rows.forEach(function(m){
+    var p=m.profiles, mine=!!(PROFILE&&p.id===PROFILE.id);
+    h+='<tr'+(mine?' style="background:var(--sunken)"':'')+'><td><div class="person-cell" data-pid="'+esc(p.id)+'">'+
+       '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
+       '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
+       '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(mine
+         ? attendanceToggleHtml(m.attendance)
+         : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
+       '</td></tr>';
+  });
+  if(!rows.length) h='<tr><td colspan="4" style="color:var(--muted)">'+(ATTENDANCE.length?"Keine Treffer für diesen Filter.":"Noch keine freigegebenen Mitglieder.")+'</td></tr>';
+  body.innerHTML=h;
+  wireAttendanceToggle(body);
+  if(isAdmin){
+    Array.prototype.forEach.call(body.querySelectorAll(".person-cell"),function(cell){
+      cell.classList.add("clickable");
+      cell.setAttribute("role","button");
+      cell.setAttribute("tabindex","0");
+      cell.setAttribute("aria-label","Profil von "+cell.querySelector("span:last-child").textContent.trim()+" bearbeiten");
+      cell.onclick=function(){ openPersonEdit(this.getAttribute("data-pid")); };
+      cell.onkeydown=function(ev){
+        if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openPersonEdit(this.getAttribute("data-pid")); }
+      };
+    });
+  }
+}
+function personEditHtml(p){
+  return '<h3>'+esc(p.full_name)+'</h3>'+
+    '<p class="hint" style="margin-top:-8px">'+esc(p.email||"")+'</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<label>Kategorie <select class="cin sel" id="pdCat">'+
+        Object.keys(CATLABEL).map(function(c){return '<option value="'+c+'"'+(c===p.category?" selected":"")+'>'+CATLABEL[c]+'</option>';}).join("")+
+      '</select></label>'+
+    '</div>'+
+    '<div class="cfgrow" style="margin-top:12px">'+
+      (p.status!=="approved"?'<button class="fbtn" id="pdApprove" type="button">Freigeben</button>':'')+
+      (p.status!=="rejected"?'<button class="fbtn" id="pdReject" type="button">Ablehnen</button>':'')+
+      '<button class="fbtn" id="pdAdminToggle" type="button">'+(p.is_admin?"Admin entziehen":"Admin machen")+'</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="pdMsg" role="status"></p>';
+}
+function openPersonEdit(profileId){
+  if(!PROFILE||!PROFILE.is_admin||!profileId) return;
+  var p=ADMINROWS.filter(function(x){return x.id===profileId;})[0];
+  if(!p) return;
+  document.getElementById("modalBody").innerHTML=personEditHtml(p);
+  function pdSay(msg,bad){ var m=document.getElementById("pdMsg"); if(m){ m.textContent=msg||""; m.className="pdfmsg"+(bad?" bad":""); } }
+  function upd(patch){
+    sbClient.from("profiles").update(patch).eq("id",p.id).then(function(r){
+      if(r.error){ pdSay(r.error.message,true); return; }
+      loadAdmin(); loadAttendance(); closeModal();
+    }).catch(function(err){ pdSay(String((err&&err.message)||err),true); });
+  }
+  var catSel=document.getElementById("pdCat"); if(catSel) catSel.onchange=function(){ upd({category:this.value}); };
+  var ap=document.getElementById("pdApprove"); if(ap) ap.onclick=function(){ upd({status:"approved",approved_at:new Date().toISOString(),approved_by:PROFILE.id}); };
+  var rj=document.getElementById("pdReject"); if(rj) rj.onclick=function(){ upd({status:"rejected"}); };
+  var at=document.getElementById("pdAdminToggle"); if(at) at.onclick=function(){ upd({is_admin: !p.is_admin}); };
+  openModal();
+}
+var attSub=null;
+function subscribeAttendance(){
+  if(!sbClient||attSub||!CURRENT_COMP) return;
+  attSub=sbClient.channel("attendance-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"competition_members",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ loadAttendance(); })
+    .subscribe();
+}
+
+/* ---- Persönliche Startansicht ---- */
+function renderStart(){
+  if(!PROFILE) return;
+  var statusBox=document.getElementById("startStatus");
+  if(statusBox){
+    var mine=(ATTENDANCE||[]).filter(function(m){return m.profile_id===PROFILE.id;})[0];
+    statusBox.innerHTML=attendanceToggleHtml(mine?mine.attendance:null);
+    wireAttendanceToggle(statusBox);
+  }
+  var taskBox=document.getElementById("startTasks");
+  if(taskBox){
+    var myTasks=(TASKS||[]).filter(function(t){
+      return t.status==="open" && (t.task_assignees||[]).some(function(a){return a.profile_id===PROFILE.id;});
+    });
+    taskBox.innerHTML=myTasks.length
+      ? myTasks.map(function(t){
+          return '<div class="startitem"><a href="#taskBox" data-jump-task="'+esc(t.id)+'">'+
+            '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span> '+esc(t.title)+'</a></div>';
+        }).join("")
+      : '<p class="hint" style="margin:0">Keine offenen Aufgaben für dich.</p>';
+    Array.prototype.forEach.call(taskBox.querySelectorAll("[data-jump-task]"),function(a){
+      a.onclick=function(ev){
+        ev.preventDefault();
+        var id=this.getAttribute("data-jump-task");
+        var tb=document.getElementById("taskBox"); if(tb) tb.open=true;
+        setTimeout(function(){
+          var card=document.querySelector('.task-card[data-id="'+id+'"]');
+          if(card) card.scrollIntoView({behavior:"smooth",block:"center"});
+        },50);
+      };
+    });
+  }
+}
+
+function taskCardHtml(t,isOrga){
+  var assignees=(t.task_assignees||[]).map(function(a){return a.profiles&&a.profiles.full_name;}).filter(Boolean);
+  var names=assignees.join(", ")||"—";
+  var avatars=assignees.slice(0,3).map(function(n,i){
+    return '<span class="tk-avatar" style="background:'+avatarColor(n)+(i?"; margin-left:-8px":"")+'" title="'+esc(n)+'">'+esc(initials(n))+'</span>';
+  }).join("")+(assignees.length>3?'<span class="tk-avatar tk-avatar-more" style="margin-left:-8px">+'+(assignees.length-3)+'</span>':"");
+  var commentN=(t.task_comments||[]).length;
+  var comments=(t.task_comments||[]).map(function(c){
+    return '<div class="task-comment"><b>'+esc((c.profiles&&c.profiles.full_name)||"?")+'</b> <span class="tm">'+dstr(c.created_at)+'</span><br>'+esc(c.body)+'</div>';
+  }).join("");
+  return '<div class="task-card'+(isTaskNew(t)?" is-new":"")+'" data-id="'+esc(t.id)+'">'+
+     '<div class="task-card-head">'+
+     (isTaskNew(t)?'<button type="button" class="tk-unread" data-mark-seen="'+esc(t.id)+'"><span class="dot-new"></span>Neu – als gelesen markieren</button>':'')+
+     '<b>'+esc(t.title)+'</b>'+
+     '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
+     (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
+     '<span class="pill'+(t.status==="done"?" status-done":"")+'">'+(t.status==="done"?"erledigt":"offen")+'</span>'+
+     '</div>'+
+     (t.description?'<p>'+esc(t.description)+'</p>':'')+
+     '<div class="task-card-meta" aria-label="Zugewiesen: '+esc(names)+'">'+
+       '<span class="tk-avatars">'+(avatars||'<span class="hint" style="margin:0">Niemand zugewiesen</span>')+'</span>'+
+       (commentN?'<span class="tk-commentcount"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4v-11Z"/></svg>'+commentN+'</span>':'')+
+     '</div>'+
+     '<div class="task-comments">'+comments+'</div>'+
+     '<div class="cfgrow">'+
+       '<input class="cin" type="text" placeholder="Notiz …" data-comment-input="'+esc(t.id)+'" size="26">'+
+       '<button class="fbtn" data-comment-send="'+esc(t.id)+'" type="button">Senden</button>'+
+       '<button class="fbtn" data-toggle-done="'+esc(t.id)+'" type="button">'+(t.status==="done"?"Wieder öffnen":"Erledigt")+'</button>'+
+       (isTaskNew(t)?'':'<button class="fbtn" data-mark-unseen="'+esc(t.id)+'" type="button">Als ungelesen markieren</button>')+
+       (isOrga?'<button class="fbtn rdel-tk" data-task-del="'+esc(t.id)+'" type="button" title="Aufgabe löschen">×</button>':'')+
+     '</div></div>';
+}
+function populatePersonFilter(){
+  var sel=document.getElementById("tkfPerson"); if(!sel) return;
+  var seen={}, names=[];
+  TASKS.forEach(function(t){ (t.task_assignees||[]).forEach(function(a){
+    var n=a.profiles&&a.profiles.full_name; if(n&&!seen[n]){ seen[n]=1; names.push(n); }
+  }); });
+  names.sort();
+  var cur=sel.value;
+  sel.innerHTML='<option value="">alle</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join("");
+  if(names.indexOf(cur)>=0) sel.value=cur;
+}
+function renderTasks(){
+  var box=document.getElementById("taskList"); if(!box) return;
+  populatePersonFilter();
+  var openN=TASKS.filter(function(t){return t.status==="open";}).length;
+  var newN=TASKS.filter(isTaskNew).length;
+  var badge=document.getElementById("taskBadge");
+  if(badge) badge.textContent=openN+" offen"+(newN?" · "+newN+" neu":"")+(TASKS.length?" · "+TASKS.length+" gesamt":"");
+  var sdot=document.getElementById("taskSummaryDot"); if(sdot) sdot.hidden=!newN;
+  var tdot=document.getElementById("tabDotAufgaben"); if(tdot) tdot.classList.toggle("on",!!newN);
+  var isOrga=!!(PROFILE&&PROFILE.category==="orga");
+  var toolbar=document.getElementById("taskToolbar"); if(toolbar) toolbar.hidden=!isOrga;
+
+  var filtered=TASKS.filter(function(t){
+    if(taskFilter.cat&&t.category!==taskFilter.cat) return false;
+    if(taskFilter.status&&t.status!==taskFilter.status) return false;
+    if(taskFilter.person&&!(t.task_assignees||[]).some(function(a){return a.profiles&&a.profiles.full_name===taskFilter.person;})) return false;
+    return true;
+  });
+  document.getElementById("taskEmpty").hidden=!!filtered.length;
+
+  if(taskView==="cols"){
+    var order=["orga","sicherung","ergebnisdienst","routenbau","buffet","_none"];
+    var byCat={}; order.forEach(function(k){byCat[k]=[];});
+    filtered.forEach(function(t){ (byCat[t.category||"_none"]||(byCat._none)).push(t); });
+    var h='<div id="taskCols">';
+    order.forEach(function(k){
+      var list=byCat[k]; if(!list||!list.length) return;
+      h+='<div class="task-col"><h4>'+(k==="_none"?"Ohne Kategorie":esc(CATSHORT[k]))+' <span class="pill">'+list.length+'</span></h4>'+
+         list.map(function(t){return taskCardHtml(t,isOrga);}).join("")+'</div>';
+    });
+    h+='</div>';
+    box.innerHTML=h;
+  } else {
+    box.innerHTML=filtered.map(function(t){return taskCardHtml(t,isOrga);}).join("");
+  }
+
+  Array.prototype.forEach.call(box.querySelectorAll("[data-mark-seen]"),function(b){
+    b.onclick=function(){ markOneSeen(this.getAttribute("data-mark-seen")); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll("[data-mark-unseen]"),function(b){
+    b.onclick=function(){ markOneUnseen(this.getAttribute("data-mark-unseen")); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll("[data-comment-send]"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-comment-send");
+      var inp=box.querySelector('[data-comment-input="'+id+'"]');
+      var body=inp&&inp.value.trim(); if(!body) return;
+      sbClient.from("task_comments").insert({task_id:id, author:PROFILE.id, body:body}).then(function(r){
+        if(r.error){ console.warn("Notiz fehlgeschlagen:",r.error.message); return; }
+        if(inp) inp.value=""; loadTasks();
+      });
+    };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll("[data-toggle-done]"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-toggle-done");
+      var t=TASKS.filter(function(x){return x.id===id;})[0]; if(!t) return;
+      var toDone=t.status!=="done";
+      sbClient.from("tasks").update(toDone?{status:"done",done_at:new Date().toISOString(),done_by:PROFILE.id}:{status:"open",done_at:null,done_by:null}).eq("id",id)
+        .then(function(r){ if(r.error) console.warn("Status ändern fehlgeschlagen:",r.error.message); else loadTasks(); });
+    };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll("[data-task-del]"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-task-del");
+      if(!confirm("Diese Aufgabe wirklich löschen?")) return;
+      sbClient.from("tasks").delete().eq("id",id).then(function(r){
+        if(r.error) console.warn("Löschen fehlgeschlagen:",r.error.message); else loadTasks();
+      });
+    };
+  });
+}
+
+function createTask(){
+  if(!sbClient||!PROFILE) return;
+  var compId=document.getElementById("tkComp").value||(CURRENT_COMP&&CURRENT_COMP.id);
+  if(!compId){ taskSay("Kein Wettkampf ausgewählt.",true); return; }
+  var title=document.getElementById("tkTitle").value.trim();
+  var desc=document.getElementById("tkDesc").value.trim();
+  var cat=document.getElementById("tkCat").value||null;
+  var prio=document.getElementById("tkPrio").value;
+  var sel=document.getElementById("tkAssignees");
+  var ids=Array.prototype.filter.call(sel.options,function(o){return o.selected;}).map(function(o){return o.value;});
+  if(!title){ taskSay("Titel eingeben.",true); return; }
+  taskSay("Lege an …");
+  sbClient.from("tasks").insert({competition_id:compId, title:title, description:desc||null, category:cat, priority:prio, created_by:PROFILE.id})
+    .select().single().then(function(r){
+      if(r.error){ taskSay(r.error.message,true); return; }
+      var taskId=r.data.id;
+      if(!ids.length){ taskSay("Aufgabe angelegt."); resetTaskForm(); loadTasks(); return; }
+      sbClient.from("task_assignees").insert(ids.map(function(pid){return {task_id:taskId, profile_id:pid};})).then(function(r2){
+        if(r2.error){ taskSay("Angelegt, aber Zuweisung fehlgeschlagen: "+r2.error.message,true); return; }
+        taskSay("Aufgabe angelegt."); resetTaskForm(); loadTasks();
+      });
+    }).catch(function(err){ taskSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function resetTaskForm(){
+  document.getElementById("tkTitle").value=""; document.getElementById("tkDesc").value="";
+  document.getElementById("tkCat").value=""; document.getElementById("tkPrio").value="mittel";
+  var sel=document.getElementById("tkAssignees"); if(sel) Array.prototype.forEach.call(sel.options,function(o){o.selected=false;});
+  document.getElementById("taskCreateBox").hidden=true;
+}
+document.getElementById("tkCreateToggle").onclick=function(){
+  var box=document.getElementById("taskCreateBox");
+  box.hidden=!box.hidden;
+  if(!box.hidden){
+    var wrap=document.getElementById("tkCompWrap"), csel=document.getElementById("tkComp");
+    if(MYCOMPS.length>1){
+      wrap.hidden=false;
+      csel.innerHTML=MYCOMPS.map(function(c){return '<option value="'+esc(c.id)+'"'+(CURRENT_COMP&&c.id===CURRENT_COMP.id?" selected":"")+'>'+esc(c.name)+'</option>';}).join("");
+    } else {
+      wrap.hidden=true;
+      csel.innerHTML=CURRENT_COMP?'<option value="'+esc(CURRENT_COMP.id)+'" selected>'+esc(CURRENT_COMP.name)+'</option>':"";
+    }
+    loadAssigneeOptions(csel.value||(CURRENT_COMP&&CURRENT_COMP.id));
+  }
+};
+document.getElementById("tkComp").onchange=function(){ loadAssigneeOptions(this.value); };
+document.getElementById("tkCancel").onclick=resetTaskForm;
+document.getElementById("tkGo").onclick=createTask;
+
+document.getElementById("tkfCat").onchange=function(){ taskFilter.cat=this.value; renderTasks(); };
+document.getElementById("tkfPerson").onchange=function(){ taskFilter.person=this.value; renderTasks(); };
+document.getElementById("tkfStatus").onchange=function(){ taskFilter.status=this.value; renderTasks(); };
+function setTaskView(v){
+  taskView=v;
+  document.getElementById("tkViewList").setAttribute("aria-pressed",v==="list"?"true":"false");
+  document.getElementById("tkViewCols").setAttribute("aria-pressed",v==="cols"?"true":"false");
+  renderTasks();
+}
+document.getElementById("tkViewList").onclick=function(){ setTaskView("list"); };
+document.getElementById("tkViewCols").onclick=function(){ setTaskView("cols"); };
+
+/* ================= Chat ================= */
+var CONVERSATIONS=[], CHATLAST={}, CHATTHREAD=[], chatView="list", chatCurrentConv=null, chatCompFilter="";
+var CHATSEENKEY="kidscup-chatseen", CHATSEEN={};
+try{CHATSEEN=JSON.parse(localStorage.getItem(CHATSEENKEY)||"{}")||{};}catch(e){CHATSEEN={};}
+var chatSub=null, chatOpen=false;
+
+function convTitle(c){
+  if(c.kind==="group") return (c.competitions&&c.competitions.name)||"Gruppe";
+  var other=(c.conversation_participants||[]).map(function(p){return p.profiles;}).filter(function(p){return p&&p.id!==PROFILE.id;})[0];
+  return other?other.full_name:"Direktnachricht";
+}
+function convUnread(c){
+  var last=CHATLAST[c.id]; if(!last) return false;
+  var seen=CHATSEEN[c.id];
+  return !seen || last.created_at>seen;
+}
+function markConvSeen(id){
+  CHATSEEN[id]=new Date().toISOString();
+  try{localStorage.setItem(CHATSEENKEY,JSON.stringify(CHATSEEN));}catch(e){}
+  renderChatBadge();
+}
+
+function chatSay(msg,bad){ authSay("chatMsg",msg,bad); }
+
+function loadConversations(){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved") return;
+  sbClient.from("conversations")
+    .select("id,kind,competition_id,competitions(id,name,slug),conversation_participants(profile_id,profiles(id,full_name))")
+    .order("created_at",{ascending:false})
+    .then(function(r){
+      if(r.error){ chatSay("Chat laden fehlgeschlagen: "+r.error.message,true); return; }
+      CONVERSATIONS=r.data||[];
+      var ids=CONVERSATIONS.map(function(c){return c.id;});
+      if(!ids.length){ CHATLAST={}; renderChatView(); return; }
+      sbClient.from("chat_messages").select("conversation_id,body,sender_id,competition_id,created_at")
+        .in("conversation_id",ids).order("created_at",{ascending:false}).limit(300).then(function(r2){
+          if(r2.error){ chatSay("Chat laden fehlgeschlagen: "+r2.error.message,true); return; }
+          CHATLAST={};
+          (r2.data||[]).forEach(function(m){ if(!CHATLAST[m.conversation_id]) CHATLAST[m.conversation_id]=m; });
+          renderChatView();
+        });
+    }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function subscribeChat(){
+  if(!sbClient||chatSub) return;
+  chatSub=sbClient.channel("chat-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"chat_messages"},function(){
+      loadConversations();
+      if(chatView==="thread"&&chatCurrentConv) loadThread(chatCurrentConv.id,true);
+    })
+    .on("postgres_changes",{event:"*",schema:"public",table:"conversations"},function(){ loadConversations(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"conversation_participants"},function(){ loadConversations(); })
+    .subscribe();
+}
+function renderChatBadge(){
+  var n=CONVERSATIONS.filter(convUnread).length;
+  var b=document.getElementById("chatBadge"); if(!b) return;
+  b.hidden=!n; b.textContent=n;
+}
+function chatFilteredConvs(){
+  if(!chatCompFilter) return CONVERSATIONS;
+  return CONVERSATIONS.filter(function(c){
+    if(c.kind==="group") return c.competition_id===chatCompFilter;
+    var last=CHATLAST[c.id];
+    return last&&last.competition_id===chatCompFilter;
+  });
+}
+function renderChatCompFilter(){
+  var sel=document.getElementById("chatCompFilter"); if(!sel) return;
+  var opts='<option value="">Alle Wettkämpfe</option>'+MYCOMPS.map(function(c){
+    return '<option value="'+esc(c.id)+'"'+(chatCompFilter===c.id?" selected":"")+'>'+esc(c.name)+'</option>';
+  }).join("");
+  sel.innerHTML=opts;
+  sel.hidden=MYCOMPS.length<2;
+}
+function renderChatView(){
+  renderChatBadge();
+  var back=document.getElementById("chatBack"), foot=document.getElementById("chatFoot");
+  var titleEl=document.querySelector(".chat-panel-head strong");
+  if(chatView==="thread"){ back.hidden=false; foot.hidden=false; renderChatThreadHtml(); return; }
+  if(titleEl) titleEl.textContent="Chat";
+  back.hidden = chatView==="list";
+  foot.hidden=true;
+  if(chatView==="contacts"){ renderChatContactsHtml(); return; }
+  renderChatListHtml();
+}
+function renderChatListHtml(){
+  var body=document.getElementById("chatBody"); if(!body) return;
+  var list=chatFilteredConvs();
+  var h='<div class="toolbar"><button class="fbtn" id="chatNewMsg" type="button">+ Neue Nachricht</button></div>';
+  if(!list.length) h+='<p class="chat-empty">Noch keine Nachrichten.</p>';
+  list.slice().sort(function(a,b){
+    var la=CHATLAST[a.id]?CHATLAST[a.id].created_at:"", lb=CHATLAST[b.id]?CHATLAST[b.id].created_at:"";
+    return String(lb).localeCompare(String(la));
+  }).forEach(function(c){
+    var last=CHATLAST[c.id];
+    h+='<div class="chat-conv" data-conv="'+esc(c.id)+'">'+
+       '<div class="chat-conv-top">'+(c.kind==="group"?'<span class="tag" data-ac="c7">Gruppe</span>':'')+
+       '<b>'+esc(convTitle(c))+'</b>'+
+       (convUnread(c)?'<span class="chat-unread-badge">●</span>':'')+
+       (last?'<span class="tm">'+dstr(last.created_at)+'</span>':'')+'</div>'+
+       (last?'<div class="chat-conv-preview">'+esc(last.body)+'</div>':'')+
+       '</div>';
+  });
+  body.innerHTML=h;
+  document.getElementById("chatNewMsg").onclick=function(){ chatView="contacts"; renderChatView(); };
+  Array.prototype.forEach.call(body.querySelectorAll("[data-conv]"),function(el){
+    el.onclick=function(){ openThread(this.getAttribute("data-conv")); };
+  });
+}
+function renderChatContactsHtml(){
+  var body=document.getElementById("chatBody"); if(!body) return;
+  body.innerHTML='<p class="chat-empty">Lade Kontakte …</p>';
+  sbClient.from("profiles").select("id,full_name,category").neq("id",PROFILE.id).eq("status","approved").order("full_name").then(function(r){
+    if(r.error){ body.innerHTML='<p class="chat-empty">'+esc(r.error.message)+'</p>'; return; }
+    var people=r.data||[];
+    body.innerHTML = people.length
+      ? people.map(function(p){return '<div class="chat-contact" data-person="'+esc(p.id)+'" data-name="'+esc(p.full_name)+'">'+esc(p.full_name)+' <span class="hint" style="display:inline">('+esc(CATLABEL[p.category]||p.category)+')</span></div>';}).join("")
+      : '<p class="chat-empty">Niemand erreichbar – ihr müsst euch mindestens einen Wettkampf teilen.</p>';
+    Array.prototype.forEach.call(body.querySelectorAll("[data-person]"),function(el){
+      el.onclick=function(){ startDm(this.getAttribute("data-person")); };
+    });
+  });
+}
+function startDm(targetId){
+  var existing=CONVERSATIONS.filter(function(c){
+    if(c.kind!=="dm") return false;
+    var ids=(c.conversation_participants||[]).map(function(p){return p.profile_id;});
+    return ids.indexOf(targetId)>=0 && ids.indexOf(PROFILE.id)>=0;
+  })[0];
+  if(existing){ openThread(existing.id); return; }
+  chatSay("Lege Unterhaltung an …");
+  sbClient.from("conversations").insert({kind:"dm"}).select().single().then(function(r){
+    if(r.error){ chatSay("Anlegen fehlgeschlagen: "+r.error.message,true); return; }
+    var convId=r.data.id;
+    sbClient.from("conversation_participants").insert([{conversation_id:convId,profile_id:PROFILE.id},{conversation_id:convId,profile_id:targetId}])
+      .then(function(r2){
+        if(r2.error){ chatSay("Anlegen fehlgeschlagen: "+r2.error.message,true); return; }
+        chatSay("");
+        loadConversationsThenOpen(convId);
+      }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+  }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function loadConversationsThenOpen(convId){
+  sbClient.from("conversations")
+    .select("id,kind,competition_id,competitions(id,name,slug),conversation_participants(profile_id,profiles(id,full_name))")
+    .order("created_at",{ascending:false}).then(function(r){
+      CONVERSATIONS=r.data||[]; openThread(convId);
+    });
+}
+function openThread(convId){
+  chatCurrentConv=CONVERSATIONS.filter(function(c){return c.id===convId;})[0]||{id:convId};
+  chatView="thread";
+  markConvSeen(convId);
+  loadThread(convId,false);
+}
+function loadThread(convId,keepScroll){
+  sbClient.from("chat_messages").select("id,body,sender_id,competition_id,created_at,profiles(full_name)")
+    .eq("conversation_id",convId).order("created_at",{ascending:true}).limit(500).then(function(r){
+      if(r.error){ chatSay("Nachrichten laden fehlgeschlagen: "+r.error.message,true); return; }
+      CHATTHREAD=r.data||[];
+      if(chatView==="thread") renderChatView();
+    }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function renderChatThreadHtml(){
+  var body=document.getElementById("chatBody"); if(!body||!chatCurrentConv) return;
+  document.querySelector(".chat-panel-head strong").textContent=convTitle(chatCurrentConv);
+  var isGroup=chatCurrentConv.kind==="group";
+  var h=CHATTHREAD.map(function(m){
+    var mine=m.sender_id===PROFILE.id;
+    var compTag = (!isGroup && m.competition_id) ? (function(){
+      var c=MYCOMPS.filter(function(x){return x.id===m.competition_id;})[0];
+      return c?'<span class="tag" data-ac="c7">'+esc(c.name)+'</span>':'';
+    })() : "";
+    return '<div class="chat-msg'+(mine?" mine":"")+'"><b>'+esc((m.profiles&&m.profiles.full_name)||"?")+'</b>'+
+      '<span class="tm">'+dstr(m.created_at)+'</span> '+compTag+
+      '<div class="chat-msg-body">'+esc(m.body)+'</div></div>';
+  }).join("")||'<p class="chat-empty">Noch keine Nachrichten – schreib die erste.</p>';
+  body.innerHTML=h;
+  body.scrollTop=body.scrollHeight;
+}
+function sendChatMessage(){
+  if(!sbClient||!PROFILE||!chatCurrentConv) return;
+  var inp=document.getElementById("chatInput");
+  var body=inp.value.trim(); if(!body) return;
+  var compId = chatCurrentConv.kind==="group" ? chatCurrentConv.competition_id : (chatCompFilter||(CURRENT_COMP&&CURRENT_COMP.id)||null);
+  chatSay("Sende …");
+  sbClient.from("chat_messages").insert({conversation_id:chatCurrentConv.id, competition_id:compId, sender_id:PROFILE.id, body:body})
+    .select().single().then(function(r){
+    if(r.error){ chatSay("Nachricht fehlgeschlagen: "+r.error.message,true); return; }
+    chatSay("");
+    inp.value="";
+    /* eigene Nachricht zählt nicht als "ungelesen" für einen selbst –
+       Zeitstempel vom Server nehmen, nicht die Client-Uhr (Uhrzeit-Drift). */
+    CHATSEEN[chatCurrentConv.id]=r.data.created_at;
+    try{localStorage.setItem(CHATSEENKEY,JSON.stringify(CHATSEEN));}catch(e){}
+    loadThread(chatCurrentConv.id,true);
+    loadConversations();
+  }).catch(function(err){ chatSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+document.getElementById("chatBubble").onclick=function(){
+  chatOpen=!chatOpen;
+  document.getElementById("chatPanel").hidden=!chatOpen;
+  if(chatOpen){ chatView="list"; renderChatCompFilter(); loadConversations(); }
+};
+document.getElementById("chatClose").onclick=function(){ chatOpen=false; document.getElementById("chatPanel").hidden=true; };
+document.getElementById("chatBack").onclick=function(){
+  chatView="list";
+  chatCurrentConv=null;
+  renderChatView();
+};
+document.getElementById("chatCompFilter").onchange=function(){ chatCompFilter=this.value; chatView="list"; chatCurrentConv=null; renderChatView(); };
+document.getElementById("chatSend").onclick=sendChatMessage;
+document.getElementById("chatInput").onkeydown=function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); sendChatMessage(); } };
+
+function initAuth(){
+  if(!sbClient){ setAuthState("locked"); authSay("liMsg","Supabase ist nicht konfiguriert – src/config.part ausfüllen.",true); return; }
+  /* Wettkampf aus dem Link (?w=<slug>) muss schon VOR dem Login feststehen,
+     damit sich jemand über einen Wettkampf-Link genau dafür registrieren
+     kann (competitions ist öffentlich lesbar, siehe schema.sql). */
+  resolveCompetition().then(function(){
+    var n=document.getElementById("regCompName");
+    if(n) n.textContent=CURRENT_COMP?("Für: "+CURRENT_COMP.name):"Kein gültiger Wettkampf-Link – bitte den Link zu deinem Wettkampf öffnen.";
+    var go=document.getElementById("reGo"); if(go) go.disabled=!CURRENT_COMP;
+    sbClient.auth.onAuthStateChange(function(){ refreshSession(); });
+  });
+}
+
+/* ================= Speicherstände ================= */
+/* Datei über einen echten Download-Link ablegen – funktioniert überall,
+   wo die Seite normal im Web liegt. Gibt false zurück, wenn es nicht geht. */
+function saveBlob(blob,name){
+  try{
+    var a=document.createElement("a");
+    if(!("download" in a)) return false;
+    var url=URL.createObjectURL(blob);
+    a.href=url; a.download=name; a.rel="noopener";
+    a.style.position="fixed"; a.style.left="-9999px";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ if(a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); },30000);
+    return true;
+  }catch(e){ return false; }
+}
+var DB=null, DBSTATE="lädt", STANDS=[], VIEWERS=[];
+function meName(){return (PROFILE&&PROFILE.full_name)||"unbenannt";}
+function snapshot(){
+  return {v:9, at:new Date().toISOString(), cfg:clone(CFG), texts:clone(TXT),
+    q:{rows:clone(pq.rows),groups:clone(pq.groups),blocks:clone(pq.blocks),seq:pq.seq},
+    f:{rows:clone(pf.rows),groups:clone(pf.groups),blocks:clone(pf.blocks),seq:pf.seq}};
+}
+function applySnapshot(s){
+  if(!s||!s.cfg||!s.q||!s.f) return false;
+  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
+  reindex(); saveCfg();
+  TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+  TXTBLOCKS=s.textblocks||{added:[],hidden:[]}; try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
+  pq.rows=s.q.rows; pq.groups=s.q.groups; pq.blocks=s.q.blocks; pq.seq=s.q.seq||1000; pq.sel=null;
+  pf.rows=s.f.rows; pf.groups=s.f.groups; pf.blocks=s.f.blocks; pf.seq=s.f.seq||1000; pf.sel=null;
+  pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
+  pf.o.start=CFG.win.fs; pf.o.end=CFG.win.fe; pf.o.step=autoStep(CFG.win.fe-CFG.win.fs);
+  pq.render(); pf.render(); pq.save(); pf.save();
+  renderWin(); renderCats(); renderPeople(); renderStats();
+  document.querySelectorAll("[data-ed]").forEach(function(el){
+    var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
+  });
+  renderAddedBlocks();
+  applyHiddenBlocks();
+  document.querySelectorAll("[data-ed]").forEach(updateEmptyFlag);
+  updateEmptyContainers();
+  if(editing) renderRestoreList();
+  return true;
+}
+function dstr(iso){
+  var d=new Date(iso||Date.now()); if(isNaN(d)) return "—";
+  return ("0"+d.getDate()).slice(-2)+"."+("0"+(d.getMonth()+1)).slice(-2)+"."+d.getFullYear()+
+         ", "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+}
+function standSay(msg,bad){
+  var el=document.getElementById("stMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function renderStands(){
+  var body=document.querySelector("#standtab tbody"); if(!body) return;
+  var isAdmin=!!(PROFILE&&PROFILE.is_admin);
+  var h="";
+  STANDS.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).forEach(function(s){
+    h+='<tr><td><strong>'+esc(s.title||"ohne Titel")+'</strong>'+(s.note?'<br><span style="color:var(--muted);font-size:13px">'+esc(s.note)+'</span>':'')+'</td>'+
+       '<td>'+esc(s.author||"—")+'</td><td class="tm">'+dstr(s.at)+'</td>'+
+       '<td>'+(isAdmin
+         ?'<button class="fbtn stload" type="button" data-id="'+esc(s.id)+'">Laden</button> '+
+          '<button class="fbtn stdel" type="button" data-id="'+esc(s.id)+'">Löschen</button>'
+         :'<span style="color:var(--muted)">nur Admin</span>')+'</td></tr>';
+  });
+  if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
+  body.innerHTML=h;
+  var cnt=document.getElementById("standCount"); if(cnt) cnt.textContent=STANDS.length;
+  Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
+    b.onclick=function(){
+      if(!isAdmin) return;
+      var id=this.getAttribute("data-id"), s=null;
+      STANDS.forEach(function(x){if(x.id===id) s=x;});
+      if(!s) return;
+      if(applySnapshot(clone(s.state))){ standSay('Stand „'+(s.title||"")+'" geladen.'); logMe("geladen: "+(s.title||"")); }
+      else standSay("Dieser Stand lässt sich nicht laden.",true);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".stdel"),function(b){
+    b.onclick=function(){
+      if(!isAdmin) return;
+      var id=this.getAttribute("data-id");
+      if(DB){ DB.doc("stands/"+id).delete().catch(function(){standSay("Löschen nicht möglich.",true);}); }
+      else { STANDS=STANDS.filter(function(x){return x.id!==id;}); saveLocalStands(); renderStands(); }
+    };
+  });
+  var st=document.getElementById("stState");
+  if(st) st.textContent=DBSTATE;
+  var md=document.getElementById("standMode");
+  if(md) md.innerHTML=DB
+    ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Alle freigegebenen Personen sehen dieselbe Liste. Speichern kann das Orga-Team, Laden und Löschen nur ein Admin.'
+    : 'Diese Fassung speichert die Stände <strong>in deinem Browser</strong> – sie wandern nicht automatisch zu anderen. Zum Weitergeben nimm <strong>„Als Datei sichern"</strong>; wer die Datei bekommt, öffnet sie hier über <strong>„Datei laden"</strong>.';
+}
+function renderViewers(){
+  var box=document.getElementById("vlist"); if(!box) return;
+  if(!VIEWERS.length){ box.innerHTML='<div style="color:var(--muted)">Noch keine Aktivität erfasst.</div>'; return; }
+  box.innerHTML=VIEWERS.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));})
+    .map(function(v){
+      return '<div><b>'+esc(v.name||"unbenannt")+'</b> <span class="tm">'+dstr(v.at)+'</span> '+
+             '<span style="color:var(--muted)">'+esc(v.last||"geöffnet")+
+             (v.pdf?' · PDF '+v.pdf+"×":"")+'</span></div>';
+    }).join("");
+}
+function saveLocalStands(){try{localStorage.setItem("kidscup-stands",JSON.stringify(STANDS));}catch(e){}}
+function loadLocalStands(){try{STANDS=JSON.parse(localStorage.getItem("kidscup-stands")||"[]")||[];}catch(e){STANDS=[];}}
+var pdfCount=0; try{pdfCount=parseInt(localStorage.getItem("kidscup-pdfn")||"0",10)||0;}catch(e){}
+function logMe(what){
+  if(!DB||!PROFILE) return;
+  DB.doc("viewers/"+PROFILE.id).set({name:PROFILE.full_name, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
+}
+var STANDS_LIMIT=10;
+/* Ältere Stände über dem Limit ermitteln (jüngste zuerst behalten) - reine
+   Auswahl, löscht selbst nichts, damit sie für beide Pfade (geteilt/lokal)
+   gleich benutzt werden kann. */
+function excessStands(list){
+  return list.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).slice(STANDS_LIMIT);
+}
+function saveStand(){
+  var t=document.getElementById("stTitle").value.trim()||("Stand "+dstr());
+  var n=document.getElementById("stNote").value.trim();
+  var rec={id:"s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+           title:t, note:n, author:meName(), at:new Date().toISOString(), state:snapshot()};
+  if(DB){
+    DB.doc("stands/"+rec.id).set(rec).then(function(){
+      standSay('Stand „'+t+'" gespeichert – für alle sichtbar, die den Link haben.');
+      document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
+      logMe("gespeichert: "+t);
+      excessStands(STANDS.concat([rec])).forEach(function(s){ DB.doc("stands/"+s.id).delete().catch(function(){}); });
+    }).catch(function(e){
+      standSay("Speichern fehlgeschlagen"+(e&&e.code?" ("+e.code+")":"")+" – der Stand liegt jetzt nur lokal.",true);
+      STANDS.push(rec); saveLocalStands(); renderStands();
+    });
+  } else {
+    STANDS.push(rec);
+    var extra=excessStands(STANDS);
+    if(extra.length){ var ids=extra.map(function(s){return s.id;}); STANDS=STANDS.filter(function(s){return ids.indexOf(s.id)<0;}); }
+    saveLocalStands(); renderStands();
+    standSay('Stand „'+t+'" lokal gespeichert (nur in diesem Browser).');
+    document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
+  }
+}
+function makeSupabaseDB(){
+  function parts(path){ var p=path.split("/"); return {table:p[0], id:p[1]}; }
+  return {
+    collection:function(name){
+      return {
+        onSnapshot:function(cb,errCb){
+          if(!CURRENT_COMP) return;
+          function pull(){
+            sbClient.from(name).select("*").eq("competition_id",CURRENT_COMP.id).then(function(r){
+              if(r.error){ if(errCb) errCb(r.error); return; }
+              cb({docs:(r.data||[]).map(function(row){
+                return {id:(name==="viewers"?row.key:row.id), data:function(){return row;}};
+              })});
+            });
+          }
+          pull();
+          sbClient.channel(name+"-changes")
+            .on("postgres_changes",{event:"*",schema:"public",table:name,filter:"competition_id=eq."+CURRENT_COMP.id},pull)
+            .subscribe();
+        }
+      };
+    },
+    doc:function(path){
+      var d=parts(path);
+      return {
+        set:function(obj){
+          if(!CURRENT_COMP) return Promise.reject(new Error("kein Wettkampf ausgewählt"));
+          var row={}; for(var k in obj) row[k]=obj[k];
+          row.competition_id=CURRENT_COMP.id;
+          if(d.table==="viewers") row.key=d.id; else row.id=d.id;
+          return sbClient.from(d.table).upsert(row).then(function(r){ if(r.error) throw r.error; });
+        },
+        delete:function(){
+          if(!CURRENT_COMP) return Promise.reject(new Error("kein Wettkampf ausgewählt"));
+          var col=(d.table==="viewers")?"key":"id", q={}; q[col]=d.id; q.competition_id=CURRENT_COMP.id;
+          return sbClient.from(d.table).delete().match(q).then(function(r){ if(r.error) throw r.error; });
+        }
+      };
+    }
+  };
+}
+var dbInited=false;
+function initDb(){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP){
+    DBSTATE="nicht verfügbar"; loadLocalStands(); renderStands(); return;
+  }
+  if(dbInited){ renderStands(); logMe("geöffnet"); return; }
+  dbInited=true;
+  DB=makeSupabaseDB();
+  DBSTATE="geteilt – alle Freigegebenen sehen dieselben Stände";
+  /* onSnapshot registriert je Tabelle einen Realtime-Kanal; ein Kanal darf
+     nur einmal abonniert werden, darum initDb() nur beim ersten Mal (dbInited)
+     wirklich neu verdrahten – spätere Aufrufe (z.B. nach jedem
+     onAuthStateChange) sollen nicht erneut subscriben. */
+  DB.collection("stands").onSnapshot(function(snap){
+    STANDS=snap.docs.map(function(x){var o=x.data()||{}; o.id=x.id; return o;});
+    renderStands();
+  },function(){ DBSTATE="Verbindung unterbrochen – lokal weiterarbeiten"; renderStands(); });
+  DB.collection("viewers").onSnapshot(function(snap){
+    VIEWERS=snap.docs.map(function(x){return x.data()||{};}); renderViewers();
+  },function(){});
+  renderStands(); logMe("geöffnet");
+}
+function initStandUi(){
+  var sb=document.getElementById("stSave"); if(sb) sb.onclick=saveStand;
+  var ex=document.getElementById("stExport");
+  if(ex) ex.onclick=function(){
+    var data=JSON.stringify({kidscup:true, exported:new Date().toISOString(), by:meName(), state:snapshot()},null,1);
+    var name="Kidscup-Stand-"+new Date().toISOString().slice(0,10)+".json";
+    (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null)).then(function(dl){
+      if(dl&&dl.save) return dl.save({filename:name,data:data}).then(function(){standSay("Stand als Datei gespeichert.");});
+      if(saveBlob(new Blob([data],{type:"application/json"}),name)) standSay("Stand als Datei gespeichert.");
+      else standSay("Export nicht möglich – dieser Browser erlaubt keinen Download.",true);
+    }).catch(function(){standSay("Export nicht möglich.",true);});
+  };
+  var im=document.getElementById("stImport"), fi=document.getElementById("stFile");
+  if(im&&fi){
+    im.onclick=function(){fi.click();};
+    fi.onchange=function(){
+      var f=this.files&&this.files[0]; if(!f) return;
+      var rd=new FileReader();
+      rd.onload=function(){
+        try{
+          var o=JSON.parse(rd.result);
+          if(applySnapshot(o.state||o)) standSay("Stand aus der Datei geladen.");
+          else standSay("Die Datei enthält keinen gültigen Stand.",true);
+        }catch(e){ standSay("Die Datei ließ sich nicht lesen.",true); }
+      };
+      rd.readAsText(f); this.value="";
+    };
+  }
+}
+initStandUi(); initAuth();
+

@@ -1,0 +1,56 @@
+
+/* ---- Abschnitte einklappen (jeder Abschnitt, unabhängig von Bearbeitungsrechten) ---- */
+var COLLAPSEKEY="kidscup-collapsed", COLLAPSED={};
+try{COLLAPSED=JSON.parse(localStorage.getItem(COLLAPSEKEY)||"{}")||{};}catch(e){COLLAPSED={};}
+function setSectionCollapsed(sec,collapsed){
+  sec.setAttribute("data-collapsed",collapsed?"true":"false");
+  var btn=sec.querySelector(".sec-toggle");
+  if(btn){ btn.textContent=collapsed?"+":"–"; btn.setAttribute("aria-expanded",collapsed?"false":"true"); }
+  COLLAPSED[sec.id]=collapsed;
+  try{localStorage.setItem(COLLAPSEKEY,JSON.stringify(COLLAPSED));}catch(e){}
+}
+function expandSection(id){
+  var sec=document.getElementById(id);
+  if(sec&&sec.getAttribute("data-collapsed")==="true") setSectionCollapsed(sec,false);
+}
+document.querySelectorAll("section[id]").forEach(function(sec){
+  var head=sec.querySelector(".sec-head"); if(!head) return;
+  var btn=document.createElement("button");
+  btn.type="button"; btn.className="sec-toggle"; btn.setAttribute("aria-label","Abschnitt ein-/ausklappen");
+  btn.onclick=function(){ setSectionCollapsed(sec, sec.getAttribute("data-collapsed")!=="true"); };
+  head.appendChild(btn);
+  setSectionCollapsed(sec, !!COLLAPSED[sec.id]);
+});
+
+/* ---- Sprungnavigation ---- */
+function renderJumpNav(){
+  var bar=document.getElementById("jumpNav"); if(!bar) return;
+  bar.innerHTML=Array.prototype.slice.call(document.querySelectorAll("section[id]")).filter(function(s){
+    return !s.hidden;
+  }).map(function(s){
+    var eb=s.querySelector(".sec-head .eyebrow");
+    var label=eb?eb.textContent:s.id;
+    return '<a href="#'+s.id+'" data-jump="'+s.id+'">'+esc(label)+'</a>';
+  }).join("");
+}
+document.getElementById("jumpNav").onclick=function(ev){
+  var a=ev.target.closest?ev.target.closest("a[data-jump]"):null; if(!a) return;
+  ev.preventDefault();
+  var id=a.getAttribute("data-jump");
+  expandSection(id);
+  var sec=document.getElementById(id); if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
+};
+renderJumpNav();
+
+/* Testhaken (Issue #1 "Test- und Lint-Grundgerüst"): stellt die reinen
+   Rechenfunktionen und die Plan-Engine für Vitest bereit, ohne die
+   bestehende Logik anzufassen. Läuft nur, wenn ein Test vorher
+   window.__TEST__=true gesetzt hat – auf der echten Seite bleibt
+   window.__TEST_EXPORTS__ undefiniert. */
+if(typeof window!=="undefined"&&window.__TEST__){
+  window.__TEST_EXPORTS__={fmt:fmt, parseTime:parseTime, quota:quota, ffix:ffix, Plan:Plan,
+    CFG:CFG, CLIMB:CLIMB, CLn:CLn, gl:gl, allowTxt:allowTxt, esc:esc, reindex:reindex};
+}
+
+})();
+</script>
