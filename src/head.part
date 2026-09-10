@@ -291,6 +291,7 @@ footer p{max-width:74ch; margin-bottom:8px}
 #meldtab td .ac{font-size:15px}
 #meldtab{min-width:840px}
 #peotab{min-width:660px}
+#peotab:not(.show-email) .email-col{display:none}
 #cattab{min-width:320px}
 #standtab{min-width:600px}
 
@@ -1074,7 +1075,7 @@ body.editing{caret-color:var(--ink)}
     <h3>Personen und ihre Teams</h3>
     <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -1082,9 +1083,12 @@ body.editing{caret-color:var(--ink)}
         <label>Name <input class="cin" id="newPname" placeholder="z. B. Lara Wächter" size="20"></label>
         <label>Kategorie <select class="cin sel" id="newPcat"></select></label>
         <label>Team <select class="cin sel" id="newPteam"></select></label>
+        <label id="newPemailLbl" hidden>E-Mail <input class="cin" id="newPemail" type="email" placeholder="optional" size="22"></label>
         <label><button class="fbtn" id="addPeoGo" type="button">Person hinzufügen</button></label>
+        <label><button class="fbtn" id="teamCsvBtn" type="button" hidden>Teamliste herunterladen (CSV)</button></label>
       </div>
     </div>
+    <p class="pdfmsg" id="peoMsg" role="status"></p>
 
     <h4>Ohne Team-Zuordnung</h4>
     <div id="nolist" style="margin:0 0 22px"></div>
