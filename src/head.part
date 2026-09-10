@@ -325,6 +325,16 @@ footer p{max-width:74ch; margin-bottom:8px}
   .modal-sheet{max-width:none; border-radius:var(--r-lg) var(--r-lg) 0 0; max-height:88vh;
     padding:24px 18px calc(20px + env(safe-area-inset-bottom,0px))}
 }
+/* ---------- Sync-Konflikt-Hinweis ---------- */
+.sync-toast{position:fixed; left:20px; bottom:20px; z-index:70; max-width:340px;
+  background:var(--surface); border:1px solid var(--warn); border-radius:var(--r-md);
+  box-shadow:var(--shadow); padding:14px 16px}
+.sync-toast b{display:block; font-family:var(--disp); font-size:13px; font-weight:600; color:var(--warn); margin:0 0 4px}
+.sync-toast p{margin:0 0 10px; font-size:13px; color:var(--ink-2)}
+.sync-toast-btns{display:flex; gap:8px; flex-wrap:wrap}
+@media (max-width:760px){
+  .sync-toast{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
@@ -592,7 +602,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
-  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
+  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel,.sync-toast{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -1237,6 +1247,15 @@ body.editing{caret-color:var(--ink)}
   <div class="modal-sheet" id="modalSheet" role="dialog" aria-modal="true">
     <button type="button" class="modal-close" id="modalClose" aria-label="Schließen">×</button>
     <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="sync-toast" id="syncToast" hidden role="alert">
+  <b>Sync-Konflikt</b>
+  <p id="syncToastMsg"></p>
+  <div class="sync-toast-btns">
+    <button type="button" class="fbtn" id="syncToastTake">Übernehmen</button>
+    <button type="button" class="fbtn" id="syncToastKeep">Meine Version behalten</button>
   </div>
 </div>
 
