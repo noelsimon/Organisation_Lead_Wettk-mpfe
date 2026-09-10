@@ -862,7 +862,8 @@ body.editing{caret-color:var(--ink)}
     </div>
     <div class="tblwrap"><table id="meldtab">
       <thead><tr><th>Klasse</th><th>Gruppe 1</th><th class="num">TN</th><th>Gruppe 2</th><th class="num">TN</th>
-        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th><th></th></tr></thead>
+        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th>
+        <th class="num">Quali</th><th class="num">Finale</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="toolbar">
@@ -1999,6 +2000,7 @@ function afterCfg(replan){
   pq.render(); pf.render(); pq.save(); pf.save();
   renderFilterBtns(); if(typeof fillAddRoute==="function") fillAddRoute();
 }
+function classInPlan(plan,classId){ return plan.rows.some(function(r){return r.cls===classId;}); }
 function renderMeld(){
   var h="", tot={m:0,w:0,n:0,min:0};
   var qlist=(pq.stat&&pq.stat.list)||[];
@@ -2017,6 +2019,8 @@ function renderMeld(){
          '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
        '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
+       '<td class="num"><input type="checkbox" class="cq" data-c="'+c.id+'"'+(classInPlan(pq,c.id)?" checked":"")+'></td>'+
+       '<td class="num"><input type="checkbox" class="cf" data-c="'+c.id+'"'+(classInPlan(pf,c.id)?" checked":"")+'></td>'+
        '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
@@ -2045,6 +2049,26 @@ function renderMeld(){
       reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
     };
   });
+  /* Quali/Finale einzeln je Klasse: ruft addClass()/delClass() nur auf der
+     jeweils betroffenen Plan-Instanz auf, nie auf beiden zusammen wie beim
+     Löschen der ganzen Klasse. CFG.classes bleibt dabei unverändert - der
+     Klassen-Eintrag selbst (Name/Meldezahlen) geht nie verloren. */
+  function wireClassToggle(sel,plan,otherSel){
+    Array.prototype.forEach.call(document.querySelectorAll(sel),function(cb){
+      cb.onchange=function(){
+        var id=this.getAttribute("data-c"), c=CL(id); if(!c) return;
+        if(!this.checked){
+          var other=document.querySelector(otherSel+'[data-c="'+id+'"]');
+          if(other&&!other.checked){ this.checked=true; return; }
+          plan.delClass(id);
+        } else {
+          plan.addClass(c);
+        }
+      };
+    });
+  }
+  wireClassToggle("#meldtab .cq",pq,"#meldtab .cf");
+  wireClassToggle("#meldtab .cf",pf,"#meldtab .cq");
 }
 function addClass(name,lm,lw,m,w,mode){
   name=String(name||"").trim(); if(!name) return false;
