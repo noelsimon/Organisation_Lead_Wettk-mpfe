@@ -1122,6 +1122,10 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
     <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+
+    <h3>Routenplan</h3>
+    <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
+    <div class="routes" id="routenplanFinale" style="margin-bottom:22px"></div>
   </div>
 </section>
 
