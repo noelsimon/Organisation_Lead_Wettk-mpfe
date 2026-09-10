@@ -763,7 +763,7 @@ body.editing{caret-color:var(--ink)}
 <section id="start" data-views="orga bau teams sport" data-tab="start">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Für dich</p>
+      <p class="eyebrow" role="heading" aria-level="2">Für dich</p>
       <p class="lede">Dein Status und deine Aufgaben auf einen Blick. Der vollständige Plan folgt darunter.</p>
     </div>
     <div class="cards g3">
@@ -849,7 +849,7 @@ body.editing{caret-color:var(--ink)}
 <section id="melde" data-views="orga" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
+      <p class="eyebrow" role="heading" aria-level="2">Wertungsklassen und Meldezahlen</p>
       <p class="lede">Diese Tabelle ist der Ursprung des ganzen Plans. Klassennamen und Gruppenbezeichnungen sind frei: aus U15 männlich/weiblich wird bei Bedarf U21 Herren/Damen. Jede Änderung verlängert oder verkürzt sofort die Balken im Zeitplan, verschiebt die Endzeiten und passt Laufkarte, Team-Zeitplan, Wegediagramm und Finalquoten an.</p>
     </div>
     <div class="tblwrap"><table id="meldtab">
@@ -899,7 +899,7 @@ body.editing{caret-color:var(--ink)}
 <section id="tag" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Tagesablauf</p>
+      <p class="eyebrow" role="heading" aria-level="2">Tagesablauf</p>
     </div>
     <div class="rail">
       <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
@@ -922,7 +922,7 @@ body.editing{caret-color:var(--ink)}
 <section id="quali" data-views="orga teams sport bau" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Zeitplan Qualifikation</p>
+      <p class="eyebrow" role="heading" aria-level="2">Zeitplan Qualifikation</p>
       <p class="lede">Alle vier Altersklassen starten um 10:30. Innerhalb einer Klasse laufen die drei Routen so versetzt, dass <strong>nie mehr als zwei gleichzeitig besetzt sind</strong> – das Team der frei werdenden Route wandert zur nächsten. Bei der U9 reicht sogar ein Team für beide Routen. Ein Routen-Team sind drei Personen: Sicherung plus Ergebnisdienst. Helle Balken sind die Jungs, dunkle die Mädchen.</p>
     </div>
 
@@ -1006,7 +1006,7 @@ body.editing{caret-color:var(--ink)}
 <section id="personal" data-views="orga bau teams sport" data-tab="team">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Kontakte</p>
+      <p class="eyebrow" role="heading" aria-level="2">Kontakte</p>
       <p class="lede">Personal, Team-Zuordnung und Anwesenheit an einem Ort. Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
     </div>
 
@@ -1079,7 +1079,7 @@ body.editing{caret-color:var(--ink)}
 <section id="finale" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Finale · 14:15 – 15:29</p>
+      <p class="eyebrow" role="heading" aria-level="2">Finale · 14:15 – 15:29</p>
       <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
     </div>
 
@@ -1129,7 +1129,7 @@ body.editing{caret-color:var(--ink)}
 <section id="admin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Admin</p>
+      <p class="eyebrow" role="heading" aria-level="2">Admin</p>
       <p class="lede">Wettkämpfe anlegen, Anmeldungen freigeben, Kategorie- und Admin-Rechte verwalten, Auszahlung und Verpflegung.</p>
     </div>
 
@@ -1188,7 +1188,7 @@ body.editing{caret-color:var(--ink)}
 <section id="staende" data-views="orga bau teams sport" data-tab="mehr">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Speicherstände</p>
+      <p class="eyebrow" role="heading" aria-level="2">Speicherstände</p>
       <p class="lede">Jeder Stand friert den kompletten Plan ein: Klassen, Meldezahlen, Zeitfenster, alle Balken, Personal und die bearbeiteten Texte. Unten steht, wer zuletzt hier war und was er oder sie gemacht hat.</p>
     </div>
     <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
