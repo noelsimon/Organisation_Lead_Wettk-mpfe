@@ -210,6 +210,7 @@ li{margin-bottom:6px}
   background:var(--m-bg); border:1px solid var(--m-br); border-left:3px solid var(--ac);
   transition:opacity .18s ease, box-shadow .12s ease;}
 .blk[data-g="w"]{background:var(--w-bg); border-color:var(--w-br)}
+.blk.merged{background:repeating-linear-gradient(135deg, var(--m-bg) 0 10px, var(--w-bg) 10px 20px); border-color:var(--ac)}
 .blk[data-fixed="1"]{cursor:default}
 .blk:hover{box-shadow:0 0 0 1px var(--ink-2) inset}
 .blk:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
@@ -963,7 +964,7 @@ body.editing{caret-color:var(--ink)}
     <div class="readout" id="roQ"></div>
     <div class="editor" id="edQ" hidden></div>
     <div class="gantt" id="gq" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gq-inner"></div></div></div>
-    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt. Bei gemischten Routen schaltet <strong>↔ m/w</strong> abwechselnden Start (m/w/m/w statt erst alle Jungs, dann alle Mädchen) ein und aus; <strong>1→n / n→1</strong> dreht die Startreihenfolge dieser Route um.</p>
+    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt. Bei gemischten Routen schaltet <strong>↔ m/w</strong> abwechselnden Start (m/w/m/w statt erst alle Jungs, dann alle Mädchen) ein und aus – die beiden Balken der Klasse verschmelzen dann zu einem gemeinsamen Balken, sofern sie direkt aneinander anschließen; <strong>1→n / n→1</strong> dreht die Startreihenfolge dieser Route um.</p>
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lk">
@@ -993,9 +994,9 @@ body.editing{caret-color:var(--ink)}
       <div class="card">
         <h4>Startreihenfolge</h4>
         <ul style="font-size:14.5px">
-          <li>Standardmäßig klettern auf den gemischten Routen <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken. Mit dem Schalter <strong>↔ m/w</strong> an der Route lässt sich das auf abwechselnden Start (m/w/m/w) umstellen.</li>
+          <li>Standardmäßig klettern auf den gemischten Routen <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken. Mit dem Schalter <strong>↔ m/w</strong> an der Route lässt sich das auf abwechselnden Start (m/w/m/w) umstellen; die beiden Balken werden dann zu einem gemeinsamen, gestreiften Balken „männlich + weiblich · abwechselnd".</li>
           <li>Innerhalb einer Gruppe nach Ranking sortieren und in umgekehrter Reihenfolge starten: die Stärksten zuletzt.</li>
-          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt.</li>
+          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt. Sind die beiden Routen einer Gruppe so gegeneinander gedreht, zeigt die Laufkarte statt eines einzelnen Werts eine <strong>Pausen-Spanne</strong> (z. B. „12–58 Min"), weil die Pause dann von Startnummer zu Startnummer unterschiedlich lang ist.</li>
           <li>Individuelle Startzeit = Blockbeginn + Startnummer × 6 Minuten.</li>
         </ul>
       </div>
@@ -1358,10 +1359,7 @@ try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
 reindex();
 function quota(n){ if(n<=0) return 0; return Math.min(n, n>=20?10:6); }
 function totalAth(){var t=0;CFG.classes.forEach(function(c){t+=(+c.m||0)+(+c.w||0);});return t;}
-function allowTxt(r){
-  if(r.allow!=="mw") return "nur "+gl(r.cls,r.allow);
-  return "gemischt"+(r.altStart?" · abwechselnd m/w":"");
-}
+function allowTxt(r){ return r.allow==="mw" ? "gemischt" : "nur "+gl(r.cls,r.allow); }
 
 /* ================= Stammdaten ================= */
 var QROWS=[
@@ -1441,6 +1439,22 @@ Plan.prototype.desc=function(r){
   var d=CLn(r.cls)+" · "+allowTxt(r)+" · "+r.mode;
   if(r.dir==="ab") d+=" · Start n→1";
   return d;
+};
+/* Individuelle Pause zwischen zwei Runden: normalerweise für alle in der
+   Gruppe gleich (Blockabstand). Läuft eine der beiden Routen mit gedrehter
+   Startreihenfolge (dir "ab" statt "auf"), ist die Pause nicht mehr für
+   alle gleich – wer auf Route 1 zuerst dran ist, ist auf Route 2 zuletzt
+   dran (oder umgekehrt), daher die Spanne lo..hi statt eines Einzelwerts. */
+Plan.prototype.pauseRange=function(g,bs){
+  var r0=this.row(bs[0].r), r1=this.row(bs[1].r), n=g.n;
+  var dir0=!!(r0&&r0.dir==="ab"), dir1=!!(r1&&r1.dir==="ab");
+  var base=bs[1].s-bs[0].s, lo=base, hi=base;
+  if(dir0!==dir1&&n>1){ lo=base-(n-1)*CLIMB; hi=base+(n-1)*CLIMB; }
+  return {lo:lo, hi:hi, uneven:lo!==hi};
+};
+Plan.prototype.pauseTxt=function(g,bs){
+  var pr=this.pauseRange(g,bs);
+  return {txt:(pr.uneven?pr.lo+"–"+pr.hi:pr.lo)+" Min", ok:pr.lo>=45&&pr.hi<=65, uneven:pr.uneven};
 };
 Plan.prototype.save=function(){
   var st={rows:this.rows,groups:this.groups,blocks:this.blocks,seq:this.seq};
@@ -1575,6 +1589,31 @@ Plan.prototype.toggleAlt=function(id){
   r.altStart=!r.altStart;
   this.render(); this.save();
 };
+/* Auf einer "abwechselnd m/w" Route: zwei direkt aneinander anschließende
+   Blöcke derselben Klasse (ein m-, ein w-Block) verschmelzen zu einem
+   einzigen Balken. Wird bei jedem render() neu ermittelt (nie gespeichert),
+   damit eine Trennung durch Teilen/Verschieben sich von selbst wieder löst. */
+Plan.prototype.findMergePairs=function(){
+  var self=this, pairs={}, tails={};
+  this.rows.forEach(function(r){
+    if(!r.altStart) return;
+    var byCls={};
+    self.blocks.filter(function(b){return b.r===r.id;}).forEach(function(b){
+      var g=self.g(b.gid); if(!g||(g.gender!=="m"&&g.gender!=="w")) return;
+      (byCls[g.cls]=byCls[g.cls]||[]).push(b);
+    });
+    Object.keys(byCls).forEach(function(cls){
+      var list=byCls[cls]; if(list.length!==2) return;
+      var g0=self.g(list[0].gid), g1=self.g(list[1].gid); if(g0.gender===g1.gender) return;
+      var e0=list[0].s+self.dur(list[0]), e1=list[1].s+self.dur(list[1]), head,tail;
+      if(e0===list[1].s){head=list[0]; tail=list[1];}
+      else if(e1===list[0].s){head=list[1]; tail=list[0];}
+      else return;
+      pairs[head.id]=tail.id; tails[tail.id]=head.id;
+    });
+  });
+  return {pairs:pairs, tails:tails};
+};
 
 /* ---- Rendern ---- */
 Plan.prototype.render=function(){
@@ -1619,7 +1658,8 @@ Plan.prototype.render=function(){
     d.style.width=((f.dur/span)*100).toFixed(3)+"%";
     t.appendChild(d);
   });
-  this.blocks.forEach(function(b){self.mount(b);});
+  this.altMerge=this.findMergePairs();
+  this.blocks.forEach(function(b){ if(!self.altMerge.tails[b.id]) self.mount(b); });
   this.position(); this.recalc();
 };
 Plan.prototype.mount=function(b){
@@ -1636,26 +1676,39 @@ Plan.prototype.position=function(){
   this.blocks.forEach(function(b){
     var d=self.nodes[b.id]; if(!d) return;
     var g=self.g(b.gid), dur=self.dur(b);
+    var tailId=self.altMerge.pairs[b.id], tail=tailId?self.b(tailId):null;
+    var endS=tail?tail.s+self.dur(tail):b.s+dur;
     d.style.left=(((b.s-o.start)/span)*100).toFixed(3)+"%";
-    d.style.width=((dur/span)*100).toFixed(3)+"%";
-    d.querySelector("b").textContent=self.label(g);
-    d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" TN";
-    d.title=b.r+" · "+self.label(g)+" · "+fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" Kletternde";
+    d.style.width=(((endS-b.s)/span)*100).toFixed(3)+"%";
+    if(tail){
+      var n=g.n+self.g(tail.gid).n, lab=CLn(g.cls)+" männlich + weiblich · abwechselnd";
+      d.querySelector("b").textContent=lab;
+      d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(endS)+" · "+n+" TN";
+      d.title=b.r+" · "+lab+" · "+fmt(b.s)+"–"+fmt(endS)+" · "+n+" Kletternde";
+    } else {
+      d.querySelector("b").textContent=self.label(g);
+      d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" TN";
+      d.title=b.r+" · "+self.label(g)+" · "+fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" Kletternde";
+    }
+    d.classList.toggle("merged", !!tail);
     d.classList.toggle("sel", self.sel===b.id);
     d.classList.toggle("dim", !!self.filter && g.cls!==self.filter);
   });
 };
 Plan.prototype.bind=function(d,b){
   var self=this, o=this.o, drag=null;
+  function tailOf(){ var tid=self.altMerge.pairs[b.id]; return tid?self.b(tid):null; }
+  function maxStart(tail){ return o.end-self.dur(b)-(tail?self.dur(tail):0); }
   function onMove(ev){
     if(!drag) return;
     if(Math.abs(ev.clientX-drag.x)>3||Math.abs(ev.clientY-drag.y)>3) drag.moved=true;
+    var tail=tailOf();
     var ns=Math.round((drag.s0+(ev.clientX-drag.x)/drag.ppm)/SNAP)*SNAP;
-    ns=Math.max(o.start,Math.min(o.end-self.dur(b),ns));
+    ns=Math.max(o.start,Math.min(maxStart(tail),ns));
     var ch=false;
-    if(ns!==b.s){b.s=ns;ch=true;}
+    if(ns!==b.s){var delta=ns-b.s; b.s=ns; if(tail) tail.s+=delta; ch=true;}
     var tgt=self.rowAt(ev.clientY);
-    if(tgt&&tgt!==b.r){b.r=tgt; self.tracks[tgt].appendChild(d); ch=true;}
+    if(tgt&&tgt!==b.r){b.r=tgt; if(tail) tail.r=tgt; self.tracks[tgt].appendChild(d); ch=true;}
     if(ch){self.position(); self.recalc();}
     ev.preventDefault();
   }
@@ -1678,15 +1731,16 @@ Plan.prototype.bind=function(d,b){
     ev.preventDefault();
   });
   d.addEventListener("keydown",function(ev){
-    var k=ev.key, step=(ev.shiftKey?1:SNAP);
+    var k=ev.key, step=(ev.shiftKey?1:SNAP), tail=tailOf();
     if(k==="ArrowLeft"||k==="ArrowRight"){
       ev.preventDefault();
-      b.s=Math.max(o.start,Math.min(o.end-self.dur(b), b.s+(k==="ArrowLeft"?-step:step)));
+      var ns=Math.max(o.start,Math.min(maxStart(tail), b.s+(k==="ArrowLeft"?-step:step)));
+      var delta=ns-b.s; b.s=ns; if(tail) tail.s+=delta;
     } else if(k==="ArrowUp"||k==="ArrowDown"){
       ev.preventDefault();
       var idx=self.rows.map(function(r){return r.id;}).indexOf(b.r)+(k==="ArrowUp"?-1:1);
       if(idx<0||idx>=self.rows.length) return;
-      b.r=self.rows[idx].id; self.tracks[b.r].appendChild(d); d.focus();
+      b.r=self.rows[idx].id; if(tail) tail.r=b.r; self.tracks[b.r].appendChild(d); d.focus();
     } else if(k==="Enter"||k===" "){ev.preventDefault(); self.select(b.id); return;}
     else return;
     self.position(); self.recalc(); self.save(); if(self.sel===b.id) self.editor();
@@ -1776,11 +1830,11 @@ Plan.prototype.laufkarte=function(list){
     var bs=self.blocks.filter(function(b){return b.gid===g.id;}).map(function(b){return by[b.id];})
             .sort(function(a,b){return a.s-b.s;});
     if(bs.length<2) return;
-    var p=bs[1].s-bs[0].s, ok=p>=45&&p<=65;
+    var pt=self.pauseTxt(g,bs);
     h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
        '<td class="tm">'+bs[0].r+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
        '<td class="tm">'+bs[1].r+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
-       '<td class="num"><span class="pill '+(ok?"ok":"bad")+'">'+p+' Min</span></td></tr>';
+       '<td class="num"><span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span></td></tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
 };
@@ -1802,16 +1856,19 @@ Plan.prototype.editor=function(){
       ' <button class="fbtn ed-split" type="button"'+(g.n<2?" disabled":"")+'>Teilen</button></label>'+
      (parts.length>1?'<label><button class="fbtn ed-merge" type="button">„'+esc(this.gname(g))+'" zusammenführen</button></label>':'')+
    '</div>';
+  var tailId=self.altMerge.pairs[b.id], tail=tailId?self.b(tailId):null;
   box.querySelector(".ed-close").onclick=function(){self.sel=null;self.position();self.editor();};
   box.querySelector(".ed-route").onchange=function(){
-    b.r=this.value; self.tracks[b.r].appendChild(self.nodes[b.id]);
+    b.r=this.value; if(tail) tail.r=b.r; self.tracks[b.r].appendChild(self.nodes[b.id]);
     self.position(); self.recalc(); self.save(); self.editor();};
   box.querySelector(".ed-start").onchange=function(){
     /* Bewusst ohne SNAP-Rundung: per Balken-Ziehen bleibt es beim 5-Minuten-
        Raster (leichter zu bedienen), aber wer die Zeit hier direkt einträgt,
        will genau diese Minute – nicht auf 5 gerundet. */
     var v=parseTime(this.value); if(v==null) return;
-    b.s=Math.max(self.o.start,Math.min(self.o.end-self.dur(b),v));
+    var maxS=self.o.end-self.dur(b)-(tail?self.dur(tail):0);
+    var ns=Math.max(self.o.start,Math.min(maxS,v)), delta=ns-b.s;
+    b.s=ns; if(tail) tail.s+=delta;
     self.position(); self.recalc(); self.save(); self.editor();};
   var sp=box.querySelector(".ed-split");
   if(sp) sp.onclick=function(){self.split(g.id,+box.querySelector(".ed-n").value||1);};
@@ -1906,14 +1963,14 @@ function renderFlow(plan,list){
       if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(b.r)+'</text>';
       if(bw>108) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
       if(k===1){
-        var p=L.bs[1].s-L.bs[0].s, ok=p>=45&&p<=65, xa=X(L.bs[0].e)+3, xb=x-4;
+        var pt=plan.pauseTxt(g,L.bs), xa=X(L.bs[0].e)+3, xb=x-4;
         if(xb>xa+76){
           s+='<line x1="'+xa.toFixed(1)+'" y1="'+mid+'" x2="'+xb.toFixed(1)+'" y2="'+mid+'" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
-          s+='<text x="'+((xa+xb)/2).toFixed(1)+'" y="'+(mid-6)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(ok?"--ok":"--bad")+')">Pause '+p+' Min</text>';
+          s+='<text x="'+((xa+xb)/2).toFixed(1)+'" y="'+(mid-6)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(pt.ok?"--ok":"--bad")+')">Pause '+pt.txt+'</text>';
         } else {
           var x1=X(L.bs[0].s)+2, x2=x-2;
           s+='<path d="M'+x1.toFixed(1)+','+(mid-15)+' C'+x1.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-15)+'" fill="none" stroke="var(--line-strong)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
-          s+='<text x="'+((x1+x2)/2).toFixed(1)+'" y="'+(mid-25)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(ok?"--ok":"--bad")+')">Pause '+p+' Min</text>';
+          s+='<text x="'+((x1+x2)/2).toFixed(1)+'" y="'+(mid-25)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(pt.ok?"--ok":"--bad")+')">Pause '+pt.txt+'</text>';
         }
       }
     });
@@ -4360,9 +4417,9 @@ function buildPDF(){
   pq.groups.forEach(function(g){
     var bs=ql.filter(function(b){return b.gid===g.id;}).sort(function(a,b){return a.s-b.s;});
     if(bs.length<2) return;
-    var p=bs[1].s-bs[0].s;
-    lk.push({c:[pq.label(g),g.n,bs[0].r+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),bs[1].r+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),p+" Min"],
-             col:[PC(g.cls).ac,null,null,null,(p>=45&&p<=65)?[24,96,69]:[142,47,41]]});
+    var pt=pq.pauseTxt(g,bs);
+    lk.push({c:[pq.label(g),g.n,bs[0].r+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),bs[1].r+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),pt.txt],
+             col:[PC(g.cls).ac,null,null,null,pt.ok?[24,96,69]:[142,47,41]]});
   });
   table(ML,y,[{t:"Startgruppe",w:44},{t:"TN",w:12,r:true},{t:"Route 1",w:44},{t:"Route 2",w:44},{t:"Pause",w:20,r:true}],lk,{rh:5.4,fs:7.5});
   foot();
@@ -4450,13 +4507,13 @@ function buildPDF(){
         doc.text(fmt(b.s)+"-"+fmt(b.e),bx+1.4,mid+2.8,{maxWidth:bw-2});
       }
       if(k===1){
-        var p=L.bs[1].s-L.bs[0].s, ok=p>=45&&p<=65;
+        var pt=pq.pauseTxt(L.g,L.bs), ok=pt.ok;
         var xa=LX(L.bs[0].e)+.8, xb=bx-.8;
         doc.setDrawColor(150,158,150); doc.setLineWidth(.25);
         if(xb>xa+22){ doc.line(xa,mid,xb,mid); doc.setFontSize(5.4);
-          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+p+" Min",(xa+xb)/2,mid-1.2,{align:"center"}); }
+          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+pt.txt,(xa+xb)/2,mid-1.2,{align:"center"}); }
         else { doc.line(LX(L.bs[0].s)+.6,mid-5.4,bx-.6,mid-5.4); doc.setFontSize(5.4);
-          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+p+" Min",(LX(L.bs[0].s)+bx)/2,mid-6.6,{align:"center"}); }
+          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+pt.txt,(LX(L.bs[0].s)+bx)/2,mid-6.6,{align:"center"}); }
         doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
       }
     });

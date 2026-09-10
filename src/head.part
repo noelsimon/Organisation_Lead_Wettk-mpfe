@@ -201,6 +201,7 @@ li{margin-bottom:6px}
   background:var(--m-bg); border:1px solid var(--m-br); border-left:3px solid var(--ac);
   transition:opacity .18s ease, box-shadow .12s ease;}
 .blk[data-g="w"]{background:var(--w-bg); border-color:var(--w-br)}
+.blk.merged{background:repeating-linear-gradient(135deg, var(--m-bg) 0 10px, var(--w-bg) 10px 20px); border-color:var(--ac)}
 .blk[data-fixed="1"]{cursor:default}
 .blk:hover{box-shadow:0 0 0 1px var(--ink-2) inset}
 .blk:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
@@ -954,7 +955,7 @@ body.editing{caret-color:var(--ink)}
     <div class="readout" id="roQ"></div>
     <div class="editor" id="edQ" hidden></div>
     <div class="gantt" id="gq" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gq-inner"></div></div></div>
-    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt. Bei gemischten Routen schaltet <strong>↔ m/w</strong> abwechselnden Start (m/w/m/w statt erst alle Jungs, dann alle Mädchen) ein und aus; <strong>1→n / n→1</strong> dreht die Startreihenfolge dieser Route um.</p>
+    <p class="hint">Seitlich scrollbar. Ein <strong>Klick auf einen Balken</strong> öffnet den Editor: dort lässt sich die Route wechseln, die Startzeit auf die Minute setzen und die Gruppe in zwei Startgruppen teilen. Alle Änderungen bleiben in diesem Browser gespeichert, bis du auf Zurücksetzen klickst. Ein <span style="color:var(--warn)">gestrichelter Rahmen</span> heißt: Die Gruppe steht auf einer Route, die für eine andere Klasse oder ein anderes Geschlecht gebaut ist. Mit <strong>+ Route</strong> kommt eine weitere Qualiroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt. Bei gemischten Routen schaltet <strong>↔ m/w</strong> abwechselnden Start (m/w/m/w statt erst alle Jungs, dann alle Mädchen) ein und aus – die beiden Balken der Klasse verschmelzen dann zu einem gemeinsamen Balken, sofern sie direkt aneinander anschließen; <strong>1→n / n→1</strong> dreht die Startreihenfolge dieser Route um.</p>
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lk">
@@ -984,9 +985,9 @@ body.editing{caret-color:var(--ink)}
       <div class="card">
         <h4>Startreihenfolge</h4>
         <ul style="font-size:14.5px">
-          <li>Standardmäßig klettern auf den gemischten Routen <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken. Mit dem Schalter <strong>↔ m/w</strong> an der Route lässt sich das auf abwechselnden Start (m/w/m/w) umstellen.</li>
+          <li>Standardmäßig klettern auf den gemischten Routen <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken. Mit dem Schalter <strong>↔ m/w</strong> an der Route lässt sich das auf abwechselnden Start (m/w/m/w) umstellen; die beiden Balken werden dann zu einem gemeinsamen, gestreiften Balken „männlich + weiblich · abwechselnd".</li>
           <li>Innerhalb einer Gruppe nach Ranking sortieren und in umgekehrter Reihenfolge starten: die Stärksten zuletzt.</li>
-          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt.</li>
+          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt. Sind die beiden Routen einer Gruppe so gegeneinander gedreht, zeigt die Laufkarte statt eines einzelnen Werts eine <strong>Pausen-Spanne</strong> (z. B. „12–58 Min"), weil die Pause dann von Startnummer zu Startnummer unterschiedlich lang ist.</li>
           <li>Individuelle Startzeit = Blockbeginn + Startnummer × 6 Minuten.</li>
         </ul>
       </div>
