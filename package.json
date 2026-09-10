@@ -1,0 +1,17 @@
+{
+  "name": "regieplan-lead-wettkaempfe",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "python3 src/build.py",
+    "test": "vitest run",
+    "pretest": "npm run build",
+    "lint": "node scripts/extract-js.mjs && eslint eslint.config.js .eslint-tmp/script.part.js tests scripts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.13.0",
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.4"
+  }
+}
