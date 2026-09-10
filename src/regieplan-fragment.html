@@ -661,33 +661,42 @@ td.pcell{font-size:13.5px; line-height:1.5}
   .tblwrap:has(#meldtab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
   #meldtab, #meldtab thead, #meldtab tbody, #meldtab tr, #meldtab td{display:block; width:100%; min-width:0}
   #meldtab thead{display:none}
-  #meldtab tr{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
-    padding:12px 44px 12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px}
-  #meldtab tr.sum{background:var(--sunken); font-weight:600}
+  #meldtab tr{position:relative; background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--ac); border-radius:var(--r-lg); box-shadow:var(--shadow);
+    padding:14px 44px 12px 16px; margin:0 0 12px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px}
+  #meldtab tr.sum{background:var(--sunken); font-weight:600; border-left-color:var(--line-strong)}
   #meldtab td{border-bottom:none; padding:0}
   #meldtab td:nth-child(1){flex:1 1 100%; order:1}
-  #meldtab td:nth-child(1) .cin{width:100%; font-weight:600}
-  #meldtab td:nth-child(2){order:2; flex:0 0 auto; width:auto}
-  #meldtab td:nth-child(2) .cin{width:130px}
-  #meldtab td:nth-child(2):not(:empty)::before{content:"Gruppe 1: "; font-size:11px; color:var(--muted); display:block}
-  #meldtab td:nth-child(3){order:3; flex:0 0 auto; width:auto}
-  #meldtab td:nth-child(3):not(:empty)::before{content:"TN: "; font-size:11px; color:var(--muted); display:block}
-  #meldtab td:nth-child(4){order:4; flex:0 0 auto; width:auto}
-  #meldtab td:nth-child(4) .cin{width:130px}
-  #meldtab td:nth-child(4):not(:empty)::before{content:"Gruppe 2: "; font-size:11px; color:var(--muted); display:block}
-  #meldtab td:nth-child(5){order:5; flex:0 0 auto; width:auto}
-  #meldtab td:nth-child(5):not(:empty)::before{content:"TN: "; font-size:11px; color:var(--muted); display:block}
+  #meldtab td:nth-child(1) .cin{width:100%; font-weight:600; font-size:15.5px; color:var(--ac)}
+  #meldtab td:nth-child(2){order:2; flex:0 0 auto; width:auto; background:var(--bg); border-radius:var(--r-sm); padding:5px 8px}
+  #meldtab td:nth-child(2) .cin{width:98px; background:transparent; border:none; padding:0}
+  #meldtab td:nth-child(2):not(:empty)::before{content:"Gruppe 1"; font-size:9.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:2px}
+  #meldtab td:nth-child(3){order:3; flex:0 0 auto; width:auto; background:var(--bg); border-radius:var(--r-sm); padding:5px 8px}
+  #meldtab td:nth-child(3):not(:empty)::before{content:"TN"; font-size:9.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:2px}
+  #meldtab td:nth-child(3) .nin{font-weight:700}
+  #meldtab td:nth-child(4){order:4; flex:0 0 auto; width:auto; background:var(--bg); border-radius:var(--r-sm); padding:5px 8px}
+  #meldtab td:nth-child(4) .cin{width:98px; background:transparent; border:none; padding:0}
+  #meldtab td:nth-child(4):not(:empty)::before{content:"Gruppe 2"; font-size:9.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:2px}
+  #meldtab td:nth-child(5){order:5; flex:0 0 auto; width:auto; background:var(--bg); border-radius:var(--r-sm); padding:5px 8px}
+  #meldtab td:nth-child(5):not(:empty)::before{content:"TN"; font-size:9.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:2px}
+  #meldtab td:nth-child(5) .nin{font-weight:700}
   #meldtab td:nth-child(6){order:6; flex:0 0 auto; width:auto}
-  #meldtab td:nth-child(7){order:7; flex:0 0 auto; width:auto}
-  #meldtab td:nth-child(8){order:8; flex:0 0 auto; width:auto; font-size:12.5px; color:var(--muted)}
+  #meldtab td:nth-child(6) select{border-radius:var(--r-pill); background:var(--m-bg); color:var(--ac); border:1px solid var(--m-br); font-weight:600; font-size:11.5px; padding:4px 10px}
+  #meldtab td:nth-child(7){order:7; flex:0 0 auto; width:auto; display:flex; align-items:center; gap:5px}
+  #meldtab td:nth-child(7):not(:empty)::before{content:"Farbe"; font-size:11px; color:var(--muted)}
+  #meldtab td:nth-child(8){order:8; flex:1 1 100%; margin-top:2px; padding-top:8px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted)}
   #meldtab td:nth-child(8):not(:empty)::before{content:"Gesamt: "}
   #meldtab td:nth-child(9){order:9; flex:0 0 auto; width:auto; font-size:12.5px; color:var(--muted)}
   #meldtab td:nth-child(9):not(:empty)::before{content:" · Kletter-Min: "}
-  #meldtab td:nth-child(10){order:10; flex:0 0 auto; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px}
+  #meldtab td:nth-child(10){order:10; flex:0 0 auto; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px;
+    background:var(--bg); border-radius:var(--r-pill); padding:4px 10px 4px 8px}
+  #meldtab td:nth-child(10) input{accent-color:var(--ac)}
   #meldtab td:nth-child(10):not(:empty)::before{content:"Quali"}
-  #meldtab td:nth-child(11){order:11; flex:0 0 auto; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px; margin-left:14px}
+  #meldtab td:nth-child(11){order:11; flex:0 0 auto; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px;
+    background:var(--bg); border-radius:var(--r-pill); padding:4px 10px 4px 8px}
+  #meldtab td:nth-child(11) input{accent-color:var(--ac)}
   #meldtab td:nth-child(11):not(:empty)::before{content:"Finale"}
-  #meldtab td:nth-child(12){position:absolute; top:10px; right:10px}
+  #meldtab td:nth-child(12){position:absolute; top:12px; right:12px}
+  #meldtab tr.sum td:nth-child(8),#meldtab tr.sum td:nth-child(9){border-top:none; padding-top:0}
 }
 @media (max-width:760px){
   .masthead{padding-bottom:0}
