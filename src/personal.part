@@ -1,0 +1,381 @@
+/* ================= Personal: Kategorien und Personen ================= */
+function catName(id){for(var i=0;i<CFG.cats.length;i++) if(CFG.cats[i].id===id) return CFG.cats[i].name; return "ohne Kategorie";}
+function teamOpts(sel){
+  var T=(LASTQ.T||[]), h='<option value="0"'+(!sel?" selected":"")+'>— kein Team —</option>';
+  T.forEach(function(t){ h+='<option value="'+t.idx+'"'+(+sel===t.idx?" selected":"")+'>'+esc(teamName(t.idx))+'</option>'; });
+  if(sel&&sel>T.length) h+='<option value="'+sel+'" selected>Team '+sel+' (nicht mehr vorhanden)</option>';
+  return h;
+}
+function renderCats(){
+  var body=document.querySelector("#cattab tbody"); if(!body) return;
+  var h="";
+  CFG.cats.forEach(function(k){
+    var n=CFG.people.filter(function(p){return p.cat===k.id;}).length;
+    h+='<tr><td><input class="cin katin" data-k="'+k.id+'" value="'+esc(k.name)+'"></td>'+
+       '<td class="num">'+n+'</td>'+
+       '<td class="num"><input class="nin katneed" data-k="'+k.id+'" type="number" min="0" max="99" value="'+(k.need||0)+'"></td>'+
+       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen">×</button></td></tr>';
+  });
+  if(!CFG.cats.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll(".katin"),function(i){
+    i.onchange=function(){
+      for(var j=0;j<CFG.cats.length;j++) if(CFG.cats[j].id===this.getAttribute("data-k")) CFG.cats[j].name=this.value.trim()||CFG.cats[j].name;
+      saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".katneed"),function(i){
+    i.onchange=function(){
+      var v=Math.max(0,Math.min(99,parseInt(this.value,10)||0)); this.value=v;
+      for(var j=0;j<CFG.cats.length;j++) if(CFG.cats[j].id===this.getAttribute("data-k")) CFG.cats[j].need=v;
+      saveCfg();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".katdel"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-k");
+      CFG.cats=CFG.cats.filter(function(x){return x.id!==id;});
+      CFG.people.forEach(function(p){if(p.cat===id) p.cat="";});
+      saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  var s=document.getElementById("newPcat");
+  if(s) s.innerHTML=CFG.cats.map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>';}).join("");
+}
+function renderPeople(){
+  var body=document.querySelector("#peotab tbody"); if(!body) return;
+  var h="";
+  CFG.people.slice().sort(function(a,b){
+    return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
+  }).forEach(function(p){
+    var cats=CFG.cats.map(function(k){return '<option value="'+k.id+'"'+(k.id===p.cat?" selected":"")+'>'+esc(k.name)+'</option>';}).join("");
+    h+='<tr><td><input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></td>'+
+       '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
+       '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
+       '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
+       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen">×</button></td></tr>';
+  });
+  if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  body.innerHTML=h;
+  renderStats();
+  renderPayTab();
+  function upd(sel,fn){
+    Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){
+      el.onchange=function(){
+        var id=this.getAttribute("data-p");
+        for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) fn(CFG.people[i],this.value);
+        saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+      };
+    });
+  }
+  upd(".pnm",function(p,v){p.name=v.trim()||p.name;});
+  upd(".pcat",function(p,v){p.cat=v;});
+  upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
+  upd(".pnote",function(p,v){p.note=v;});
+  Array.prototype.forEach.call(document.querySelectorAll(".pdel"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-p");
+      CFG.people=CFG.people.filter(function(x){return x.id!==id;});
+      saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  var box=document.getElementById("nolist");
+  if(box){
+    var free={};
+    CFG.people.filter(function(p){return !p.team;}).forEach(function(p){
+      var k=catName(p.cat); (free[k]=free[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));
+    });
+    var ks=Object.keys(free);
+    box.innerHTML=ks.length
+      ? ks.map(function(k){return '<div><b>'+esc(k)+'</b> '+esc(free[k].join(", "))+'</div>';}).join("")
+      : '<div style="color:var(--muted)">Alle erfassten Personen sind einem Team zugeordnet.</div>';
+  }
+}
+function peopleOfTeam(idx){
+  return CFG.people.filter(function(p){return +p.team===idx;});
+}
+function teamPeopleHtml(idx){
+  var ps=peopleOfTeam(idx); if(!ps.length) return '<span style="color:var(--muted)">—</span>';
+  var by={};
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+  return Object.keys(by).map(function(k){
+    return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
+}
+function renderStats(){
+  var q=pq.stat||{}, f=pf.stat||{};
+  function set(id,v){var el=document.getElementById(id); if(el) el.textContent=v;}
+  set("stAth",totalAth());
+  set("stRoutes",pq.rows.length+pf.rows.length);
+  set("stHelferIst",CFG.people.length);
+  var soll=document.getElementById("stHelferSoll");
+  if(soll&&document.activeElement!==soll) soll.value=CFG.helferSoll||0;
+  var tlist=TASKS||[];
+  set("stTasks",tlist.filter(function(t){return t.status==="open";}).length+" / "+tlist.filter(function(t){return t.status==="done";}).length);
+  set("stTeams",Math.max(q.maxR||0,f.maxR||0));
+  set("stPers",Math.max(q.maxR||0,f.maxR||0)*CFG.teamPers);
+  renderStart();
+}
+function renderFinalTab(){
+  var list=(pf.stat&&pf.stat.list)||[], T=teams(pf,list), rteam={};
+  T.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
+  var h="", sumG=0, sumF=0;
+  CFG.classes.forEach(function(cc){
+    var c=cc.id, mode=classMode(pf,list,c);
+    ["m","w"].forEach(function(gd,gi){
+      var n=+cc[gd]||0, q=quota(n); sumG+=n; sumF+=q;
+      var blk=list.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");})
+                  .sort(function(a,b){return a.s-b.s;})[0];
+      h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
+         '<td class="num">'+n+'</td><td class="num">'+(n>=20?10:6)+'</td><td class="num">'+q+'</td>'+
+         '<td>'+(blk?'<strong class="mono">'+esc(blk.r)+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
+         '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
+         '<td class="num">'+(blk&&rteam[blk.r]?rteam[blk.r]:'—')+'</td>'+
+         (gi===0?'<td rowspan="2" style="vertical-align:middle"><span class="pill '+(mode==="parallel"?"ok":"")+'">'+mode+'</span></td>':'')+
+         '</tr>';
+    });
+  });
+  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">—</td><td class="num">'+sumF+'</td>'+
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td class="num">'+T.length+'</td><td>'+T.length*CFG.teamPers+' Personen</td></tr>';
+  document.querySelector("#finaltab tbody").innerHTML=h;
+}
+
+var routeNoteTimer=null;
+function renderRoutePlan(plan,list){
+  var box=document.getElementById("routenplan"); if(!box) return;
+  var wasOpen={};
+  Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
+    if(d.open) wasOpen[d.getAttribute("data-id")]=true;
+  });
+  var h="";
+  plan.rows.forEach(function(r){
+    var uses=list.filter(function(b){return b.r===r.id;});
+    var starts=uses.reduce(function(s,b){return s+b.n;},0);
+    var mins=starts*CLIMB;
+    var lo=uses.length?Math.min.apply(null,uses.map(function(b){return b.s;})):null;
+    var hi=uses.length?Math.max.apply(null,uses.map(function(b){return b.e;})):null;
+    h+='<details class="route" data-ac="'+esc(ACOF[r.cls]||"c7")+'" data-id="'+esc(r.id)+'"'+(wasOpen[r.id]?" open":"")+'>'+
+       '<summary class="route-summary"><b>'+esc(r.id)+'</b> <span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></summary>'+
+       '<div class="route-body">'+
+         '<span class="tag'+(r.allow==="w"?" w":"")+'">'+esc(allowTxt(r))+'</span>'+
+         '<div class="route-meta"><span>'+starts+' Starts</span><span>'+mins+' Min</span>'+
+           (uses.length?'<span>'+fmt(lo)+'–'+fmt(hi)+'</span>':'<span>noch nicht eingeplant</span>')+
+         '</div>'+
+         '<label class="route-note-label" for="rn-'+esc(r.id)+'">Notiz</label>'+
+         '<textarea class="route-note" id="rn-'+esc(r.id)+'" data-route="'+esc(r.id)+'" rows="2" placeholder="Beschreibung oder Notiz zu dieser Route …">'+esc((CFG.routeNotes&&CFG.routeNotes[r.id])||"")+'</textarea>'+
+       '</div></details>';
+  });
+  box.innerHTML=h||'<p class="hint">Noch keine Routen angelegt.</p>';
+  Array.prototype.forEach.call(box.querySelectorAll(".route-note"),function(ta){
+    ta.oninput=function(){
+      CFG.routeNotes=CFG.routeNotes||{};
+      CFG.routeNotes[this.getAttribute("data-route")]=this.value;
+      clearTimeout(routeNoteTimer);
+      routeNoteTimer=setTimeout(saveCfg,400);
+    };
+  });
+}
+
+/* ================= Instanzen ================= */
+var pq,pf;
+function afterQ(plan,list){
+  renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
+  if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
+}
+function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
+function autoStep(span){return span>300?60:(span>150?30:15);}
+pq=new Plan({mount:"gq-inner", readout:"roQ", editor:"edQ", laufkarte:"#lk", store:"kidscup-quali-v9", kind:"quali",
+  prefix:"Q", start:CFG.win.qs, end:CFG.win.qe, step:autoStep(CFG.win.qe-CFG.win.qs), axisLabel:"Quali",
+  rows:QROWS, groups:QGROUPS, blocks:QBLOCKS, onchange:afterQ});
+pf=new Plan({mount:"gf-inner", readout:"roF", editor:"edF", store:"kidscup-finale-v9", kind:"finale",
+  prefix:"F", start:CFG.win.fs, end:CFG.win.fe, step:autoStep(CFG.win.fe-CFG.win.fs), axisLabel:"Finale",
+  rows:FROWS, groups:FGROUPS, blocks:FBLOCKS, fixedGen:ffix, onchange:afterF});
+pq.applyField(); pf.applyField(); pq.render(); pf.render();
+renderWin(); renderCats(); renderPeople();
+
+document.getElementById("resetQ").onclick=function(){pq.reset();};
+document.getElementById("resetF").onclick=function(){pf.reset();};
+document.getElementById("resetField").onclick=function(){
+  CFG.classes=clone(CFG0.classes); reindex(); saveCfg();
+  try{localStorage.removeItem("kidscup-quali-v9"); localStorage.removeItem("kidscup-finale-v9");}catch(e){}
+  location.reload();
+};
+var addBox=document.getElementById("addQ");
+document.getElementById("addQtoggle").onclick=function(){addBox.hidden=!addBox.hidden; if(!addBox.hidden) fillAddRoute();};
+function fillAddRoute(){
+  var s=document.getElementById("addQcls");
+  s.innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  syncAllow();
+}
+function syncAllow(){
+  var c=CL(document.getElementById("addQcls").value)||CFG.classes[0]; if(!c) return;
+  var a=document.getElementById("addQallow"), v=a.value;
+  a.innerHTML='<option value="mw">gemischt</option><option value="m">nur '+esc(c.lm)+'</option><option value="w">nur '+esc(c.lw)+'</option>';
+  a.value=v||"mw";
+  document.getElementById("addQmode").value=c.mode||"TR";
+}
+document.getElementById("addQcls").onchange=syncAllow;
+fillAddRoute();
+document.getElementById("addQgo").onclick=function(){
+  pq.addRoute(document.getElementById("addQcls").value,document.getElementById("addQallow").value,document.getElementById("addQmode").value);
+  addBox.hidden=true;
+};
+document.getElementById("addQcancel").onclick=function(){addBox.hidden=true;};
+
+var addBoxF=document.getElementById("addF");
+document.getElementById("addFtoggle").onclick=function(){addBoxF.hidden=!addBoxF.hidden; if(!addBoxF.hidden) fillAddRouteF();};
+function fillAddRouteF(){
+  var s=document.getElementById("addFcls");
+  s.innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  syncAllowF();
+}
+function syncAllowF(){
+  var c=CL(document.getElementById("addFcls").value)||CFG.classes[0]; if(!c) return;
+  var a=document.getElementById("addFallow"), v=a.value;
+  a.innerHTML='<option value="mw">gemischt</option><option value="m">nur '+esc(c.lm)+'</option><option value="w">nur '+esc(c.lw)+'</option>';
+  a.value=v||"mw";
+  document.getElementById("addFmode").value=c.mode||"TR";
+}
+document.getElementById("addFcls").onchange=syncAllowF;
+fillAddRouteF();
+document.getElementById("addFgo").onclick=function(){
+  pf.addRoute(document.getElementById("addFcls").value,document.getElementById("addFallow").value,document.getElementById("addFmode").value);
+  addBoxF.hidden=true;
+};
+document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
+
+/* ---- Balken manuell hinzufügen ---- */
+function fillAddBlock(clsSelId,routeSelId,plan){
+  document.getElementById(clsSelId).innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  document.getElementById(routeSelId).innerHTML=plan.rows.map(function(r){return '<option value="'+r.id+'">'+esc(r.id)+' – '+esc(plan.desc(r))+'</option>';}).join("");
+}
+var addBoxQBlock=document.getElementById("addQBlock");
+document.getElementById("addQBlockToggle").onclick=function(){
+  addBoxQBlock.hidden=!addBoxQBlock.hidden; if(!addBoxQBlock.hidden) fillAddBlock("addQBlockCls","addQBlockRoute",pq);
+};
+document.getElementById("addQBlockGo").onclick=function(){
+  pq.addBlock(document.getElementById("addQBlockCls").value,document.getElementById("addQBlockRoute").value,pq.o.start);
+  addBoxQBlock.hidden=true;
+};
+document.getElementById("addQBlockCancel").onclick=function(){addBoxQBlock.hidden=true;};
+
+var addBoxFBlock=document.getElementById("addFBlock");
+document.getElementById("addFBlockToggle").onclick=function(){
+  addBoxFBlock.hidden=!addBoxFBlock.hidden; if(!addBoxFBlock.hidden) fillAddBlock("addFBlockCls","addFBlockRoute",pf);
+};
+document.getElementById("addFBlockGo").onclick=function(){
+  pf.addBlock(document.getElementById("addFBlockCls").value,document.getElementById("addFBlockRoute").value,pf.o.start);
+  addBoxFBlock.hidden=true;
+};
+document.getElementById("addFBlockCancel").onclick=function(){addBoxFBlock.hidden=true;};
+
+/* ---- Klasse hinzufügen ---- */
+var clsBox=document.getElementById("addCls");
+document.getElementById("addClsToggle").onclick=function(){clsBox.hidden=!clsBox.hidden;};
+document.getElementById("addClsCancel").onclick=function(){clsBox.hidden=true;};
+document.getElementById("addClsGo").onclick=function(){
+  var ok=addClass(document.getElementById("acName").value,document.getElementById("acLm").value,
+    document.getElementById("acLw").value,document.getElementById("acM").value,
+    document.getElementById("acW").value,document.getElementById("acMode").value);
+  if(ok){ clsBox.hidden=true; document.getElementById("acName").value=""; fillAddRoute(); }
+};
+
+/* ---- Zeitfenster ---- */
+["winQs","winQe","winFs","winFe"].forEach(function(id){
+  var el=document.getElementById(id);
+  el.onchange=function(){
+    var v=parseTime(this.value); if(v==null){renderWin();return;}
+    CFG.win[id.slice(3).toLowerCase()]=Math.round(v/5)*5;
+    applyWin();
+  };
+});
+[["winBes","bes"],["winIso","iso"],["finBesIn","bes"],["finIsoIn","iso"]].forEach(function(pair){
+  var el=document.getElementById(pair[0]); if(!el) return;
+  el.onchange=function(){
+    CFG.win[pair[1]]=Math.max(0,Math.min(180,parseInt(this.value,10)||0));
+    saveCfg(); pf.render(); pf.save(); renderWin();
+  };
+});
+document.getElementById("stHelferSoll").onchange=function(){
+  CFG.helferSoll=Math.max(0,Math.min(999,parseInt(this.value,10)||0));
+  saveCfg(); renderStats();
+};
+document.getElementById("winReset").onclick=function(){
+  CFG.win=clone(CFG0.win); applyWin();
+};
+
+/* ---- Kategorien und Personen ---- */
+document.getElementById("addKatGo").onclick=function(){
+  var n=document.getElementById("newKat").value.trim(); if(!n) return;
+  CFG.cats.push({id:newId("k"),name:n,need:0}); document.getElementById("newKat").value="";
+  saveCfg(); renderCats(); renderPeople();
+};
+document.getElementById("addPeoGo").onclick=function(){
+  var n=document.getElementById("newPname").value.trim(); if(!n) return;
+  CFG.people.push({id:newId("p"),name:n,cat:document.getElementById("newPcat").value||"",
+    team:parseInt(document.getElementById("newPteam").value,10)||0,note:""});
+  document.getElementById("newPname").value="";
+  document.getElementById("newPteam").value="0";
+  saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+  document.getElementById("newPname").focus();
+};
+function refreshTeamSel(){
+  var s=document.getElementById("newPteam"); if(s) s.innerHTML=teamOpts(0);
+}
+document.getElementById("teamPersIn").onchange=function(){
+  CFG.teamPers=Math.max(1,Math.min(10,parseInt(this.value,10)||3));
+  afterCfg(false);
+};
+
+/* ---- Tab-Navigation (Handy) ---- */
+var tabBtns=Array.prototype.slice.call(document.querySelectorAll(".tabnav [data-tabbtn]"));
+function setTab(t,skipScroll){
+  document.body.setAttribute("data-tabactive",t);
+  tabBtns.forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-tabbtn")===t?"true":"false");});
+  if(!skipScroll){
+    var m=document.querySelector("main");
+    if(m) window.scrollTo({top:Math.max(0,m.offsetTop-1),behavior:"smooth"});
+  }
+}
+tabBtns.forEach(function(b){b.onclick=function(){setTab(b.getAttribute("data-tabbtn"));};});
+setTab("start",true);
+
+/* ---- Modal / Popup ---- */
+var profileBoxHome=null;
+function openModal(){
+  document.getElementById("modalOverlay").classList.add("open");
+  document.getElementById("modalOverlay").setAttribute("aria-hidden","false");
+}
+function closeModal(){
+  document.getElementById("modalOverlay").classList.remove("open");
+  document.getElementById("modalOverlay").setAttribute("aria-hidden","true");
+  var box=document.getElementById("profileBox");
+  if(box&&box.parentNode===document.getElementById("modalBody")){
+    box.hidden=true;
+    if(profileBoxHome) profileBoxHome.parent.insertBefore(box,profileBoxHome.next);
+  }
+  document.getElementById("modalBody").innerHTML="";
+}
+document.getElementById("modalClose").onclick=closeModal;
+document.getElementById("modalOverlay").onclick=function(ev){ if(ev.target===this) closeModal(); };
+document.addEventListener("keydown",function(ev){
+  if(ev.key==="Escape"&&document.getElementById("modalOverlay").classList.contains("open")) closeModal();
+});
+
+function renderFilterBtns(){
+  var bar=document.getElementById("fbar"); if(!bar) return;
+  bar.innerHTML='<button class="fbtn" type="button" data-f="all" aria-pressed="'+(pq.filter?"false":"true")+'">Alle</button>'+
+    CFG.classes.map(function(c){
+      return '<button class="fbtn" type="button" data-f="'+esc(c.id)+'" aria-pressed="'+(pq.filter===c.id?"true":"false")+'">'+esc(c.name)+'</button>';
+    }).join("");
+  Array.prototype.forEach.call(bar.querySelectorAll(".fbtn"),function(x){
+    x.onclick=function(){
+      var v=x.getAttribute("data-f");
+      pq.filter=(v==="all")?null:v;
+      Array.prototype.forEach.call(bar.querySelectorAll(".fbtn"),function(o){
+        o.setAttribute("aria-pressed",o===x?"true":"false");});
+      pq.position();
+    };
+  });
+}
+renderFilterBtns();
+
