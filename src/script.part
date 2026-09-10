@@ -926,8 +926,8 @@ function renderFinalTab(){
 }
 
 var routeNoteTimer=null;
-function renderRoutePlan(plan,list){
-  var box=document.getElementById("routenplan"); if(!box) return;
+function renderRoutePlan(plan,list,targetId){
+  var box=document.getElementById(targetId||"routenplan"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;
@@ -967,7 +967,10 @@ function afterQ(plan,list){
   renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
   if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
 }
-function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
+function afterF(plan,list){
+  renderRoutePlan(plan,list,"routenplanFinale");
+  if(pq&&pf){ renderFinalTab(); renderStats(); }
+}
 function autoStep(span){return span>300?60:(span>150?30:15);}
 pq=new Plan({mount:"gq-inner", readout:"roQ", editor:"edQ", laufkarte:"#lk", store:"kidscup-quali-v9", kind:"quali",
   prefix:"Q", start:CFG.win.qs, end:CFG.win.qe, step:autoStep(CFG.win.qe-CFG.win.qs), axisLabel:"Quali",
