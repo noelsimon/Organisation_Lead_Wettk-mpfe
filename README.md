@@ -67,15 +67,27 @@ veröffentlicht die neue Fassung automatisch.
 
 ## Bearbeiten
 
-`index.html` wird aus drei Quelldateien zusammengesetzt und sollte nicht
+`index.html` wird aus mehreren Quelldateien zusammengesetzt und sollte nicht
 direkt bearbeitet werden:
 
 | Datei | Inhalt |
 |---|---|
 | `src/config.part` | Supabase-Zugangsdaten (Project URL + anon key) |
 | `src/head.part` | Titel, CSS und das gesamte Seiten-Markup |
-| `src/script.part` | Plan-Engine, Login/Freigabe, Tabellen, Diagramme, PDF-Export |
-| `src/build.py` | setzt alle drei zu `index.html` zusammen |
+| `src/script-core.part` | Konstanten, `CFG`/`CFG0`, Stammdaten (Wertungsklassen, Routen), `ffix` |
+| `src/plan-engine.part` | Plan-Engine, Teams, Wege-Diagramm, Meldezahlen/Finalquoten, Zeitfenster |
+| `src/personal.part` | Personal: Kategorien und Personen, `pq`/`pf`-Instanzen |
+| `src/texte.part` | Texte bearbeiten (Textbausteine, Formatierungsleiste) |
+| `src/auth.part` | Login und Freigabe (Supabase), Wettkämpfe, Sync-Zustand |
+| `src/aufgaben-chat.part` | Aufgaben, Chat, Speicherstände |
+| `src/pdf-export.part` | PDF-Export, Auszahlung & Verpflegung |
+| `src/ui-misc.part` | Abschnitte einklappen, Sprungnavigation |
+| `src/build.py` | setzt alle Teile (in dieser Reihenfolge) zu `index.html` zusammen |
+
+Die `script-*.part`-Module bilden zusammen ein einziges `<script>` (`script-
+core.part` öffnet es, `ui-misc.part` schließt es) – dieselbe gemeinsame
+Closure wie vorher, nur auf mehrere Dateien verteilt statt einer 3300-Zeilen-
+Datei.
 
 ```bash
 python3 src/build.py     # schreibt index.html neu
@@ -124,6 +136,14 @@ stehen. Einmalig einzurichten:
      Tabelle `profiles`, Event `INSERT`, Typ „Supabase Edge Functions",
      Funktion `notify-signup`. Supabase übernimmt dabei die Authentifizierung
      des Aufrufs, es muss kein Secret von Hand verdrahtet werden.
+   - Genauso für Aufgaben-Zuweisungen (benachrichtigt die zugewiesene Person
+     per Mail, nicht dich als Admin):
+     ```bash
+     supabase functions deploy notify-task-assigned
+     ```
+     (nutzt denselben `RESEND_API_KEY`, kein weiteres Secret nötig) – dann
+     einen zweiten Webhook: Tabelle `task_assignees`, Event `INSERT`,
+     Funktion `notify-task-assigned`.
 
 **Rechte je Kategorie:** Orga-Team bearbeitet alles; Routenbau darf nur die
 Texte in den Abschnitten „Routenplan" und „Routenbau" ändern; Sicherung,
