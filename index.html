@@ -3100,7 +3100,17 @@ function createCompetition(){
           {key:"textblocks",data:{added:[],hidden:[]}}
         ]);
     seedP.then(function(rows){
-      var payload=(rows||[]).map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
+      /* Vorlage übernimmt Wertungsklassen, Kategorien und Zeitraster - bewusst
+         NICHT Personen/Zuordnungen: die gehören zum jeweiligen Wettkampftag,
+         nicht zur Vorlage (siehe Hinweistext im Formular). cfg.people liegt
+         mit im selben JSON-Datensatz wie classes/cats/win, deshalb hier
+         gezielt herausnehmen statt den ganzen Datensatz zu kopieren. */
+      rows=(rows||[]).map(function(row){
+        if(row.key!=="cfg"||!row.data) return row;
+        var cfg=clone(row.data); cfg.people=[];
+        return {key:row.key, data:cfg};
+      });
+      var payload=rows.map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
       if(!payload.length) return {error:null};
       return sbClient.from("plan_state").insert(payload);
     }).then(function(r3){
