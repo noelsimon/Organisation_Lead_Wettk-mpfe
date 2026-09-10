@@ -136,6 +136,14 @@ stehen. Einmalig einzurichten:
      Tabelle `profiles`, Event `INSERT`, Typ „Supabase Edge Functions",
      Funktion `notify-signup`. Supabase übernimmt dabei die Authentifizierung
      des Aufrufs, es muss kein Secret von Hand verdrahtet werden.
+   - Genauso für Aufgaben-Zuweisungen (benachrichtigt die zugewiesene Person
+     per Mail, nicht dich als Admin):
+     ```bash
+     supabase functions deploy notify-task-assigned
+     ```
+     (nutzt denselben `RESEND_API_KEY`, kein weiteres Secret nötig) – dann
+     einen zweiten Webhook: Tabelle `task_assignees`, Event `INSERT`,
+     Funktion `notify-task-assigned`.
 
 **Rechte je Kategorie:** Orga-Team bearbeitet alles; Routenbau darf nur die
 Texte in den Abschnitten „Routenplan" und „Routenbau" ändern; Sicherung,
