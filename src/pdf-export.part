@@ -62,6 +62,10 @@ function paySay(msg,bad){
 }
 function payAmount(p){ return PAYOUTS[p.id]&&PAYOUTS[p.id].amount!=null?PAYOUTS[p.id].amount:25; }
 function payDrink(p){ return !PAYOUTS[p.id]||PAYOUTS[p.id].drink!==false; }
+/* Opt-in statt Opt-out: eine Person steht nur auf der Auszahlungsliste,
+   wenn ein Admin sie aktiv angehakt hat. Anders als payDrink() (Standard an)
+   ist der Standard hier bewusst aus. */
+function payOnList(p){ return !!(PAYOUTS[p.id]&&PAYOUTS[p.id].onList); }
 function euro(n){ return (Number(n)||0).toFixed(2).replace(".",",")+" €"; }
 function sortedPeople(){
   return CFG.people.slice().sort(function(a,b){return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");});
@@ -69,16 +73,17 @@ function sortedPeople(){
 function savePayout(id,fields){
   if(!sbClient||!CURRENT_COMP||!PROFILE) return;
   var payload={competition_id:CURRENT_COMP.id,person_id:id,updated_by:PROFILE.id,updated_at:new Date().toISOString(),
-    amount:PAYOUTS[id]?PAYOUTS[id].amount:25, drink_list:PAYOUTS[id]?PAYOUTS[id].drink!==false:true};
+    amount:PAYOUTS[id]?PAYOUTS[id].amount:25, drink_list:PAYOUTS[id]?PAYOUTS[id].drink!==false:true,
+    on_list:PAYOUTS[id]?!!PAYOUTS[id].onList:false};
   for(var k in fields) payload[k]=fields[k];
   sbClient.from("payouts").upsert(payload).then(function(r){ if(r.error) paySay("Speichern fehlgeschlagen: "+r.error.message,true); });
 }
 function loadPayouts(){
   if(!sbClient||!PROFILE||!PROFILE.is_admin||!CURRENT_COMP) return;
-  sbClient.from("payouts").select("person_id,amount,drink_list").eq("competition_id",CURRENT_COMP.id).then(function(r){
+  sbClient.from("payouts").select("person_id,amount,drink_list,on_list").eq("competition_id",CURRENT_COMP.id).then(function(r){
     if(r.error){ paySay("Laden fehlgeschlagen: "+r.error.message,true); return; }
     PAYOUTS={};
-    (r.data||[]).forEach(function(row){ PAYOUTS[row.person_id]={amount:Number(row.amount), drink:row.drink_list!==false}; });
+    (r.data||[]).forEach(function(row){ PAYOUTS[row.person_id]={amount:Number(row.amount), drink:row.drink_list!==false, onList:row.on_list===true}; });
     renderPayTab();
   }).catch(function(err){ paySay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
 }
@@ -88,21 +93,33 @@ function renderPayTab(){
   if(!PROFILE||!PROFILE.is_admin){ body.innerHTML=""; if(sumEl) sumEl.textContent="—"; return; }
   var list=sortedPeople(), h="", sum=0;
   list.forEach(function(p){
-    var amt=payAmount(p); sum+=amt;
+    var amt=payAmount(p); if(payOnList(p)) sum+=amt;
     h+='<tr><td>'+esc(p.name)+'</td><td>'+esc(catName(p.cat))+'</td>'+
+       '<td class="num"><input type="checkbox" class="payonlist" data-p="'+esc(p.id)+'"'+(payOnList(p)?" checked":"")+'></td>'+
        '<td class="num"><input class="nin payamt" data-p="'+esc(p.id)+'" type="number" min="0" max="9999" step="0.5" value="'+amt+'"></td>'+
        '<td class="num"><input type="checkbox" class="paydrink" data-p="'+esc(p.id)+'"'+(payDrink(p)?" checked":"")+'></td></tr>';
   });
-  if(!list.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  if(!list.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
   if(sumEl) sumEl.textContent=euro(sum);
+  function recalcSum(){
+    var total=0; CFG.people.forEach(function(p){ if(payOnList(p)) total+=payAmount(p); });
+    if(sumEl) sumEl.textContent=euro(total);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".payonlist"),function(cb){
+    cb.onchange=function(){
+      var id=this.getAttribute("data-p"), on=this.checked;
+      PAYOUTS[id]=PAYOUTS[id]||{amount:25,drink:true}; PAYOUTS[id].onList=on;
+      recalcSum();
+      savePayout(id,{on_list:on});
+    };
+  });
   Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(inp){
     inp.onchange=function(){
       var v=Math.max(0,parseFloat(this.value)||0); this.value=v;
       var id=this.getAttribute("data-p");
       PAYOUTS[id]=PAYOUTS[id]||{drink:true}; PAYOUTS[id].amount=v;
-      var total=0; CFG.people.forEach(function(p){total+=payAmount(p);});
-      if(sumEl) sumEl.textContent=euro(total);
+      recalcSum();
       savePayout(id,{amount:v});
     };
   });
@@ -220,7 +237,7 @@ function buildPayoutPDF(){
     {t:"ausgezahlt",w:26,r:true},{t:"Unterschrift",w:kit.CW-42-36-32-26}
   ];
   var sum=0;
-  var rows=sortedPeople().map(function(p){
+  var rows=sortedPeople().filter(payOnList).map(function(p){
     var amt=payAmount(p); sum+=amt;
     return {c:[p.name,catName(p.cat),"",euro(amt),""]};
   });
