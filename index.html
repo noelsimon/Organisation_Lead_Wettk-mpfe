@@ -608,6 +608,16 @@ td.pcell{font-size:13.5px; line-height:1.5}
 @media (max-width:760px){
   #anwesenheit .lede{display:none}
 }
+.peo-catstats{display:flex; gap:10px; margin:0 0 14px; overflow-x:auto; scrollbar-width:none}
+.peo-catstats::-webkit-scrollbar{display:none}
+.peo-catstats:empty{display:none}
+.peo-catstat{flex:0 0 auto; min-width:104px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:11px 13px; box-shadow:var(--shadow)}
+.peo-catstat .lbl{margin:0 0 5px; font-size:9.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.peo-catstat .val{margin:0 0 6px; font-size:17px; font-weight:700; font-family:var(--disp)}
+.peo-catstat .val small{font-size:12px; font-weight:500; color:var(--muted)}
+.peo-catstat .bar{height:4px; border-radius:var(--r-pill); background:var(--surface-2); overflow:hidden}
+.peo-catstat .bar>span{display:block; height:100%; background:var(--ok)}
+.peo-catstat .bar.warn>span{background:var(--warn)}
 .tel-btn{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
   background:var(--brand-tint); color:var(--brand); vertical-align:middle; margin-right:6px}
 .tel-btn svg{stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
@@ -657,13 +667,16 @@ td.pcell{font-size:13.5px; line-height:1.5}
   .tblwrap:has(#peotab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
   #peotab, #peotab thead, #peotab tbody, #peotab tr, #peotab td{display:block; width:100%; min-width:0}
   #peotab thead{display:none}
-  #peotab tr{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow);
+  #peotab tr{position:relative; background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--ac); border-radius:var(--r-lg); box-shadow:var(--shadow);
     padding:12px 44px 12px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px}
   #peotab td{border-bottom:none; padding:0}
   #peotab td:nth-child(1){flex:1 1 100%; order:1}
-  #peotab td:nth-child(1) .cin{width:100%; font-weight:600}
+  #peotab td:nth-child(1) .person-cell{width:100%}
+  #peotab td:nth-child(1) .cin{flex:1; min-width:0; font-weight:600; font-size:14.5px}
   #peotab td:nth-child(2){order:2; flex:0 0 auto; width:auto}
+  #peotab td:nth-child(2) select{border-radius:var(--r-pill); background:var(--m-bg); color:var(--ac); border:1px solid var(--m-br); font-weight:600; font-size:11.5px; padding:3px 10px}
   #peotab td:nth-child(3){order:3; flex:0 0 auto; width:auto}
+  #peotab td:nth-child(3) select{border-radius:var(--r-pill); background:var(--bg); border:1px solid var(--line-strong); font-size:11.5px; padding:3px 10px}
   #peotab td:nth-child(4){order:4; flex:1 1 100%}
   #peotab td:nth-child(4) .cin{width:100%}
   #peotab td:nth-child(4)::before{content:"Notiz: "; font-size:11.5px; color:var(--muted); display:block; margin-bottom:2px}
@@ -671,6 +684,7 @@ td.pcell{font-size:13.5px; line-height:1.5}
   #peotab td.email-col .cin{width:100%}
   #peotab td.email-col:not(:empty)::before{content:"E-Mail: "; font-size:11.5px; color:var(--muted); display:block; margin-bottom:2px}
   #peotab td:nth-child(6){position:absolute; top:10px; right:10px}
+  #addPeoGo{width:100%; border-radius:var(--r-pill); padding:14px; font-size:14px}
 
   .tblwrap:has(#meldtab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
   #meldtab, #meldtab thead, #meldtab tbody, #meldtab tr, #meldtab td{display:block; width:100%; min-width:0}
@@ -1213,6 +1227,8 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Personen und ihre Teams</h3>
     <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
+    <div class="scroller peo-catstats" id="peoCatStats"></div>
+    <div class="att-filters" id="peoCatChips" role="group" aria-label="Personen nach Kategorie filtern"></div>
     <div class="tblwrap"><table id="peotab">
       <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
@@ -2330,6 +2346,38 @@ function applyWin(){
 }
 /* ================= Personal: Kategorien und Personen ================= */
 function catName(id){for(var i=0;i<CFG.cats.length;i++) if(CFG.cats[i].id===id) return CFG.cats[i].name; return "ohne Kategorie";}
+/* Deterministische Akzentfarbe je Kategorie (dieselben [data-ac]-Variablen
+   wie bei den Wertungsklassen, siehe #meldtab) - Kategorien haben anders
+   als Klassen kein eigenes Farbfeld, darum aus der id gehasht statt frei
+   wählbar. */
+function catColorIdx(id){
+  var s=String(id||""), h=0;
+  for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+  return h%8;
+}
+var peoCatFilter=null;
+function renderPeoCatStats(){
+  var box=document.getElementById("peoCatStats"); if(!box) return;
+  box.innerHTML=CFG.cats.map(function(k){
+    var n=CFG.people.filter(function(p){return p.cat===k.id;}).length;
+    var need=k.need||0, warn=need>0&&n<need, pct=need?Math.min(100,Math.round(n/need*100)):(n?100:0);
+    return '<div class="peo-catstat"><p class="lbl">'+esc(k.name)+'</p>'+
+      '<p class="val">'+n+(need?'<small>/'+need+'</small>':'')+'</p>'+
+      (need?'<div class="bar'+(warn?" warn":"")+'"><span style="width:'+pct+'%"></span></div>':'')+
+      '</div>';
+  }).join("");
+}
+function renderPeoFilters(){
+  var box=document.getElementById("peoCatChips"); if(!box) return;
+  if(peoCatFilter&&!CFG.cats.some(function(k){return k.id===peoCatFilter;})) peoCatFilter=null;
+  box.innerHTML='<button type="button" data-cat="" aria-pressed="'+(!peoCatFilter?"true":"false")+'">Alle</button>'+
+    CFG.cats.map(function(k){
+      return '<button type="button" data-cat="'+esc(k.id)+'" aria-pressed="'+(peoCatFilter===k.id?"true":"false")+'">'+esc(k.name)+'</button>';
+    }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){
+    b.onclick=function(){ peoCatFilter=this.getAttribute("data-cat")||null; renderPeople(); };
+  });
+}
 function teamOpts(sel){
   var T=(LASTQ.T||[]), h='<option value="0"'+(!sel?" selected":"")+'>— kein Team —</option>';
   T.forEach(function(t){ h+='<option value="'+t.idx+'"'+(+sel===t.idx?" selected":"")+'>'+esc(teamName(t.idx))+'</option>'; });
@@ -2376,19 +2424,23 @@ function renderPeople(){
   var table=document.getElementById("peotab"), body=document.querySelector("#peotab tbody"); if(!body) return;
   var isAdmin=!!(PROFILE&&PROFILE.is_admin);
   if(table) table.classList.toggle("show-email",isAdmin);
+  renderPeoCatStats(); renderPeoFilters();
   var h="";
-  CFG.people.slice().sort(function(a,b){
+  var list=CFG.people.filter(function(p){return !peoCatFilter||p.cat===peoCatFilter;});
+  list.slice().sort(function(a,b){
     return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
   }).forEach(function(p){
     var cats=CFG.cats.map(function(k){return '<option value="'+k.id+'"'+(k.id===p.cat?" selected":"")+'>'+esc(k.name)+'</option>';}).join("");
-    h+='<tr><td><input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></td>'+
+    h+='<tr data-ac="'+(p.cat?("c"+catColorIdx(p.cat)):"mix")+'"><td><div class="person-cell">'+
+       '<span class="tk-avatar" style="background:var(--ac)">'+esc(initials(p.name))+'</span>'+
+       '<input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></div></td>'+
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!CFG.people.length) h='<tr><td colspan="6" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  if(!list.length) h='<tr><td colspan="6" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
