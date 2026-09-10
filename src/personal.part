@@ -43,7 +43,9 @@ function renderCats(){
   if(s) s.innerHTML=CFG.cats.map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>';}).join("");
 }
 function renderPeople(){
-  var body=document.querySelector("#peotab tbody"); if(!body) return;
+  var table=document.getElementById("peotab"), body=document.querySelector("#peotab tbody"); if(!body) return;
+  var isAdmin=!!(PROFILE&&PROFILE.is_admin);
+  if(table) table.classList.toggle("show-email",isAdmin);
   var h="";
   CFG.people.slice().sort(function(a,b){
     return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
@@ -53,12 +55,15 @@ function renderPeople(){
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
+       (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  if(!CFG.people.length) h='<tr><td colspan="6" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
+  var newEmail=document.getElementById("newPemailLbl"); if(newEmail) newEmail.hidden=!isAdmin;
+  var csvBtn=document.getElementById("teamCsvBtn"); if(csvBtn) csvBtn.hidden=!isAdmin;
   function upd(sel,fn){
     Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){
       el.onchange=function(){
@@ -72,6 +77,12 @@ function renderPeople(){
   upd(".pcat",function(p,v){p.cat=v;});
   upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
   upd(".pnote",function(p,v){p.note=v;});
+  Array.prototype.forEach.call(document.querySelectorAll(".pemail"),function(el){
+    el.onchange=function(){
+      var id=this.getAttribute("data-p"), v=this.value.trim();
+      CONTACTS[id]=v; saveContact(id,v);
+    };
+  });
   Array.prototype.forEach.call(document.querySelectorAll(".pdel"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-p");
@@ -314,13 +325,16 @@ document.getElementById("addKatGo").onclick=function(){
 };
 document.getElementById("addPeoGo").onclick=function(){
   var n=document.getElementById("newPname").value.trim(); if(!n) return;
-  CFG.people.push({id:newId("p"),name:n,cat:document.getElementById("newPcat").value||"",
+  var id=newId("p"), emailIn=document.getElementById("newPemail");
+  CFG.people.push({id:id,name:n,cat:document.getElementById("newPcat").value||"",
     team:parseInt(document.getElementById("newPteam").value,10)||0,note:""});
   document.getElementById("newPname").value="";
   document.getElementById("newPteam").value="0";
+  if(emailIn&&emailIn.value.trim()){ var em=emailIn.value.trim(); CONTACTS[id]=em; saveContact(id,em); emailIn.value=""; }
   saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
   document.getElementById("newPname").focus();
 };
+document.getElementById("teamCsvBtn").onclick=downloadTeamCsv;
 function refreshTeamSel(){
   var s=document.getElementById("newPteam"); if(s) s.innerHTML=teamOpts(0);
 }
