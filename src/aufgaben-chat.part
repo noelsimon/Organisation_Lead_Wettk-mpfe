@@ -262,11 +262,11 @@ function taskCardHtml(t,isOrga){
      (isTaskNew(t)?'<button type="button" class="tk-unread" data-mark-seen="'+esc(t.id)+'"><span class="dot-new"></span>Neu – als gelesen markieren</button>':'')+
      '<b>'+esc(t.title)+'</b>'+
      '<span class="pill prio-'+esc(t.priority)+'">'+esc(PRIOLABEL[t.priority]||t.priority)+'</span>'+
-     (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
      '<span class="pill'+(t.status==="done"?" status-done":"")+'">'+(t.status==="done"?"erledigt":"offen")+'</span>'+
      '</div>'+
      (t.description?'<p>'+esc(t.description)+'</p>':'')+
      '<div class="task-card-meta" aria-label="Zugewiesen: '+esc(names)+'">'+
+       (t.category?'<span class="tag" data-ac="c7">'+esc(CATSHORT[t.category]||t.category)+'</span>':'')+
        '<span class="tk-avatars">'+(avatars||'<span class="hint" style="margin:0">Niemand zugewiesen</span>')+'</span>'+
        (commentN?'<span class="tk-commentcount"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4v-11Z"/></svg>'+commentN+'</span>':'')+
      '</div>'+
