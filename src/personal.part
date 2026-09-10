@@ -1,5 +1,37 @@
 /* ================= Personal: Kategorien und Personen ================= */
 function catName(id){for(var i=0;i<CFG.cats.length;i++) if(CFG.cats[i].id===id) return CFG.cats[i].name; return "ohne Kategorie";}
+/* Deterministische Akzentfarbe je Kategorie (dieselben [data-ac]-Variablen
+   wie bei den Wertungsklassen, siehe #meldtab) - Kategorien haben anders
+   als Klassen kein eigenes Farbfeld, darum aus der id gehasht statt frei
+   wählbar. */
+function catColorIdx(id){
+  var s=String(id||""), h=0;
+  for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+  return h%8;
+}
+var peoCatFilter=null;
+function renderPeoCatStats(){
+  var box=document.getElementById("peoCatStats"); if(!box) return;
+  box.innerHTML=CFG.cats.map(function(k){
+    var n=CFG.people.filter(function(p){return p.cat===k.id;}).length;
+    var need=k.need||0, warn=need>0&&n<need, pct=need?Math.min(100,Math.round(n/need*100)):(n?100:0);
+    return '<div class="peo-catstat"><p class="lbl">'+esc(k.name)+'</p>'+
+      '<p class="val">'+n+(need?'<small>/'+need+'</small>':'')+'</p>'+
+      (need?'<div class="bar'+(warn?" warn":"")+'"><span style="width:'+pct+'%"></span></div>':'')+
+      '</div>';
+  }).join("");
+}
+function renderPeoFilters(){
+  var box=document.getElementById("peoCatChips"); if(!box) return;
+  if(peoCatFilter&&!CFG.cats.some(function(k){return k.id===peoCatFilter;})) peoCatFilter=null;
+  box.innerHTML='<button type="button" data-cat="" aria-pressed="'+(!peoCatFilter?"true":"false")+'">Alle</button>'+
+    CFG.cats.map(function(k){
+      return '<button type="button" data-cat="'+esc(k.id)+'" aria-pressed="'+(peoCatFilter===k.id?"true":"false")+'">'+esc(k.name)+'</button>';
+    }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){
+    b.onclick=function(){ peoCatFilter=this.getAttribute("data-cat")||null; renderPeople(); };
+  });
+}
 function teamOpts(sel){
   var T=(LASTQ.T||[]), h='<option value="0"'+(!sel?" selected":"")+'>— kein Team —</option>';
   T.forEach(function(t){ h+='<option value="'+t.idx+'"'+(+sel===t.idx?" selected":"")+'>'+esc(teamName(t.idx))+'</option>'; });
@@ -46,19 +78,23 @@ function renderPeople(){
   var table=document.getElementById("peotab"), body=document.querySelector("#peotab tbody"); if(!body) return;
   var isAdmin=!!(PROFILE&&PROFILE.is_admin);
   if(table) table.classList.toggle("show-email",isAdmin);
+  renderPeoCatStats(); renderPeoFilters();
   var h="";
-  CFG.people.slice().sort(function(a,b){
+  var list=CFG.people.filter(function(p){return !peoCatFilter||p.cat===peoCatFilter;});
+  list.slice().sort(function(a,b){
     return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
   }).forEach(function(p){
     var cats=CFG.cats.map(function(k){return '<option value="'+k.id+'"'+(k.id===p.cat?" selected":"")+'>'+esc(k.name)+'</option>';}).join("");
-    h+='<tr><td><input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></td>'+
+    h+='<tr data-ac="'+(p.cat?("c"+catColorIdx(p.cat)):"mix")+'"><td><div class="person-cell">'+
+       '<span class="tk-avatar" style="background:var(--ac)">'+esc(initials(p.name))+'</span>'+
+       '<input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></div></td>'+
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!CFG.people.length) h='<tr><td colspan="6" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  if(!list.length) h='<tr><td colspan="6" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
