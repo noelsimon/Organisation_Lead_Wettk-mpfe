@@ -152,7 +152,7 @@ function renderFinalTab(){
 
 var routeNoteTimer=null;
 function renderRoutePlan(plan,list,targetId){
-  var box=document.getElementById(targetId||"routenplan"); if(!box) return;
+  var box=document.getElementById(targetId||"routenplanCards"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;
