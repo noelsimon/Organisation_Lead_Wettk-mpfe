@@ -33,6 +33,7 @@ export default [
         CSS: "readonly",
         URLSearchParams: "readonly",
         FileReader: "readonly",
+        IntersectionObserver: "readonly",
         // eingebunden über <script src> in config.part / head.part
         jspdf: "readonly",
         Chart: "readonly",

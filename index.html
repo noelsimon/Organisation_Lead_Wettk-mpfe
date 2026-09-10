@@ -361,10 +361,12 @@ footer p{max-width:74ch; margin-bottom:8px}
 /* ---------- Sprungnavigation ---------- */
 .jumpnav{display:flex; flex-wrap:wrap; gap:6px 8px; margin:14px 0 0}
 .jumpnav a{font-family:var(--disp); font-size:11.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
-  padding:5px 11px; border-radius:var(--r-pill); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2);
-  text-decoration:none}
+  padding:5px 11px; border-radius:var(--r-pill); border:1px solid transparent; background:var(--surface); color:var(--ink-2);
+  box-shadow:var(--shadow); text-decoration:none}
 .jumpnav a:hover{background:var(--sunken)}
 .jumpnav a:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.jumpnav a.active{background:var(--brand); color:#fff; box-shadow:none}
+.jumpnav a.active:hover{background:var(--brand-dark)}
 /* ---------- Modal / Popup ---------- */
 .modal-overlay{display:none; position:fixed; inset:0; z-index:80; background:rgba(16,21,28,.45);
   align-items:center; justify-content:center; padding:20px}
@@ -5136,6 +5138,11 @@ document.querySelectorAll("section[id]").forEach(function(sec){
 });
 
 /* ---- Sprungnavigation ---- */
+/* jumpNavActiveId: welcher Abschnitt gerade oben im sichtbaren Bereich
+   steht (siehe IntersectionObserver unten) - renderJumpNav() baut die
+   Pills bei jedem Rollenwechsel komplett neu auf und muss die
+   Markierung danach jedes Mal erneut anwenden. */
+var jumpNavActiveId=null;
 function renderJumpNav(){
   var bar=document.getElementById("jumpNav"); if(!bar) return;
   var v=document.body.getAttribute("data-view")||"alles";
@@ -5146,7 +5153,7 @@ function renderJumpNav(){
   }).map(function(s){
     var eb=s.querySelector(".sec-head .eyebrow");
     var label=eb?eb.textContent:s.id;
-    return '<a href="#'+s.id+'" data-jump="'+s.id+'">'+esc(label)+'</a>';
+    return '<a href="#'+s.id+'" data-jump="'+s.id+'"'+(s.id===jumpNavActiveId?' class="active"':"")+'>'+esc(label)+'</a>';
   }).join("");
 }
 document.getElementById("jumpNav").onclick=function(ev){
@@ -5157,6 +5164,24 @@ document.getElementById("jumpNav").onclick=function(ev){
   var sec=document.getElementById(id); if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
 };
 renderJumpNav();
+
+/* Markiert den Pill des Abschnitts, der gerade oben im sichtbaren
+   Bereich steht (Scroll-Spy). rootMargin zieht die Erkennungszone auf
+   die oberen 30% des Viewports zusammen, statt auf volle Sichtbarkeit
+   zu warten - sonst würde bei hohen Abschnitten lange der vorherige
+   Pill aktiv bleiben. */
+if(typeof IntersectionObserver!=="undefined"){
+  var jumpNavObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting||e.target.id===jumpNavActiveId) return;
+      jumpNavActiveId=e.target.id;
+      Array.prototype.forEach.call(document.querySelectorAll("#jumpNav a"),function(a){
+        a.classList.toggle("active", a.getAttribute("data-jump")===jumpNavActiveId);
+      });
+    });
+  },{rootMargin:"0px 0px -70% 0px"});
+  document.querySelectorAll("section[id]").forEach(function(sec){ jumpNavObserver.observe(sec); });
+}
 
 /* Testhaken (Issue #1 "Test- und Lint-Grundgerüst"): stellt die reinen
    Rechenfunktionen und die Plan-Engine für Vitest bereit, ohne die
