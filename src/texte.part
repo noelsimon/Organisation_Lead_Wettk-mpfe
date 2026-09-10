@@ -1,0 +1,313 @@
+/* ================= Texte bearbeiten ================= */
+var TXTKEY="kidscup-texts-v1";
+function editables(){
+  var sel="h1, .dek, main h2, main h3, main h4, main p, main li, main .route-desc, main .eyebrow, header .eyebrow, footer p, .rail .step div b, .rail .step div span, .rail .step time";
+  var list=Array.prototype.slice.call(document.querySelectorAll(sel)).filter(function(el){
+    return !el.closest(".gantt,.tblwrap,.readout,.editor,.addbox,.toolbar,.flowwrap,.dlbar,.textbar,.legend");
+  });
+  /* Routenbau darf nur die Texte in "Routenplan" bearbeiten */
+  if(PROFILE&&PROFILE.category==="routenbau"){
+    list=list.filter(function(el){ return !!el.closest("#routenplan"); });
+  }
+  return list;
+}
+function sanitize(html){
+  return String(html).replace(/<\s*script[\s\S]*?<\s*\/\s*script\s*>/gi,"")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi,"").replace(/\son\w+\s*=\s*'[^']*'/gi,"")
+    .replace(/javascript:/gi,"");
+}
+var TXT={};
+try{TXT=JSON.parse(localStorage.getItem(TXTKEY)||"{}")||{};}catch(e){TXT={};}
+var TXTBLOCKKEY="kidscup-textblocks-v1", TXTBLOCKS={added:[],hidden:[]};
+try{
+  var _tb=JSON.parse(localStorage.getItem(TXTBLOCKKEY)||"null");
+  if(_tb&&typeof _tb==="object") TXTBLOCKS={added:_tb.added||[], hidden:_tb.hidden||[]};
+}catch(e){}
+function cssEsc(s){ return (window.CSS&&CSS.escape)?CSS.escape(s):String(s).replace(/[^a-zA-Z0-9_-]/g,"\\$&"); }
+function updateEmptyFlag(el){ el.classList.toggle("txt-empty", !el.textContent.trim()); }
+function updateEmptyContainers(){
+  document.querySelectorAll("main .card, main .note").forEach(function(box){
+    var texts=box.querySelectorAll("[data-ed]");
+    var allGone=texts.length>0 && Array.prototype.every.call(texts,function(el){
+      return el.hidden||el.classList.contains("txt-empty");
+    });
+    box.classList.toggle("box-empty",allGone);
+  });
+  document.querySelectorAll("main .cards").forEach(function(grid){
+    var cards=grid.querySelectorAll(":scope > .card");
+    var allGone=cards.length>0 && Array.prototype.every.call(cards,function(c){ return c.classList.contains("box-empty"); });
+    grid.classList.toggle("box-empty",allGone);
+  });
+}
+function renderAddedBlocks(){
+  var pending=TXTBLOCKS.added.slice(), guard=0;
+  while(pending.length&&guard++<50){
+    var next=[];
+    pending.forEach(function(b){
+      if(document.querySelector('[data-ed="'+cssEsc(b.key)+'"]')) return;
+      var anchor=document.querySelector('[data-ed="'+cssEsc(b.afterKey)+'"]');
+      if(!anchor){ next.push(b); return; }
+      var el=document.createElement(b.tag);
+      el.setAttribute("data-ed",b.key);
+      el.setAttribute("data-scope",b.scope||anchor.getAttribute("data-scope")||"root");
+      el.classList.add("txt-added");
+      if(TXT[b.key]!=null) el.innerHTML=sanitize(TXT[b.key]);
+      anchor.parentNode.insertBefore(el,anchor.nextSibling);
+    });
+    pending=next;
+  }
+}
+function applyHiddenBlocks(){
+  TXTBLOCKS.hidden.forEach(function(key){
+    var el=document.querySelector('[data-ed="'+cssEsc(key)+'"]');
+    if(el) el.hidden=true;
+  });
+}
+function saveTextBlocks(){
+  try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
+  pushState("textblocks",TXTBLOCKS);
+}
+/* Schlüssel je Element: an den Abschnitt (nicht an die Position im
+   Dokument) gebunden, damit eine Änderung an anderer Stelle der Seite
+   (neuer Abschnitt, gelöschter Abschnitt, umsortierter Block) nicht
+   die Nummerierung alter Elemente verschiebt und damit gelöschte/
+   bearbeitete Textbausteine an einem völlig anderen Element wieder
+   auftauchen lässt. Zählt pro (Abschnitt, Tag) getrennt hoch. */
+function initTexts(){
+  var counters={};
+  editables().forEach(function(el){
+    /* #routenplan zuerst geprüft (auch wenn es selbst in einer section liegt):
+       das ist die Grenze, auf die die RLS-Policy für Routenbau eingrenzt
+       (siehe plan_texts, Migration 0010) - muss also der genauere Scope
+       sein, nicht die umschließende section (aktuell #quali). */
+    var host=el.closest("#routenplan, section[id]")||el.closest("header,footer");
+    var scope=host?(host.id||host.tagName.toLowerCase()):"root";
+    var group=scope+"_"+el.tagName;
+    counters[group]=(counters[group]||0)+1;
+    var k=group+"_"+counters[group];
+    el.setAttribute("data-ed",k);
+    el.setAttribute("data-scope",scope);
+    if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
+    updateEmptyFlag(el);
+  });
+  renderAddedBlocks();
+  document.querySelectorAll(".txt-added[data-ed]").forEach(updateEmptyFlag);
+  applyHiddenBlocks();
+  updateEmptyContainers();
+}
+/* Jeder Textbaustein ist eine eigene Zeile in plan_texts (statt eines
+   einzigen JSON-Blobs) - nur so kann RLS Routenbau auf den
+   Routenplan-Bereich eingrenzen (siehe Migration 0010). pendingTextKeys
+   sammelt während der Debounce-Zeit alle geänderten Schlüssel (mit ihrem
+   scope), damit auch mehrere schnell hintereinander bearbeitete Felder
+   korrekt einzeln geschrieben werden. */
+var txtTimer=null, pendingTextKeys={};
+function pushText(key,html,scope){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
+  sbClient.from("plan_texts").upsert({competition_id:CURRENT_COMP.id,ed_key:key,scope:scope||"root",html:html,updated_by:PROFILE.id})
+    .then(function(r){ if(r.error) console.warn("Sync (Text "+key+") fehlgeschlagen:",r.error.message); });
+}
+function flushTextEdits(){
+  try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+  var pending=pendingTextKeys;
+  pendingTextKeys={};
+  Object.keys(pending).forEach(function(k){ pushText(k,TXT[k],pending[k]); });
+}
+function markText(el){
+  var k=el.getAttribute("data-ed");
+  TXT[k]=el.innerHTML;
+  updateEmptyFlag(el);
+  updateEmptyContainers();
+  pendingTextKeys[k]=el.getAttribute("data-scope")||"root";
+  clearTimeout(txtTimer);
+  txtTimer=setTimeout(flushTextEdits,400);
+}
+
+/* ---- Textbausteine hinzufügen/entfernen ---- */
+function newBlockKey(){ return "n"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function addBlockAfter(el){
+  var key=newBlockKey(), tag=el.tagName.toLowerCase(), scope=el.getAttribute("data-scope")||"root";
+  var neu=document.createElement(tag);
+  neu.setAttribute("data-ed",key);
+  neu.setAttribute("data-scope",scope);
+  neu.classList.add("txt-added");
+  neu.setAttribute("contenteditable","true");
+  neu.textContent="Neuer Text …";
+  el.parentNode.insertBefore(neu,el.nextSibling);
+  TXTBLOCKS.added.push({key:key, afterKey:el.getAttribute("data-ed"), tag:tag, scope:scope});
+  TXT[key]=neu.innerHTML;
+  saveTextBlocks();
+  try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+  pushText(key,neu.innerHTML,scope);
+  updateEmptyFlag(neu);
+  updateEmptyContainers();
+  neu.focus();
+  var range=document.createRange(); range.selectNodeContents(neu);
+  var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+}
+function deleteBlock(el){
+  var key=el.getAttribute("data-ed"); if(!key) return;
+  if(TXTBLOCKS.hidden.indexOf(key)<0) TXTBLOCKS.hidden.push(key);
+  el.hidden=true;
+  saveTextBlocks();
+  updateEmptyContainers();
+  hideBlockToolbar();
+  renderRestoreList();
+}
+function restoreBlock(key){
+  var el=document.querySelector('[data-ed="'+cssEsc(key)+'"]');
+  if(el) el.hidden=false;
+  var idx=TXTBLOCKS.hidden.indexOf(key);
+  if(idx>=0) TXTBLOCKS.hidden.splice(idx,1);
+  saveTextBlocks();
+  if(el) updateEmptyFlag(el);
+  updateEmptyContainers();
+  renderRestoreList();
+}
+function renderRestoreList(){
+  var box=document.getElementById("txtRestoreList"); if(!box) return;
+  var hiddenEls=Array.prototype.slice.call(document.querySelectorAll("[data-ed][hidden]"));
+  if(!hiddenEls.length){ box.innerHTML='<p class="hint" style="margin:0">Keine ausgeblendeten Textbausteine.</p>'; return; }
+  box.innerHTML=hiddenEls.map(function(el){
+    var key=el.getAttribute("data-ed");
+    var preview=el.textContent.trim().slice(0,70)||"(leer)";
+    return '<div class="cfgrow" style="margin:0 0 8px; align-items:center">'+
+      '<span style="flex:1; font-size:13.5px">'+esc(preview)+'</span>'+
+      '<button class="fbtn" type="button" data-restorebtn="'+esc(key)+'">Wiederherstellen</button></div>';
+  }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll("[data-restorebtn]"),function(b){
+    b.onclick=function(){ restoreBlock(this.getAttribute("data-restorebtn")); };
+  });
+}
+
+/* ---- Schwebende Leiste zum Hinzufügen/Entfernen von Textbausteinen ---- */
+var blockActiveEl=null, blockHideTimer=null;
+function hideBlockToolbar(){
+  document.getElementById("blockToolbar").hidden=true;
+  blockActiveEl=null;
+}
+function showBlockToolbar(el){
+  blockActiveEl=el;
+  var tb=document.getElementById("blockToolbar");
+  tb.hidden=false;
+  var rect=el.getBoundingClientRect();
+  var left=Math.min(Math.max(8,rect.left),window.innerWidth-tb.offsetWidth-8);
+  tb.style.left=left+"px";
+  tb.style.top=Math.max(8,rect.top-tb.offsetHeight-8)+"px";
+}
+document.addEventListener("focusin",function(ev){
+  if(!editing) return;
+  var el=ev.target.closest&&ev.target.closest('[data-ed][contenteditable="true"]');
+  if(el){ clearTimeout(blockHideTimer); showBlockToolbar(el); }
+});
+document.addEventListener("focusout",function(ev){
+  if(!editing) return;
+  clearTimeout(blockHideTimer);
+  blockHideTimer=setTimeout(function(){
+    var a=document.activeElement, tb=document.getElementById("blockToolbar");
+    if(tb.contains(a)) return;
+    if(a&&a.closest&&a.closest('[data-ed][contenteditable="true"]')) return;
+    hideBlockToolbar();
+  },120);
+});
+document.getElementById("blockAdd").onmousedown=function(ev){ ev.preventDefault(); if(blockActiveEl) addBlockAfter(blockActiveEl); };
+document.getElementById("blockDel").onmousedown=function(ev){ ev.preventDefault(); if(blockActiveEl) deleteBlock(blockActiveEl); };
+
+var editing=false;
+function setEditing(on){
+  editing=on;
+  document.body.classList.toggle("editing",on);
+  editables().forEach(function(el){ if(on) el.setAttribute("contenteditable","true"); else el.removeAttribute("contenteditable"); });
+  Array.prototype.forEach.call(document.querySelectorAll(".txt-added[data-ed]"),function(el){
+    if(on) el.setAttribute("contenteditable","true"); else el.removeAttribute("contenteditable");
+  });
+  var b=document.getElementById("txtToggle");
+  b.setAttribute("aria-pressed",on?"true":"false");
+  b.textContent=on?"Textbearbeitung beenden":"Texte bearbeiten";
+  document.getElementById("txtHint").hidden=!on;
+  document.getElementById("txtRestoreToggle").hidden=!on;
+  if(!on){ hideFmtToolbar(); hideBlockToolbar(); document.getElementById("txtRestoreBox").hidden=true; }
+  else { renderRestoreList(); }
+}
+initTexts();
+document.addEventListener("input",function(ev){
+  var el=ev.target.closest&&ev.target.closest("[data-ed]");
+  if(el&&editing) markText(el);
+});
+document.getElementById("txtToggle").onclick=function(){setEditing(!editing);};
+document.getElementById("txtReset").onclick=function(){
+  TXT={}; TXTBLOCKS={added:[],hidden:[]};
+  try{localStorage.removeItem(TXTKEY);}catch(e){}
+  try{localStorage.removeItem(TXTBLOCKKEY);}catch(e){}
+  location.reload();
+};
+document.getElementById("txtRestoreToggle").onclick=function(){
+  var box=document.getElementById("txtRestoreBox");
+  box.hidden=!box.hidden;
+  if(!box.hidden) renderRestoreList();
+};
+
+/* ---- Schriftgröße/-dicke für markierten Text in der Textbearbeitung ---- */
+var fmtSavedRange=null, fmtTimer=null;
+function fmtEditableAt(node){
+  var el=node&&(node.nodeType===1?node:node.parentElement);
+  return el&&el.closest?el.closest('[data-ed][contenteditable="true"]'):null;
+}
+function hideFmtToolbar(){
+  var tb=document.getElementById("fmtToolbar");
+  tb.hidden=true; fmtSavedRange=null;
+}
+function updateFmtToolbar(){
+  var tb=document.getElementById("fmtToolbar");
+  if(tb.contains(document.activeElement)) return; /* Bedienung der Leiste selbst nicht stören */
+  if(!editing){ hideFmtToolbar(); return; }
+  var sel=window.getSelection();
+  if(!sel||!sel.rangeCount||sel.isCollapsed){ hideFmtToolbar(); return; }
+  var range=sel.getRangeAt(0);
+  if(!fmtEditableAt(range.commonAncestorContainer)){ hideFmtToolbar(); return; }
+  var rect=range.getBoundingClientRect();
+  if(!rect||(!rect.width&&!rect.height)){ hideFmtToolbar(); return; }
+  fmtSavedRange=range.cloneRange();
+  tb.hidden=false;
+  var left=Math.min(Math.max(8,rect.left+rect.width/2-tb.offsetWidth/2),window.innerWidth-tb.offsetWidth-8);
+  tb.style.left=left+"px";
+  tb.style.top=Math.max(8,rect.top-tb.offsetHeight-8)+"px";
+}
+document.addEventListener("selectionchange",function(){
+  clearTimeout(fmtTimer); fmtTimer=setTimeout(updateFmtToolbar,10);
+});
+function fmtWrapSelection(applyStyle){
+  if(!fmtSavedRange) return;
+  var sel=window.getSelection();
+  sel.removeAllRanges(); sel.addRange(fmtSavedRange);
+  var range=fmtSavedRange;
+  var editEl=fmtEditableAt(range.commonAncestorContainer);
+  if(!editEl) return;
+  var span=document.createElement("span");
+  applyStyle(span,range);
+  span.appendChild(range.extractContents());
+  range.insertNode(span);
+  sel.removeAllRanges();
+  var newRange=document.createRange();
+  newRange.selectNodeContents(span);
+  sel.addRange(newRange);
+  fmtSavedRange=newRange.cloneRange();
+  markText(editEl);
+}
+document.getElementById("fmtBold").onmousedown=function(ev){
+  ev.preventDefault();
+  /* Eigene, explizite Fett-Prüfung statt execCommand("bold") – Überschriften
+     sind hier schon per CSS fett, execCommand hält sie dann fälschlich für
+     "schon fett" und würde sie beim Klick auf Normalgewicht zurücksetzen. */
+  fmtWrapSelection(function(span,range){
+    var p=range.startContainer.nodeType===1?range.startContainer:range.startContainer.parentElement;
+    var isBold=p&&p.style&&(p.style.fontWeight==="700"||p.style.fontWeight==="bold");
+    span.style.fontWeight=isBold?"400":"700";
+  });
+};
+document.getElementById("fmtSizeGo").onclick=function(){
+  var px=parseInt(document.getElementById("fmtSize").value,10);
+  if(!px||px<6||px>200) return;
+  fmtWrapSelection(function(span){ span.style.fontSize=px+"px"; });
+};
+
