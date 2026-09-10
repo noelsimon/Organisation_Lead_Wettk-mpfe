@@ -230,9 +230,10 @@ Plan.prototype.render=function(){
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
+         (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken" aria-label="Startreihenfolge '+
          (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken">'+
          (r.dir==="ab"?"n→1":"1→n")+'</button>'+
-       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'" aria-label="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
        '</span></b>'+
        '<span>'+esc(self.desc(r))+'</span></div>';
     h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
@@ -629,7 +630,7 @@ function renderMeld(){
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
        '<td class="num"><input type="checkbox" class="cq" data-c="'+c.id+'"'+(classInPlan(pq,c.id)?" checked":"")+'></td>'+
        '<td class="num"><input type="checkbox" class="cf" data-c="'+c.id+'"'+(classInPlan(pf,c.id)?" checked":"")+'></td>'+
-       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
+       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
      '<td></td><td></td><td class="num">'+tot.n+'</td><td class="num">'+tot.min+'</td><td></td></tr>';

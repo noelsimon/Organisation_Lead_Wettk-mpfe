@@ -71,23 +71,44 @@ function saveTextBlocks(){
    (neuer Abschnitt, gelöschter Abschnitt, umsortierter Block) nicht
    die Nummerierung alter Elemente verschiebt und damit gelöschte/
    bearbeitete Textbausteine an einem völlig anderen Element wieder
-   auftauchen lässt. Zählt pro (Abschnitt, Tag) getrennt hoch. */
+   auftauchen lässt. Zählt pro (Abschnitt, Tag) getrennt hoch.
+
+   Einmalige Migration: vor diesem Schema liefen dieselben Elemente unter
+   einem flachen, über die ganze Seite fortlaufenden Schlüssel (t0, t1,
+   t2, ...). Beim ersten Laden nach der Umstellung wird hier pro Element
+   zusätzlich der alte Schlüssel anhand derselben DOM-Reihenfolge
+   nachgebildet - existiert unter dem alten Schlüssel ein gespeicherter
+   Text, aber noch keiner unter dem neuen, wird er übernommen, statt
+   kommentarlos auf den Ursprungstext zurückzufallen. */
 function initTexts(){
-  var counters={};
+  var counters={}, flatCounter=0, keyMap={}, migrated=false;
   editables().forEach(function(el){
+    var oldKey="t"+(flatCounter++);
     var host=el.closest("section[id]")||el.closest("header,footer");
     var scope=host?(host.id||host.tagName.toLowerCase()):"root";
     var group=scope+"_"+el.tagName;
     counters[group]=(counters[group]||0)+1;
     var k=group+"_"+counters[group];
+    keyMap[oldKey]=k;
+    if(TXT[k]==null&&TXT[oldKey]!=null){ TXT[k]=TXT[oldKey]; migrated=true; }
     el.setAttribute("data-ed",k);
     if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
     updateEmptyFlag(el);
   });
+  var remappedHidden=TXTBLOCKS.hidden.map(function(k){ return keyMap[k]||k; });
+  if(remappedHidden.some(function(k,i){ return k!==TXTBLOCKS.hidden[i]; })){
+    TXTBLOCKS.hidden=remappedHidden;
+    migrated=true;
+  }
   renderAddedBlocks();
   document.querySelectorAll(".txt-added[data-ed]").forEach(updateEmptyFlag);
   applyHiddenBlocks();
   updateEmptyContainers();
+  if(migrated){
+    try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+    pushState("texts",TXT);
+    saveTextBlocks();
+  }
 }
 var txtTimer=null;
 function markText(el){
