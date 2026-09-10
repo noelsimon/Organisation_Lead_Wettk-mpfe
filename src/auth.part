@@ -181,7 +181,7 @@ function applyCategoryUI(){
   if(admin) admin.hidden=!PROFILE.is_admin;
   var soll=document.getElementById("stHelferSoll");
   if(soll) soll.disabled=!(PROFILE.is_admin||PROFILE.category==="orga");
-  if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); loadPayouts(); subscribePayouts(); }
+  if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); loadPayouts(); subscribePayouts(); loadContacts(); }
   renderJumpNav();
 }
 

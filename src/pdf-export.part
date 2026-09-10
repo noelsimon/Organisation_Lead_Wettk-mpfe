@@ -12,6 +12,45 @@ function pdfSay(msg,bad){
 }
 function T(el,fb){var n=document.querySelector('[data-ed="'+el+'"]'); return n?n.textContent.trim():fb;}
 
+/* ================= Kontakt-E-Mail je Person (nur Admin) =================
+   Liegt bewusst NICHT in CFG/plan_state (das ist für alle freigegebenen
+   Mitglieder lesbar), sondern in einer eigenen Tabelle mit admin-only RLS –
+   siehe supabase/migrations/0011_people_contacts.sql. */
+var CONTACTS={};
+function saveContact(id,email){
+  if(!sbClient||!CURRENT_COMP||!PROFILE) return;
+  sbClient.from("people_contacts").upsert({competition_id:CURRENT_COMP.id,person_id:id,email:email||null,
+    updated_by:PROFILE.id,updated_at:new Date().toISOString()}).then(function(r){
+    if(r.error) authSay("peoMsg","E-Mail speichern fehlgeschlagen: "+r.error.message,true);
+  });
+}
+function loadContacts(){
+  if(!sbClient||!PROFILE||!PROFILE.is_admin||!CURRENT_COMP) return;
+  sbClient.from("people_contacts").select("person_id,email").eq("competition_id",CURRENT_COMP.id).then(function(r){
+    if(r.error) return;
+    CONTACTS={};
+    (r.data||[]).forEach(function(row){ CONTACTS[row.person_id]=row.email||""; });
+    renderPeople();
+  });
+}
+function csvEsc(v){
+  v=String(v==null?"":v);
+  return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
+}
+function downloadTeamCsv(){
+  if(!PROFILE||!PROFILE.is_admin) return;
+  var rows=[["Name","E-Mail","Kategorie"]].concat(sortedPeople().map(function(p){
+    return [p.name, CONTACTS[p.id]||"", catName(p.cat)];
+  }));
+  var csv="﻿"+rows.map(function(r){ return r.map(csvEsc).join(","); }).join("\r\n");
+  var name="Kidscup-Teamliste-"+new Date().toISOString().slice(0,10)+".csv";
+  (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null)).then(function(dl){
+    if(dl&&dl.save) return dl.save({filename:name,data:csv}).then(function(){authSay("peoMsg","Teamliste heruntergeladen.");});
+    if(saveBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}),name)) authSay("peoMsg","Teamliste heruntergeladen.");
+    else authSay("peoMsg","Export nicht möglich – dieser Browser erlaubt keinen Download.",true);
+  }).catch(function(){authSay("peoMsg","Export nicht möglich.",true);});
+}
+
 /* ================= Auszahlung & Verpflegung (nur Admin) =================
    Honorare liegen bewusst NICHT in CFG/plan_state (das ist für alle
    freigegebenen Mitglieder lesbar), sondern in einer eigenen Tabelle mit
