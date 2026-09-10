@@ -971,17 +971,8 @@ body.editing{caret-color:var(--ink)}
         <p class="hint" style="margin:10px 0 0">Mehrfachauswahl mit Strg/Cmd-Klick.</p>
         <p class="pdfmsg" id="tkMsg" role="status"></p>
       </div>
-      <div class="cfgrow" id="taskFilters" style="margin:4px 0 14px">
-        <label>Kategorie
-          <select class="cin sel" id="tkfCat">
-            <option value="">alle</option>
-            <option value="orga">Orga-Team</option>
-            <option value="sicherung">Sicherung</option>
-            <option value="ergebnisdienst">Ergebnisdienst</option>
-            <option value="routenbau">Routenbau</option>
-            <option value="buffet">Buffet</option>
-          </select>
-        </label>
+      <div class="att-filters" id="tkfCatChips" role="group" aria-label="Nach Kategorie filtern" style="margin:4px 0 10px"></div>
+      <div class="cfgrow" id="taskFilters" style="margin:0 0 14px">
         <label>Person
           <select class="cin sel" id="tkfPerson"><option value="">alle</option></select>
         </label>
@@ -3902,9 +3893,23 @@ function populatePersonFilter(){
   sel.innerHTML='<option value="">alle</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join("");
   if(names.indexOf(cur)>=0) sel.value=cur;
 }
+function renderTaskCatFilter(){
+  var box=document.getElementById("tkfCatChips"); if(!box) return;
+  var cats=[];
+  TASKS.forEach(function(t){ if(t.category&&cats.indexOf(t.category)<0) cats.push(t.category); });
+  if(taskFilter.cat&&cats.indexOf(taskFilter.cat)<0) taskFilter.cat="";
+  box.innerHTML='<button type="button" data-cat="" aria-pressed="'+(!taskFilter.cat?"true":"false")+'">Alle</button>'+
+    cats.map(function(c){
+      return '<button type="button" data-cat="'+esc(c)+'" aria-pressed="'+(taskFilter.cat===c?"true":"false")+'">'+esc(CATSHORT[c]||c)+'</button>';
+    }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){
+    b.onclick=function(){ taskFilter.cat=this.getAttribute("data-cat")||""; renderTasks(); };
+  });
+}
 function renderTasks(){
   var box=document.getElementById("taskList"); if(!box) return;
   populatePersonFilter();
+  renderTaskCatFilter();
   var openN=TASKS.filter(function(t){return t.status==="open";}).length;
   var newN=TASKS.filter(isTaskNew).length;
   var badge=document.getElementById("taskBadge");
@@ -4023,7 +4028,6 @@ document.getElementById("tkComp").onchange=function(){ loadAssigneeOptions(this.
 document.getElementById("tkCancel").onclick=resetTaskForm;
 document.getElementById("tkGo").onclick=createTask;
 
-document.getElementById("tkfCat").onchange=function(){ taskFilter.cat=this.value; renderTasks(); };
 document.getElementById("tkfPerson").onchange=function(){ taskFilter.person=this.value; renderTasks(); };
 document.getElementById("tkfStatus").onchange=function(){ taskFilter.status=this.value; renderTasks(); };
 function setTaskView(v){
