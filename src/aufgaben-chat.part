@@ -150,7 +150,7 @@ function renderAttendance(){
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
-       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
        '<td>'+(mine
          ? attendanceToggleHtml(m.attendance)
          : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
@@ -162,7 +162,13 @@ function renderAttendance(){
   if(isAdmin){
     Array.prototype.forEach.call(body.querySelectorAll(".person-cell"),function(cell){
       cell.classList.add("clickable");
+      cell.setAttribute("role","button");
+      cell.setAttribute("tabindex","0");
+      cell.setAttribute("aria-label","Profil von "+cell.querySelector("span:last-child").textContent.trim()+" bearbeiten");
       cell.onclick=function(){ openPersonEdit(this.getAttribute("data-pid")); };
+      cell.onkeydown=function(ev){
+        if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openPersonEdit(this.getAttribute("data-pid")); }
+      };
     });
   }
 }

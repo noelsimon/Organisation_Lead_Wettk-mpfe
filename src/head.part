@@ -7,7 +7,7 @@
   --bg:#F3F6FA; --surface:#FFFFFF; --surface-2:#EAF1F8; --sunken:#EEF3F9;
   --ink:#10151C; --ink-2:#3A4A5E; --muted:#5E7086;
   --line:#DCE6F0; --line-strong:#AFC2D6;
-  --c0:#B87708;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
+  --c0:#9A6407;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
   --c1:#1F7A55; --c1-m-bg:#EDF7F2; --c1-m-br:#C4E0D3; --c1-w-bg:#CBE7D9; --c1-w-br:#8FC3A9;
   --c2:#2559A6; --c2-m-bg:#EEF4FC; --c2-m-br:#C7D9F0; --c2-w-bg:#CFE0F4; --c2-w-br:#98BAE1;
   --c3:#A93B34; --c3-m-bg:#FDF0EE; --c3-m-br:#EDCBC6; --c3-w-bg:#F2D3CE; --c3-w-br:#DBA199;
@@ -15,7 +15,7 @@
   --c5:#0D7480; --c5-m-bg:#EAF7F8; --c5-m-br:#BFDFE3; --c5-w-bg:#C6E7EA; --c5-w-br:#88C0C7;
   --c6:#83592C; --c6-m-bg:#FAF4EB; --c6-m-br:#E2D3BC; --c6-w-bg:#ECDCC4; --c6-w-br:#C9AE83;
   --c7:#4A5666; --c7-m-bg:#F1F3F6; --c7-m-br:#D3D9E1; --c7-w-bg:#D6DCE4; --c7-w-br:#AAB4C1;
-  --ok:#1D8A5D; --warn:#B7791B; --bad:#C0342B; --grid:#DCE6F0;
+  --ok:#1B7E55; --warn:#986516; --bad:#C0342B; --grid:#DCE6F0;
   --ring:#114A7A;
   --shadow:0 1px 2px rgba(16,21,28,.06), 0 12px 28px -18px rgba(16,21,28,.32);
   --r-sm:8px; --r-md:14px; --r-lg:20px; --r-pill:999px;
@@ -330,6 +330,16 @@ footer p{max-width:74ch; margin-bottom:8px}
   .modal-sheet{max-width:none; border-radius:var(--r-lg) var(--r-lg) 0 0; max-height:88vh;
     padding:24px 18px calc(20px + env(safe-area-inset-bottom,0px))}
 }
+/* ---------- Sync-Konflikt-Hinweis ---------- */
+.sync-toast{position:fixed; left:20px; bottom:20px; z-index:70; max-width:340px;
+  background:var(--surface); border:1px solid var(--warn); border-radius:var(--r-md);
+  box-shadow:var(--shadow); padding:14px 16px}
+.sync-toast b{display:block; font-family:var(--disp); font-size:13px; font-weight:600; color:var(--warn); margin:0 0 4px}
+.sync-toast p{margin:0 0 10px; font-size:13px; color:var(--ink-2)}
+.sync-toast-btns{display:flex; gap:8px; flex-wrap:wrap}
+@media (max-width:760px){
+  .sync-toast{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
@@ -529,6 +539,7 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .person-cell{display:flex; align-items:center; gap:10px}
 .person-cell.clickable{cursor:pointer}
 .person-cell.clickable:hover .tk-avatar{outline:2px solid var(--brand-tint-2)}
+.person-cell.clickable:focus-visible{outline:2px solid var(--ring); outline-offset:2px; border-radius:var(--r-sm)}
 .att-summary{margin:-6px 0 12px; font-size:13px; color:var(--muted)}
 .att-filters{display:flex; gap:8px; margin:0 0 14px; overflow-x:auto; scrollbar-width:none}
 .att-filters::-webkit-scrollbar{display:none}
@@ -603,7 +614,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
-  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
+  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel,.sync-toast{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -646,7 +657,7 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="masthead-top">
       <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
-      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten">
+      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten" aria-label="Profil bearbeiten">
         <img id="mastheadAvatarImg" alt="" hidden>
         <span id="mastheadAvatarInitial"></span>
       </button>
@@ -990,9 +1001,11 @@ body.editing{caret-color:var(--ink)}
     <div class="flowwrap" id="flow"></div>
     <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
 
-    <h3>Routenplan</h3>
-    <p class="lede">Alle Qualirouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
-    <div class="routes" id="routenplan" style="margin-bottom:22px"></div>
+    <div id="routenplan">
+      <h3>Routenplan</h3>
+      <p class="lede">Alle Qualirouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
+      <div class="routes" id="routenplanCards" style="margin-bottom:22px"></div>
+    </div>
 
     <div class="cards g2">
       <div class="card">
@@ -1279,6 +1292,15 @@ body.editing{caret-color:var(--ink)}
   </div>
 </div>
 
+<div class="sync-toast" id="syncToast" hidden role="alert">
+  <b>Sync-Konflikt</b>
+  <p id="syncToastMsg"></p>
+  <div class="sync-toast-btns">
+    <button type="button" class="fbtn" id="syncToastTake">Übernehmen</button>
+    <button type="button" class="fbtn" id="syncToastKeep">Meine Version behalten</button>
+  </div>
+</div>
+
 <nav class="tabnav" id="tabNav" aria-label="Hauptnavigation">
   <button type="button" data-tabbtn="start" aria-pressed="true">
     <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg>
@@ -1303,7 +1325,7 @@ body.editing{caret-color:var(--ink)}
   </button>
 </nav>
 
-<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
+<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen" aria-label="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
 
 <div id="chatPanel" class="chat-panel" hidden>
   <div class="chat-panel-head">
