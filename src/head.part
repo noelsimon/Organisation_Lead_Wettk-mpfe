@@ -338,10 +338,12 @@ footer p{max-width:74ch; margin-bottom:8px}
 /* ---------- Sprungnavigation ---------- */
 .jumpnav{display:flex; flex-wrap:wrap; gap:6px 8px; margin:14px 0 0}
 .jumpnav a{font-family:var(--disp); font-size:11.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
-  padding:5px 11px; border-radius:var(--r-pill); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2);
-  text-decoration:none}
+  padding:5px 11px; border-radius:var(--r-pill); border:1px solid transparent; background:var(--surface); color:var(--ink-2);
+  box-shadow:var(--shadow); text-decoration:none}
 .jumpnav a:hover{background:var(--sunken)}
 .jumpnav a:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.jumpnav a.active{background:var(--brand); color:#fff; box-shadow:none}
+.jumpnav a.active:hover{background:var(--brand-dark)}
 /* ---------- Modal / Popup ---------- */
 .modal-overlay{display:none; position:fixed; inset:0; z-index:80; background:rgba(16,21,28,.45);
   align-items:center; justify-content:center; padding:20px}

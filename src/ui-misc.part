@@ -23,6 +23,11 @@ document.querySelectorAll("section[id]").forEach(function(sec){
 });
 
 /* ---- Sprungnavigation ---- */
+/* jumpNavActiveId: welcher Abschnitt gerade oben im sichtbaren Bereich
+   steht (siehe IntersectionObserver unten) - renderJumpNav() baut die
+   Pills bei jedem Rollenwechsel komplett neu auf und muss die
+   Markierung danach jedes Mal erneut anwenden. */
+var jumpNavActiveId=null;
 function renderJumpNav(){
   var bar=document.getElementById("jumpNav"); if(!bar) return;
   var v=document.body.getAttribute("data-view")||"alles";
@@ -33,7 +38,7 @@ function renderJumpNav(){
   }).map(function(s){
     var eb=s.querySelector(".sec-head .eyebrow");
     var label=eb?eb.textContent:s.id;
-    return '<a href="#'+s.id+'" data-jump="'+s.id+'">'+esc(label)+'</a>';
+    return '<a href="#'+s.id+'" data-jump="'+s.id+'"'+(s.id===jumpNavActiveId?' class="active"':"")+'>'+esc(label)+'</a>';
   }).join("");
 }
 document.getElementById("jumpNav").onclick=function(ev){
@@ -44,6 +49,24 @@ document.getElementById("jumpNav").onclick=function(ev){
   var sec=document.getElementById(id); if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
 };
 renderJumpNav();
+
+/* Markiert den Pill des Abschnitts, der gerade oben im sichtbaren
+   Bereich steht (Scroll-Spy). rootMargin zieht die Erkennungszone auf
+   die oberen 30% des Viewports zusammen, statt auf volle Sichtbarkeit
+   zu warten - sonst würde bei hohen Abschnitten lange der vorherige
+   Pill aktiv bleiben. */
+if(typeof IntersectionObserver!=="undefined"){
+  var jumpNavObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting||e.target.id===jumpNavActiveId) return;
+      jumpNavActiveId=e.target.id;
+      Array.prototype.forEach.call(document.querySelectorAll("#jumpNav a"),function(a){
+        a.classList.toggle("active", a.getAttribute("data-jump")===jumpNavActiveId);
+      });
+    });
+  },{rootMargin:"0px 0px -70% 0px"});
+  document.querySelectorAll("section[id]").forEach(function(sec){ jumpNavObserver.observe(sec); });
+}
 
 /* Testhaken (Issue #1 "Test- und Lint-Grundgerüst"): stellt die reinen
    Rechenfunktionen und die Plan-Engine für Vitest bereit, ohne die
