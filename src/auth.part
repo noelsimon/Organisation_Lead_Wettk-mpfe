@@ -1,0 +1,467 @@
+/* ================= Login und Freigabe (Supabase) ================= */
+var sbClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY &&
+                 window.SUPABASE_URL.indexOf("DEIN-PROJEKT")<0)
+  ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
+var SESSION=null, PROFILE=null, authTab="login", CURRENT_COMP=null, MYCOMPS=[];
+var CATLABEL={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
+
+function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; n.textContent=msg||""; n.className="pdfmsg"+(bad?" bad":""); }
+
+function setAuthState(state){
+  document.body.setAttribute("data-auth",state);
+  document.getElementById("userbar").hidden = state==="locked";
+  var mpb=document.getElementById("mastheadProfileBtn"); if(mpb) mpb.hidden = state==="locked";
+  document.getElementById("authBar").hidden = state!=="locked";
+  document.getElementById("loginBox").hidden = state!=="locked" || authTab!=="login";
+  document.getElementById("registerBox").hidden = state!=="locked" || authTab!=="register";
+  document.getElementById("pendingNote").hidden = state!=="pending";
+  document.getElementById("rejectedNote").hidden = state!=="rejected";
+  document.getElementById("noAccessNote").hidden = state!=="no-access";
+}
+
+/* ---- Wettkampf aus der URL auflösen (?w=<slug>, sonst der Standard-Wettkampf) ---- */
+function resolveCompetition(){
+  if(!sbClient) return Promise.resolve();
+  var slug=null;
+  try{ slug=new URLSearchParams(location.search).get("w"); }catch(e){}
+  var q=sbClient.from("competitions").select("id,slug,name");
+  q = slug ? q.eq("slug",slug) : q.eq("is_default",true);
+  return q.maybeSingle().then(function(r){
+    CURRENT_COMP=(r.error||!r.data)?null:r.data;
+  }).catch(function(){ CURRENT_COMP=null; });
+}
+function loadMyCompetitions(){
+  if(!sbClient||!PROFILE) return;
+  var q = PROFILE.is_admin
+    ? sbClient.from("competitions").select("id,slug,name").order("name")
+    : sbClient.from("competition_members").select("competitions(id,slug,name)").eq("profile_id",PROFILE.id);
+  q.then(function(r){
+    if(r.error) return;
+    MYCOMPS = PROFILE.is_admin ? (r.data||[]) : (r.data||[]).map(function(x){return x.competitions;}).filter(Boolean);
+    renderCompSwitch();
+  });
+}
+function renderCompSwitch(){
+  var sel=document.getElementById("compSwitch"); if(!sel) return;
+  if(MYCOMPS.length<2){ sel.hidden=true; return; }
+  sel.hidden=false;
+  sel.innerHTML=MYCOMPS.map(function(c){return '<option value="'+esc(c.slug)+'"'+(CURRENT_COMP&&c.id===CURRENT_COMP.id?" selected":"")+'>'+esc(c.name)+'</option>';}).join("");
+}
+document.getElementById("compSwitch").onchange=function(){
+  var params; try{params=new URLSearchParams(location.search);}catch(e){params=new URLSearchParams();}
+  params.set("w",this.value);
+  location.search=params.toString();
+};
+function showAuthTab(t){
+  authTab=t;
+  document.getElementById("tabLogin").setAttribute("aria-pressed",t==="login"?"true":"false");
+  document.getElementById("tabRegister").setAttribute("aria-pressed",t==="register"?"true":"false");
+  setAuthState(document.body.getAttribute("data-auth")||"locked");
+}
+document.getElementById("tabLogin").onclick=function(){showAuthTab("login");};
+document.getElementById("tabRegister").onclick=function(){showAuthTab("register");};
+
+function doRegister(){
+  if(!sbClient){ authSay("reMsg","Supabase ist nicht konfiguriert (src/config.part ausfüllen).",true); return; }
+  if(!CURRENT_COMP){ authSay("reMsg","Kein gültiger Wettkampf-Link – bitte den Link zu deinem Wettkampf öffnen.",true); return; }
+  var name=document.getElementById("reName").value.trim();
+  var email=document.getElementById("reEmail").value.trim();
+  var pass=document.getElementById("rePass").value;
+  var cat=document.getElementById("reCat").value;
+  if(!name||!email||pass.length<6){ authSay("reMsg","Name, E-Mail und ein Passwort mit mindestens 6 Zeichen ausfüllen.",true); return; }
+  authSay("reMsg","Registriere …");
+  /* Profil wird serverseitig per DB-Trigger angelegt (siehe supabase/schema.sql,
+     handle_new_user) – nicht per Insert vom Client, das würde ohne aktive
+     Sitzung (z.B. bei aktivierter E-Mail-Bestätigung) an der RLS scheitern.
+     Der Trigger liest competition_id aus den Metadaten und ordnet die
+     Person direkt dem Wettkampf hinter diesem Link zu. */
+  sbClient.auth.signUp({email:email, password:pass, options:{data:{full_name:name, category:cat, competition_id:CURRENT_COMP.id}}}).then(function(r){
+    if(r.error){ authSay("reMsg",r.error.message,true); return; }
+    if(r.data.session){
+      authSay("reMsg","Registriert – warte auf Freigabe durch die Orga.");
+      refreshSession();
+    } else {
+      authSay("reMsg","Registrierung eingegangen – prüfe deine E-Mails, öffne den Bestätigungslink und melde dich danach an.",false);
+    }
+  }).catch(function(err){ authSay("reMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+document.getElementById("reGo").onclick=doRegister;
+
+function doLogin(){
+  if(!sbClient){ authSay("liMsg","Supabase ist nicht konfiguriert (src/config.part ausfüllen).",true); return; }
+  var email=document.getElementById("liEmail").value.trim(), pass=document.getElementById("liPass").value;
+  if(!email||!pass){ authSay("liMsg","E-Mail und Passwort eingeben.",true); return; }
+  authSay("liMsg","Melde an …");
+  sbClient.auth.signInWithPassword({email:email,password:pass}).then(function(r){
+    if(r.error){ authSay("liMsg",r.error.message,true); return; }
+    authSay("liMsg","Angemeldet – lade Profil …");
+    refreshSession();
+  }).catch(function(err){ authSay("liMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+document.getElementById("liGo").onclick=doLogin;
+
+function doLogout(){
+  if(!sbClient) return;
+  sbClient.auth.signOut().then(function(){ PROFILE=null; SESSION=null; refreshSession(); })
+    .catch(function(err){ authSay("liMsg","Abmelden fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+document.getElementById("btnLogout").onclick=doLogout;
+
+function renderUserbarIdentity(){
+  if(!PROFILE) return;
+  document.getElementById("ubName").textContent=PROFILE.full_name;
+  document.getElementById("ubCat").textContent=CATLABEL[PROFILE.category]||PROFILE.category;
+  var av=document.getElementById("ubAvatar");
+  if(av){ av.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) av.src=PROFILE.avatar_url; }
+  var mImg=document.getElementById("mastheadAvatarImg"), mIn=document.getElementById("mastheadAvatarInitial");
+  if(mImg&&mIn){
+    mImg.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) mImg.src=PROFILE.avatar_url;
+    mIn.hidden=!!PROFILE.avatar_url; mIn.textContent=initials(PROFILE.full_name);
+  }
+}
+
+/* ---- Profil-Selbstverwaltung: eigenen Namen ändern, eigenes Profilbild hochladen ---- */
+function profileSay(msg,bad){
+  var el=document.getElementById("pfMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function openProfileBox(){
+  if(!PROFILE) return;
+  document.getElementById("pfName").value=PROFILE.full_name||"";
+  document.getElementById("pfPhone").value=PROFILE.phone||"";
+  var prev=document.getElementById("pfAvatarPreview");
+  prev.hidden=!PROFILE.avatar_url; if(PROFILE.avatar_url) prev.src=PROFILE.avatar_url;
+  document.getElementById("pfAvatarFile").value="";
+  profileSay("");
+  var box=document.getElementById("profileBox");
+  if(!profileBoxHome) profileBoxHome={parent:box.parentNode, next:box.nextSibling};
+  document.getElementById("modalBody").appendChild(box);
+  box.hidden=false;
+  openModal();
+}
+document.getElementById("btnProfile").onclick=openProfileBox;
+document.getElementById("mastheadProfileBtn").onclick=openProfileBox;
+document.getElementById("pfCancel").onclick=closeModal;
+document.getElementById("pfSave").onclick=function(){
+  if(!sbClient||!PROFILE) return;
+  var name=document.getElementById("pfName").value.trim();
+  if(!name){ profileSay("Name darf nicht leer sein.",true); return; }
+  var phone=document.getElementById("pfPhone").value.trim();
+  var file=(document.getElementById("pfAvatarFile").files||[])[0];
+  if(file&&(!/^image\//.test(file.type)||file.size>2*1024*1024)){
+    profileSay("Bild muss ein Bildformat und darf max. 2 MB groß sein.",true); return;
+  }
+  profileSay("Speichere …");
+  var upload=Promise.resolve(PROFILE.avatar_url||null);
+  if(file){
+    var ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+    upload=sbClient.storage.from("avatars").upload(PROFILE.id+"/avatar."+ext, file, {upsert:true}).then(function(r){
+      if(r.error) throw r.error;
+      var pub=sbClient.storage.from("avatars").getPublicUrl(PROFILE.id+"/avatar."+ext);
+      return pub.data.publicUrl+"?v="+Date.now();
+    });
+  }
+  upload.then(function(avatarUrl){
+    return sbClient.from("profiles").update({full_name:name, phone:phone||null, avatar_url:avatarUrl}).eq("id",PROFILE.id).select().single();
+  }).then(function(r){
+    if(r.error){ profileSay("Speichern fehlgeschlagen: "+r.error.message,true); return; }
+    PROFILE=r.data;
+    renderUserbarIdentity();
+    loadAttendance();
+    profileSay("Gespeichert.");
+    closeModal();
+  }).catch(function(err){ profileSay("Speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
+};
+function applyCategoryUI(){
+  if(!PROFILE) return;
+  document.body.setAttribute("data-cat",PROFILE.category);
+  var admin=document.getElementById("admin");
+  if(admin) admin.hidden=!PROFILE.is_admin;
+  var soll=document.getElementById("stHelferSoll");
+  if(soll) soll.disabled=!(PROFILE.is_admin||PROFILE.category==="orga");
+  if(PROFILE.is_admin){ loadAdmin(); loadAllCompetitions(); loadPayouts(); subscribePayouts(); loadContacts(); }
+  renderJumpNav();
+}
+
+function refreshSession(){
+  if(!sbClient){ setAuthState("locked"); return; }
+  sbClient.auth.getSession().then(function(r){
+    if(r.error){ authSay("liMsg","Sitzung konnte nicht geladen werden: "+r.error.message,true); setAuthState("locked"); return; }
+    SESSION=(r.data&&r.data.session)||null;
+    if(!SESSION){ PROFILE=null; setAuthState("locked"); return; }
+    sbClient.from("profiles").select("*").eq("id",SESSION.user.id).maybeSingle().then(function(r2){
+      if(r2.error){ authSay("liMsg","Profil konnte nicht geladen werden: "+r2.error.message,true); setAuthState("locked"); return; }
+      if(!r2.data){ authSay("liMsg","Kein Profil zu diesem Account gefunden – neu registrieren?",true); setAuthState("locked"); return; }
+      PROFILE=r2.data;
+      renderUserbarIdentity();
+      if(PROFILE.status==="pending"){ setAuthState("pending"); return; }
+      if(PROFILE.status==="rejected"){ setAuthState("rejected"); return; }
+      resolveCompetition().then(function(){
+        if(!CURRENT_COMP){ setAuthState("no-access"); return; }
+        applyCategoryUI();
+        setAuthState("ok");
+        initDb(); pullState(); subscribePlanState();
+        loadTasks(); subscribeTasks();
+        loadAssigneeOptions(CURRENT_COMP.id);
+        loadAttendance(); subscribeAttendance();
+        loadMyCompetitions();
+        loadConversations(); subscribeChat();
+        var bub=document.getElementById("chatBubble"); if(bub) bub.hidden=false;
+      });
+    }).catch(function(err){ authSay("liMsg","Profil-Abfrage fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
+  }).catch(function(err){ authSay("liMsg","Verbindung zu Supabase fehlgeschlagen: "+((err&&err.message)||err),true); setAuthState("locked"); });
+}
+
+/* ---- Admin-Dashboard: Anmeldungen freigeben, Kategorie/Admin-Rechte pflegen ---- */
+var ADMINROWS=[];
+function loadAdmin(){
+  if(!sbClient||!PROFILE||!PROFILE.is_admin) return;
+  sbClient.from("profiles").select("*, competition_members(competition_id)").order("created_at",{ascending:false}).then(function(r){
+    if(r.error){ authSay("adminMsg",r.error.message,true); return; }
+    ADMINROWS=r.data||[]; renderAdmin();
+  }).catch(function(err){ authSay("adminMsg","Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function renderAdmin(){
+  var body=document.querySelector("#admintab tbody"); if(!body) return;
+  var h="";
+  ADMINROWS.forEach(function(p){
+    var have=(p.competition_members||[]).map(function(m){return m.competition_id;});
+    h+='<tr><td>'+esc(p.full_name)+(p.is_admin?' <span class="pill ok">Admin</span>':'')+'</td>'+
+       '<td>'+esc(p.email)+'</td>'+
+       '<td><select class="cin sel admcat" data-id="'+esc(p.id)+'">'+
+         Object.keys(CATLABEL).map(function(c){return '<option value="'+c+'"'+(c===p.category?" selected":"")+'>'+CATLABEL[c]+'</option>';}).join("")+
+       '</select></td>'+
+       '<td><select class="cin sel admcomp" multiple size="'+Math.min(4,Math.max(2,ALLCOMPS.length||1))+'" data-id="'+esc(p.id)+'" style="min-width:150px">'+
+         ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'"'+(have.indexOf(c.id)>=0?" selected":"")+'>'+esc(c.name)+'</option>';}).join("")+
+       '</select></td>'+
+       '<td><span class="pill '+(p.status==="approved"?"ok":(p.status==="rejected"?"bad":""))+'">'+esc(p.status)+'</span></td>'+
+       '<td class="tm">'+dstr(p.created_at)+'</td>'+
+       '<td>'+
+         (p.status!=="approved"?'<button class="fbtn admapprove" type="button" data-id="'+esc(p.id)+'">Freigeben</button> ':'')+
+         (p.status!=="rejected"?'<button class="fbtn admreject" type="button" data-id="'+esc(p.id)+'">Ablehnen</button> ':'')+
+         '<button class="fbtn admtoggle" type="button" data-id="'+esc(p.id)+'">'+(p.is_admin?"Admin entziehen":"Admin machen")+'</button>'+
+       '</td></tr>';
+  });
+  if(!ADMINROWS.length) h='<tr><td colspan="7" style="color:var(--muted)">Noch keine Anmeldungen.</td></tr>';
+  body.innerHTML=h;
+  function upd(id,patch){
+    sbClient.from("profiles").update(patch).eq("id",id).then(function(r){
+      if(r.error){ authSay("adminMsg",r.error.message,true); return; }
+      authSay("adminMsg","Gespeichert.");
+      loadAdmin();
+    }).catch(function(err){ authSay("adminMsg","Speichern fehlgeschlagen: "+((err&&err.message)||err),true); });
+  }
+  Array.prototype.forEach.call(body.querySelectorAll(".admapprove"),function(b){
+    b.onclick=function(){ upd(this.getAttribute("data-id"),{status:"approved",approved_at:new Date().toISOString(),approved_by:PROFILE.id}); };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".admreject"),function(b){
+    b.onclick=function(){ upd(this.getAttribute("data-id"),{status:"rejected"}); };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".admtoggle"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-id");
+      var p=ADMINROWS.filter(function(x){return x.id===id;})[0];
+      upd(id,{is_admin: !(p&&p.is_admin)});
+    };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".admcat"),function(s){
+    s.onchange=function(){ upd(this.getAttribute("data-id"),{category:this.value}); };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".admcomp"),function(s){
+    s.onchange=function(){
+      var id=this.getAttribute("data-id");
+      var wanted=Array.prototype.filter.call(this.options,function(o){return o.selected;}).map(function(o){return o.value;});
+      var p=ADMINROWS.filter(function(x){return x.id===id;})[0];
+      var have=((p&&p.competition_members)||[]).map(function(m){return m.competition_id;});
+      var toAdd=wanted.filter(function(x){return have.indexOf(x)<0;});
+      var toRemove=have.filter(function(x){return wanted.indexOf(x)<0;});
+      var ops=[];
+      if(toAdd.length) ops.push(sbClient.from("competition_members").insert(toAdd.map(function(cid){return {competition_id:cid, profile_id:id};})));
+      toRemove.forEach(function(cid){ ops.push(sbClient.from("competition_members").delete().match({competition_id:cid, profile_id:id})); });
+      Promise.all(ops).then(function(results){
+        var err=results.filter(function(r){return r&&r.error;})[0];
+        if(err){ authSay("adminMsg",err.error.message,true); return; }
+        authSay("adminMsg","Wettkämpfe aktualisiert.");
+        loadAdmin();
+      }).catch(function(err){ authSay("adminMsg","Fehler: "+((err&&err.message)||err),true); });
+    };
+  });
+}
+
+/* ---- Wettkämpfe verwalten (Admin): anlegen, duplizieren, Link kopieren ---- */
+var ALLCOMPS=[], slugTouched=false;
+function ccSay(msg,bad){ authSay("ccMsg",msg,bad); }
+function slugify(s){
+  var map={"ä":"ae","ö":"oe","ü":"ue","ß":"ss"};
+  return String(s).toLowerCase().replace(/[äöüß]/g,function(c){return map[c]||c;})
+    .replace(/[^a-z0-9]+/g,"").slice(0,40);
+}
+function competitionLink(slug){
+  return location.origin+location.pathname+"?w="+encodeURIComponent(slug);
+}
+function loadAllCompetitions(){
+  if(!sbClient||!PROFILE||!PROFILE.is_admin) return;
+  sbClient.from("competitions").select("id,slug,name,is_default,competition_members(profile_id)").order("name").then(function(r){
+    if(r.error) return;
+    ALLCOMPS=r.data||[];
+    renderCompAdmin();
+    renderAdmin();
+  });
+}
+function renderCompAdmin(){
+  var body=document.querySelector("#comptab tbody"); if(!body) return;
+  var h="";
+  ALLCOMPS.forEach(function(c){
+    var link=competitionLink(c.slug);
+    h+='<tr><td>'+esc(c.name)+(c.is_default?' <span class="pill ok">Standard</span>':'')+'</td>'+
+       '<td><span class="mono" style="font-size:12px">'+esc(link)+'</span> <button class="fbtn compcopy" data-link="'+esc(link)+'" type="button">Kopieren</button></td>'+
+       '<td class="num">'+((c.competition_members||[]).length)+'</td>'+
+       '<td><button class="fbtn compdel" type="button" data-id="'+esc(c.id)+'"'+(c.is_default?' disabled title="Standard-Wettkampf lässt sich nicht löschen"':'')+'>Löschen</button></td></tr>';
+  });
+  if(!ALLCOMPS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Wettkampf.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(body.querySelectorAll(".compcopy"),function(b){
+    b.onclick=function(){
+      var link=this.getAttribute("data-link"), btn=this, old=btn.textContent;
+      (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(link):Promise.reject())
+        .then(function(){ btn.textContent="Kopiert!"; setTimeout(function(){btn.textContent=old;},1500); })
+        .catch(function(){ prompt("Link kopieren:",link); });
+    };
+  });
+  Array.prototype.forEach.call(body.querySelectorAll(".compdel"),function(b){
+    b.onclick=function(){ openCompetitionDelete(this.getAttribute("data-id")); };
+  });
+  var dupSel=document.getElementById("ccDupFrom");
+  if(dupSel) dupSel.innerHTML=ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join("");
+}
+function competitionDeleteHtml(c){
+  return '<h3>Wettkampf löschen</h3>'+
+    '<p class="hint" style="margin-top:-8px">Wettkampf „'+esc(c.name)+'" wirklich löschen? Das entfernt unwiderruflich Zeitplan, Personen, Chat, Aufgaben und Speicherstände dieses Wettkampfs.</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<button class="fbtn" id="compDelConfirm" type="button">Endgültig löschen</button>'+
+      '<button class="fbtn" id="compDelCancel" type="button">Abbrechen</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="compDelMsg" role="status"></p>';
+}
+/* Fremdschlüssel auf competitions sind in supabase/schema.sql bereits
+   "on delete cascade" (plan_state, competition_members, tasks, chat,
+   payouts, attendance, people_contacts, ...) - keine weitere
+   Aufräum-Logik hier nötig. */
+function openCompetitionDelete(id){
+  if(!PROFILE||!PROFILE.is_admin||!id) return;
+  var c=ALLCOMPS.filter(function(x){return x.id===id;})[0]; if(!c) return;
+  if(c.is_default){
+    ccSay('„'+c.name+'" ist der Standard-Wettkampf (erreichbar ohne ?w=-Link) und lässt sich nicht löschen, solange kein anderer Wettkampf als Standard gesetzt ist.',true);
+    return;
+  }
+  document.getElementById("modalBody").innerHTML=competitionDeleteHtml(c);
+  function cdSay(msg,bad){ var m=document.getElementById("compDelMsg"); if(m){ m.textContent=msg||""; m.className="pdfmsg"+(bad?" bad":""); } }
+  document.getElementById("compDelCancel").onclick=closeModal;
+  document.getElementById("compDelConfirm").onclick=function(){
+    var btn=this; btn.disabled=true; cdSay("Lösche …");
+    sbClient.from("competitions").delete().eq("id",c.id).then(function(r){
+      if(r.error){ cdSay(r.error.message,true); btn.disabled=false; return; }
+      closeModal();
+      if(CURRENT_COMP&&CURRENT_COMP.id===c.id){
+        /* War der gerade angezeigte Wettkampf: ?w=<gelöschter-slug> zeigt
+           jetzt ins Leere. Link ohne ?w= neu laden - das lässt
+           resolveCompetition() ganz regulär auf den Standard-Wettkampf
+           auflösen, wie beim ersten Besuch ohne Link. */
+        var url=new URL(location.href); url.searchParams.delete("w");
+        location.href=url.pathname+(url.search||"")+url.hash;
+      } else {
+        loadAllCompetitions();
+      }
+    }).catch(function(err){ cdSay(String((err&&err.message)||err),true); btn.disabled=false; });
+  };
+  openModal();
+}
+function resetCompForm(){
+  document.getElementById("ccName").value=""; document.getElementById("ccSlug").value="";
+  slugTouched=false;
+  var r=document.querySelector('input[name="ccSrc"][value="template"]'); if(r) r.checked=true;
+  document.getElementById("compCreateBox").hidden=true;
+}
+function createCompetition(){
+  if(!sbClient||!PROFILE) return;
+  var name=document.getElementById("ccName").value.trim();
+  var slug=slugify(document.getElementById("ccSlug").value.trim()||name);
+  var srcEl=document.querySelector('input[name="ccSrc"]:checked');
+  var src=srcEl?srcEl.value:"template";
+  var dupFrom=document.getElementById("ccDupFrom").value;
+  if(!name||!slug){ ccSay("Name und Link-Kennung eingeben.",true); return; }
+  ccSay("Lege an …");
+  sbClient.from("competitions").insert({slug:slug, name:name, created_by:PROFILE.id}).select().single().then(function(r){
+    if(r.error){ ccSay(r.error.message,true); return; }
+    var comp=r.data;
+    var seedP = (src==="dup"&&dupFrom)
+      ? sbClient.from("plan_state").select("key,data").eq("competition_id",dupFrom).then(function(r2){ return r2.data||[]; })
+      : Promise.resolve([
+          {key:"cfg",data:CFG0},
+          {key:"quali",data:{rows:QROWS,groups:QGROUPS,blocks:QBLOCKS,seq:1000}},
+          {key:"finale",data:{rows:FROWS,groups:FGROUPS,blocks:FBLOCKS,seq:1000}},
+          {key:"texts",data:{}},
+          {key:"textblocks",data:{added:[],hidden:[]}}
+        ]);
+    seedP.then(function(rows){
+      /* Vorlage übernimmt Wertungsklassen, Kategorien und Zeitraster - bewusst
+         NICHT Personen/Zuordnungen: die gehören zum jeweiligen Wettkampftag,
+         nicht zur Vorlage (siehe Hinweistext im Formular). cfg.people liegt
+         mit im selben JSON-Datensatz wie classes/cats/win, deshalb hier
+         gezielt herausnehmen statt den ganzen Datensatz zu kopieren. */
+      rows=(rows||[]).map(function(row){
+        if(row.key!=="cfg"||!row.data) return row;
+        var cfg=clone(row.data); cfg.people=[];
+        return {key:row.key, data:cfg};
+      });
+      var payload=rows.map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
+      if(!payload.length) return {error:null};
+      return sbClient.from("plan_state").insert(payload);
+    }).then(function(r3){
+      if(r3&&r3.error){ ccSay("Wettkampf angelegt, aber Struktur konnte nicht kopiert werden: "+r3.error.message,true); }
+      else ccSay('Wettkampf „'+name+'" angelegt: '+competitionLink(slug));
+      resetCompForm(); loadAllCompetitions();
+    }).catch(function(err){ ccSay("Fehler beim Anlegen der Struktur: "+((err&&err.message)||err),true); });
+  }).catch(function(err){ ccSay("Verbindung fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+document.getElementById("ccName").oninput=function(){
+  if(!slugTouched) document.getElementById("ccSlug").value=slugify(this.value);
+};
+document.getElementById("ccSlug").oninput=function(){ slugTouched=true; };
+document.getElementById("compCreateToggle").onclick=function(){
+  document.getElementById("compCreateBox").hidden=!document.getElementById("compCreateBox").hidden;
+};
+document.getElementById("ccCancel").onclick=resetCompForm;
+document.getElementById("ccGo").onclick=createCompetition;
+
+/* ---- Plan-Zustand mit Supabase abgleichen (ersetzt localStorage als Quelle der Wahrheit) ---- */
+function pushState(key,data){
+  if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
+  sbClient.from("plan_state").upsert({competition_id:CURRENT_COMP.id,key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
+    .then(function(r){ if(r.error) console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); });
+}
+function pullState(){
+  if(!sbClient||!CURRENT_COMP) return;
+  sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
+    if(r.error||!r.data) return;
+    var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
+    if(by.cfg&&by.quali&&by.finale){
+      applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
+    } else {
+      /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
+      pushState("cfg",CFG);
+      pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
+      pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
+      pushState("texts",TXT);
+      pushState("textblocks",TXTBLOCKS);
+    }
+  }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
+}
+var planSub=null;
+function subscribePlanState(){
+  if(!sbClient||planSub||!CURRENT_COMP) return;
+  planSub=sbClient.channel("plan_state-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"plan_state",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ pullState(); })
+    .subscribe();
+}
+

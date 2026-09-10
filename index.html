@@ -232,6 +232,11 @@ li{margin-bottom:6px}
 .blk.clash{outline:2px solid var(--bad); outline-offset:-1px}
 .blk.warn{outline:2px dashed var(--warn); outline-offset:-1px}
 .blk.sel{outline:2px solid var(--ink); outline-offset:-1px; box-shadow:0 2px 10px -3px rgba(0,0,0,.35)}
+.blk-del{position:absolute; top:1px; right:1px; width:15px; height:15px; line-height:13px; text-align:center;
+  font-family:var(--serif); font-size:12px; padding:0; border:none; border-radius:50%; cursor:pointer;
+  background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease}
+.blk:hover .blk-del,.blk-del:focus-visible{opacity:1; color:var(--bad)}
+.blk-del:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
 .ed-head b{font-family:var(--disp); font-weight:600; font-size:17px; color:var(--ac)}
@@ -410,6 +415,11 @@ body:not([data-auth="ok"]) main{display:none}
 .task-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
 .task-box[open] .task-summary::before{transform:rotate(90deg)}
 .task-body{padding:0 16px 16px}
+.stand-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
+  padding:8px 0; font-family:var(--disp); font-weight:500; font-size:14px}
+.stand-summary::-webkit-details-marker{display:none}
+.stand-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
+#standList[open] .stand-summary::before{transform:rotate(90deg)}
 .task-card{background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md);
   box-shadow:var(--shadow); padding:14px 16px; margin:0 0 12px}
 .task-card-head{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px}
@@ -497,6 +507,7 @@ body:not([data-auth="ok"]) .chat-panel{display:none !important}
 body[data-cat]:not([data-cat="orga"]) main section input,
 body[data-cat]:not([data-cat="orga"]) main section select,
 body[data-cat]:not([data-cat="orga"]) main section button,
+body[data-cat]:not([data-cat="orga"]) main section textarea,
 body[data-cat]:not([data-cat="orga"]) main section .rdel,
 body[data-cat]:not([data-cat="orga"]) main section .blk{
   pointer-events:none; opacity:.55; cursor:default;
@@ -788,7 +799,7 @@ body.editing{caret-color:var(--ink)}
 <section id="start" data-views="orga bau teams sport" data-tab="start">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Für dich</p>
+      <p class="eyebrow" role="heading" aria-level="2">Für dich</p>
       <p class="lede">Dein Status und deine Aufgaben auf einen Blick. Der vollständige Plan folgt darunter.</p>
     </div>
     <div class="cards g3">
@@ -874,12 +885,13 @@ body.editing{caret-color:var(--ink)}
 <section id="melde" data-views="orga" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
+      <p class="eyebrow" role="heading" aria-level="2">Wertungsklassen und Meldezahlen</p>
       <p class="lede">Diese Tabelle ist der Ursprung des ganzen Plans. Klassennamen und Gruppenbezeichnungen sind frei: aus U15 männlich/weiblich wird bei Bedarf U21 Herren/Damen. Jede Änderung verlängert oder verkürzt sofort die Balken im Zeitplan, verschiebt die Endzeiten und passt Laufkarte, Team-Zeitplan, Wegediagramm und Finalquoten an.</p>
     </div>
     <div class="tblwrap"><table id="meldtab">
       <thead><tr><th>Klasse</th><th>Gruppe 1</th><th class="num">TN</th><th>Gruppe 2</th><th class="num">TN</th>
-        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th><th></th></tr></thead>
+        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th>
+        <th class="num">Quali</th><th class="num">Finale</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="toolbar">
@@ -924,7 +936,7 @@ body.editing{caret-color:var(--ink)}
 <section id="tag" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Tagesablauf</p>
+      <p class="eyebrow" role="heading" aria-level="2">Tagesablauf</p>
     </div>
     <div class="rail">
       <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
@@ -947,7 +959,7 @@ body.editing{caret-color:var(--ink)}
 <section id="quali" data-views="orga teams sport bau" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Zeitplan Qualifikation</p>
+      <p class="eyebrow" role="heading" aria-level="2">Zeitplan Qualifikation</p>
       <p class="lede">Alle vier Altersklassen starten um 10:30. Innerhalb einer Klasse laufen die drei Routen so versetzt, dass <strong>nie mehr als zwei gleichzeitig besetzt sind</strong> – das Team der frei werdenden Route wandert zur nächsten. Bei der U9 reicht sogar ein Team für beide Routen. Ein Routen-Team sind drei Personen: Sicherung plus Ergebnisdienst. Helle Balken sind die Jungs, dunkle die Mädchen.</p>
     </div>
 
@@ -962,6 +974,7 @@ body.editing{caret-color:var(--ink)}
       <span id="fbar" style="display:contents"></span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addQtoggle">+ Route</button>
+      <button class="fbtn" id="addQBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetQ">Zurücksetzen</button>
     </div>
 
@@ -975,6 +988,15 @@ body.editing{caret-color:var(--ink)}
           <select id="addQmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
         <label><button class="fbtn" id="addQgo" type="button">Route anlegen</button></label>
         <label><button class="fbtn" id="addQcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
+    <div class="addbox" id="addQBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addQBlockCls"></select></label>
+        <label>Route <select id="addQBlockRoute"></select></label>
+        <label><button class="fbtn" id="addQBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addQBlockCancel" type="button">Abbrechen</button></label>
       </div>
     </div>
 
@@ -1031,7 +1053,7 @@ body.editing{caret-color:var(--ink)}
 <section id="personal" data-views="orga bau teams sport" data-tab="team">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Kontakte</p>
+      <p class="eyebrow" role="heading" aria-level="2">Kontakte</p>
       <p class="lede">Personal, Team-Zuordnung und Anwesenheit an einem Ort. Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
     </div>
 
@@ -1107,7 +1129,7 @@ body.editing{caret-color:var(--ink)}
 <section id="finale" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Finale · 14:15 – 15:29</p>
+      <p class="eyebrow" role="heading" aria-level="2">Finale · 14:15 – 15:29</p>
       <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
     </div>
 
@@ -1123,6 +1145,7 @@ body.editing{caret-color:var(--ink)}
       <span class="lbl">Finale</span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addFtoggle">+ Route</button>
+      <button class="fbtn" id="addFBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetF">Zurücksetzen</button>
     </div>
 
@@ -1139,6 +1162,15 @@ body.editing{caret-color:var(--ink)}
       </div>
     </div>
 
+    <div class="addbox" id="addFBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addFBlockCls"></select></label>
+        <label>Route <select id="addFBlockRoute"></select></label>
+        <label><button class="fbtn" id="addFBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addFBlockCancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
     <div class="readout" id="roF"></div>
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
@@ -1150,6 +1182,10 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
     <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+
+    <h3>Routenplan</h3>
+    <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
+    <div class="routes" id="routenplanFinale" style="margin-bottom:22px"></div>
   </div>
 </section>
 
@@ -1157,7 +1193,7 @@ body.editing{caret-color:var(--ink)}
 <section id="admin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Admin</p>
+      <p class="eyebrow" role="heading" aria-level="2">Admin</p>
       <p class="lede">Wettkämpfe anlegen, Anmeldungen freigeben, Kategorie- und Admin-Rechte verwalten, Auszahlung und Verpflegung.</p>
     </div>
 
@@ -1216,7 +1252,7 @@ body.editing{caret-color:var(--ink)}
 <section id="staende" data-views="orga bau teams sport" data-tab="mehr">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Speicherstände</p>
+      <p class="eyebrow" role="heading" aria-level="2">Speicherstände</p>
       <p class="lede">Jeder Stand friert den kompletten Plan ein: Klassen, Meldezahlen, Zeitfenster, alle Balken, Personal und die bearbeiteten Texte. Unten steht, wer zuletzt hier war und was er oder sie gemacht hat.</p>
     </div>
     <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
@@ -1235,10 +1271,13 @@ body.editing{caret-color:var(--ink)}
     </div>
     <p class="pdfmsg" id="stMsg" role="status"></p>
 
-    <div class="tblwrap"><table id="standtab">
-      <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table></div>
+    <details id="standList">
+      <summary class="stand-summary">Gespeicherte Stände (<span id="standCount">0</span>)</summary>
+      <div class="tblwrap"><table id="standtab">
+        <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </details>
 
     <h4>Wer war zuletzt hier</h4>
     <div id="vlist" style="margin:0 0 8px"></div>
@@ -1599,6 +1638,30 @@ Plan.prototype.delRoute=function(id){
   this.rows=this.rows.filter(function(r){return r.id!==id;});
   this.render(); this.save(); return true;
 };
+/* Manuell einen weiteren Balken für eine Klasse anlegen - anders als
+   addClass() KEINE neuen Gruppen, sondern ein zusätzlicher Termin für die
+   schon vorhandene männliche/weibliche Gruppe dieser Klasse (dasselbe
+   Muster wie die zwei Balken, die addClass() für Quali bereits auf zwei
+   Routen verteilt). Ohne vorhandene Gruppe für eine Seite (Klasse in
+   diesem Plan noch gar nicht angelegt) wird diese Seite übersprungen. */
+Plan.prototype.addBlock=function(cls,routeId,start){
+  if(!this.row(routeId)) return false;
+  var self=this, added=false;
+  ["m","w"].forEach(function(gender){
+    var g=self.groups.filter(function(x){return x.cls===cls&&x.gender===gender;})[0];
+    if(!g) return;
+    self.blocks.push({id:"b"+(++self.seq), gid:g.id, r:routeId, s:Math.round(start/SNAP)*SNAP});
+    added=true;
+  });
+  if(!added) return false;
+  this.render(); this.save(); return true;
+};
+Plan.prototype.delBlock=function(blockId){
+  if(!this.blocks.some(function(b){return b.id===blockId;})) return false;
+  this.blocks=this.blocks.filter(function(b){return b.id!==blockId;});
+  if(this.sel===blockId) this.sel=null;
+  this.render(); this.save(); return true;
+};
 Plan.prototype.toggleDir=function(id){
   var r=this.row(id); if(!r) return;
   r.dir=r.dir==="ab"?"auf":"ab";
@@ -1688,7 +1751,7 @@ Plan.prototype.mount=function(b){
   var d=document.createElement("div");
   d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
   d.setAttribute("tabindex","0"); d.setAttribute("role","button");
-  d.innerHTML='<b></b><span></span>';
+  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(b.r)+' löschen">×</button>';
   t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
 };
 Plan.prototype.position=function(){
@@ -1739,6 +1802,13 @@ Plan.prototype.bind=function(d,b){
     window.removeEventListener("pointerup",onUp);
     window.removeEventListener("pointercancel",onUp);
     if(!moved) self.select(b.id); else {self.save(); if(self.sel===b.id) self.editor();}
+  }
+  var delBtn=d.querySelector(".blk-del");
+  if(delBtn){
+    /* pointerdown muss VOR dem Drag-Handler des Balkens selbst gestoppt
+       werden, sonst startet ein Klick auf "×" zusätzlich einen Drag. */
+    delBtn.addEventListener("pointerdown",function(ev){ ev.stopPropagation(); });
+    delBtn.addEventListener("click",function(ev){ ev.stopPropagation(); self.delBlock(b.id); });
   }
   d.addEventListener("pointerdown",function(ev){
     if(ev.button!==0&&ev.pointerType==="mouse") return;
@@ -2019,6 +2089,7 @@ function afterCfg(replan){
   pq.render(); pf.render(); pq.save(); pf.save();
   renderFilterBtns(); if(typeof fillAddRoute==="function") fillAddRoute();
 }
+function classInPlan(plan,classId){ return plan.rows.some(function(r){return r.cls===classId;}); }
 function renderMeld(){
   var h="", tot={m:0,w:0,n:0,min:0};
   var qlist=(pq.stat&&pq.stat.list)||[];
@@ -2037,6 +2108,8 @@ function renderMeld(){
          '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
        '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
+       '<td class="num"><input type="checkbox" class="cq" data-c="'+c.id+'"'+(classInPlan(pq,c.id)?" checked":"")+'></td>'+
+       '<td class="num"><input type="checkbox" class="cf" data-c="'+c.id+'"'+(classInPlan(pf,c.id)?" checked":"")+'></td>'+
        '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
@@ -2065,6 +2138,26 @@ function renderMeld(){
       reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
     };
   });
+  /* Quali/Finale einzeln je Klasse: ruft addClass()/delClass() nur auf der
+     jeweils betroffenen Plan-Instanz auf, nie auf beiden zusammen wie beim
+     Löschen der ganzen Klasse. CFG.classes bleibt dabei unverändert - der
+     Klassen-Eintrag selbst (Name/Meldezahlen) geht nie verloren. */
+  function wireClassToggle(sel,plan,otherSel){
+    Array.prototype.forEach.call(document.querySelectorAll(sel),function(cb){
+      cb.onchange=function(){
+        var id=this.getAttribute("data-c"), c=CL(id); if(!c) return;
+        if(!this.checked){
+          var other=document.querySelector(otherSel+'[data-c="'+id+'"]');
+          if(other&&!other.checked){ this.checked=true; return; }
+          plan.delClass(id);
+        } else {
+          plan.addClass(c);
+        }
+      };
+    });
+  }
+  wireClassToggle("#meldtab .cq",pq,"#meldtab .cf");
+  wireClassToggle("#meldtab .cf",pf,"#meldtab .cq");
 }
 function addClass(name,lm,lw,m,w,mode){
   name=String(name||"").trim(); if(!name) return false;
@@ -2250,8 +2343,8 @@ function renderFinalTab(){
 }
 
 var routeNoteTimer=null;
-function renderRoutePlan(plan,list){
-  var box=document.getElementById("routenplan"); if(!box) return;
+function renderRoutePlan(plan,list,targetId){
+  var box=document.getElementById(targetId||"routenplan"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;
@@ -2291,7 +2384,10 @@ function afterQ(plan,list){
   renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
   if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
 }
-function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
+function afterF(plan,list){
+  renderRoutePlan(plan,list,"routenplanFinale");
+  if(pq&&pf){ renderFinalTab(); renderStats(); }
+}
 function autoStep(span){return span>300?60:(span>150?30:15);}
 pq=new Plan({mount:"gq-inner", readout:"roQ", editor:"edQ", laufkarte:"#lk", store:"kidscup-quali-v9", kind:"quali",
   prefix:"Q", start:CFG.win.qs, end:CFG.win.qe, step:autoStep(CFG.win.qe-CFG.win.qs), axisLabel:"Quali",
@@ -2352,6 +2448,31 @@ document.getElementById("addFgo").onclick=function(){
   addBoxF.hidden=true;
 };
 document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
+
+/* ---- Balken manuell hinzufügen ---- */
+function fillAddBlock(clsSelId,routeSelId,plan){
+  document.getElementById(clsSelId).innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  document.getElementById(routeSelId).innerHTML=plan.rows.map(function(r){return '<option value="'+r.id+'">'+esc(r.id)+' – '+esc(plan.desc(r))+'</option>';}).join("");
+}
+var addBoxQBlock=document.getElementById("addQBlock");
+document.getElementById("addQBlockToggle").onclick=function(){
+  addBoxQBlock.hidden=!addBoxQBlock.hidden; if(!addBoxQBlock.hidden) fillAddBlock("addQBlockCls","addQBlockRoute",pq);
+};
+document.getElementById("addQBlockGo").onclick=function(){
+  pq.addBlock(document.getElementById("addQBlockCls").value,document.getElementById("addQBlockRoute").value,pq.o.start);
+  addBoxQBlock.hidden=true;
+};
+document.getElementById("addQBlockCancel").onclick=function(){addBoxQBlock.hidden=true;};
+
+var addBoxFBlock=document.getElementById("addFBlock");
+document.getElementById("addFBlockToggle").onclick=function(){
+  addBoxFBlock.hidden=!addBoxFBlock.hidden; if(!addBoxFBlock.hidden) fillAddBlock("addFBlockCls","addFBlockRoute",pf);
+};
+document.getElementById("addFBlockGo").onclick=function(){
+  pf.addBlock(document.getElementById("addFBlockCls").value,document.getElementById("addFBlockRoute").value,pf.o.start);
+  addBoxFBlock.hidden=true;
+};
+document.getElementById("addFBlockCancel").onclick=function(){addBoxFBlock.hidden=true;};
 
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");
@@ -3075,7 +3196,7 @@ function renderCompAdmin(){
     h+='<tr><td>'+esc(c.name)+(c.is_default?' <span class="pill ok">Standard</span>':'')+'</td>'+
        '<td><span class="mono" style="font-size:12px">'+esc(link)+'</span> <button class="fbtn compcopy" data-link="'+esc(link)+'" type="button">Kopieren</button></td>'+
        '<td class="num">'+((c.competition_members||[]).length)+'</td>'+
-       '<td></td></tr>';
+       '<td><button class="fbtn compdel" type="button" data-id="'+esc(c.id)+'"'+(c.is_default?' disabled title="Standard-Wettkampf lässt sich nicht löschen"':'')+'>Löschen</button></td></tr>';
   });
   if(!ALLCOMPS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Wettkampf.</td></tr>';
   body.innerHTML=h;
@@ -3087,8 +3208,53 @@ function renderCompAdmin(){
         .catch(function(){ prompt("Link kopieren:",link); });
     };
   });
+  Array.prototype.forEach.call(body.querySelectorAll(".compdel"),function(b){
+    b.onclick=function(){ openCompetitionDelete(this.getAttribute("data-id")); };
+  });
   var dupSel=document.getElementById("ccDupFrom");
   if(dupSel) dupSel.innerHTML=ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join("");
+}
+function competitionDeleteHtml(c){
+  return '<h3>Wettkampf löschen</h3>'+
+    '<p class="hint" style="margin-top:-8px">Wettkampf „'+esc(c.name)+'" wirklich löschen? Das entfernt unwiderruflich Zeitplan, Personen, Chat, Aufgaben und Speicherstände dieses Wettkampfs.</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<button class="fbtn" id="compDelConfirm" type="button">Endgültig löschen</button>'+
+      '<button class="fbtn" id="compDelCancel" type="button">Abbrechen</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="compDelMsg" role="status"></p>';
+}
+/* Fremdschlüssel auf competitions sind in supabase/schema.sql bereits
+   "on delete cascade" (plan_state, competition_members, tasks, chat,
+   payouts, attendance, people_contacts, ...) - keine weitere
+   Aufräum-Logik hier nötig. */
+function openCompetitionDelete(id){
+  if(!PROFILE||!PROFILE.is_admin||!id) return;
+  var c=ALLCOMPS.filter(function(x){return x.id===id;})[0]; if(!c) return;
+  if(c.is_default){
+    ccSay('„'+c.name+'" ist der Standard-Wettkampf (erreichbar ohne ?w=-Link) und lässt sich nicht löschen, solange kein anderer Wettkampf als Standard gesetzt ist.',true);
+    return;
+  }
+  document.getElementById("modalBody").innerHTML=competitionDeleteHtml(c);
+  function cdSay(msg,bad){ var m=document.getElementById("compDelMsg"); if(m){ m.textContent=msg||""; m.className="pdfmsg"+(bad?" bad":""); } }
+  document.getElementById("compDelCancel").onclick=closeModal;
+  document.getElementById("compDelConfirm").onclick=function(){
+    var btn=this; btn.disabled=true; cdSay("Lösche …");
+    sbClient.from("competitions").delete().eq("id",c.id).then(function(r){
+      if(r.error){ cdSay(r.error.message,true); btn.disabled=false; return; }
+      closeModal();
+      if(CURRENT_COMP&&CURRENT_COMP.id===c.id){
+        /* War der gerade angezeigte Wettkampf: ?w=<gelöschter-slug> zeigt
+           jetzt ins Leere. Link ohne ?w= neu laden - das lässt
+           resolveCompetition() ganz regulär auf den Standard-Wettkampf
+           auflösen, wie beim ersten Besuch ohne Link. */
+        var url=new URL(location.href); url.searchParams.delete("w");
+        location.href=url.pathname+(url.search||"")+url.hash;
+      } else {
+        loadAllCompetitions();
+      }
+    }).catch(function(err){ cdSay(String((err&&err.message)||err),true); btn.disabled=false; });
+  };
+  openModal();
 }
 function resetCompForm(){
   document.getElementById("ccName").value=""; document.getElementById("ccSlug").value="";
@@ -3118,7 +3284,17 @@ function createCompetition(){
           {key:"textblocks",data:{added:[],hidden:[]}}
         ]);
     seedP.then(function(rows){
-      var payload=(rows||[]).map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
+      /* Vorlage übernimmt Wertungsklassen, Kategorien und Zeitraster - bewusst
+         NICHT Personen/Zuordnungen: die gehören zum jeweiligen Wettkampftag,
+         nicht zur Vorlage (siehe Hinweistext im Formular). cfg.people liegt
+         mit im selben JSON-Datensatz wie classes/cats/win, deshalb hier
+         gezielt herausnehmen statt den ganzen Datensatz zu kopieren. */
+      rows=(rows||[]).map(function(row){
+        if(row.key!=="cfg"||!row.data) return row;
+        var cfg=clone(row.data); cfg.people=[];
+        return {key:row.key, data:cfg};
+      });
+      var payload=rows.map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
       if(!payload.length) return {error:null};
       return sbClient.from("plan_state").insert(payload);
     }).then(function(r3){
@@ -3883,6 +4059,7 @@ function renderStands(){
   });
   if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
   body.innerHTML=h;
+  var cnt=document.getElementById("standCount"); if(cnt) cnt.textContent=STANDS.length;
   Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
     b.onclick=function(){
       if(!isAdmin) return;
@@ -3925,6 +4102,13 @@ function logMe(what){
   if(!DB||!PROFILE) return;
   DB.doc("viewers/"+PROFILE.id).set({name:PROFILE.full_name, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
 }
+var STANDS_LIMIT=10;
+/* Ältere Stände über dem Limit ermitteln (jüngste zuerst behalten) - reine
+   Auswahl, löscht selbst nichts, damit sie für beide Pfade (geteilt/lokal)
+   gleich benutzt werden kann. */
+function excessStands(list){
+  return list.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).slice(STANDS_LIMIT);
+}
 function saveStand(){
   var t=document.getElementById("stTitle").value.trim()||("Stand "+dstr());
   var n=document.getElementById("stNote").value.trim();
@@ -3935,12 +4119,16 @@ function saveStand(){
       standSay('Stand „'+t+'" gespeichert – für alle sichtbar, die den Link haben.');
       document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
       logMe("gespeichert: "+t);
+      excessStands(STANDS.concat([rec])).forEach(function(s){ DB.doc("stands/"+s.id).delete().catch(function(){}); });
     }).catch(function(e){
       standSay("Speichern fehlgeschlagen"+(e&&e.code?" ("+e.code+")":"")+" – der Stand liegt jetzt nur lokal.",true);
       STANDS.push(rec); saveLocalStands(); renderStands();
     });
   } else {
-    STANDS.push(rec); saveLocalStands(); renderStands();
+    STANDS.push(rec);
+    var extra=excessStands(STANDS);
+    if(extra.length){ var ids=extra.map(function(s){return s.id;}); STANDS=STANDS.filter(function(s){return ids.indexOf(s.id)<0;}); }
+    saveLocalStands(); renderStands();
     standSay('Stand „'+t+'" lokal gespeichert (nur in diesem Browser).');
     document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
   }
@@ -4674,6 +4862,16 @@ document.getElementById("jumpNav").onclick=function(ev){
   var sec=document.getElementById(id); if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
 };
 renderJumpNav();
+
+/* Testhaken (Issue #1 "Test- und Lint-Grundgerüst"): stellt die reinen
+   Rechenfunktionen und die Plan-Engine für Vitest bereit, ohne die
+   bestehende Logik anzufassen. Läuft nur, wenn ein Test vorher
+   window.__TEST__=true gesetzt hat – auf der echten Seite bleibt
+   window.__TEST_EXPORTS__ undefiniert. */
+if(typeof window!=="undefined"&&window.__TEST__){
+  window.__TEST_EXPORTS__={fmt:fmt, parseTime:parseTime, quota:quota, ffix:ffix, Plan:Plan,
+    CFG:CFG, CLIMB:CLIMB, CLn:CLn, gl:gl, allowTxt:allowTxt, esc:esc, reindex:reindex};
+}
 
 })();
 </script>
