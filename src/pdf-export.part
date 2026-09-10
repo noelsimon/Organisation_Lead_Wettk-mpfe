@@ -1,0 +1,553 @@
+/* ================= PDF-Export ================= */
+function loadJs(src){
+  return new Promise(function(res,rej){
+    var s=document.createElement("script"); s.src=src; s.async=true;
+    s.onload=function(){res();}; s.onerror=function(){rej(new Error("load"));};
+    document.head.appendChild(s);
+  });
+}
+function pdfSay(msg,bad){
+  var el=document.getElementById("pdfmsg");
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function T(el,fb){var n=document.querySelector('[data-ed="'+el+'"]'); return n?n.textContent.trim():fb;}
+
+/* ================= Auszahlung & Verpflegung (nur Admin) =================
+   Honorare liegen bewusst NICHT in CFG/plan_state (das ist für alle
+   freigegebenen Mitglieder lesbar), sondern in einer eigenen Tabelle mit
+   admin-only RLS – siehe supabase/migrations/0006_payouts.sql. */
+var PAYOUTS={};
+function paySay(msg,bad){
+  var el=document.getElementById("payMsg"); if(!el) return;
+  el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
+}
+function payAmount(p){ return PAYOUTS[p.id]&&PAYOUTS[p.id].amount!=null?PAYOUTS[p.id].amount:25; }
+function payDrink(p){ return !PAYOUTS[p.id]||PAYOUTS[p.id].drink!==false; }
+function euro(n){ return (Number(n)||0).toFixed(2).replace(".",",")+" €"; }
+function sortedPeople(){
+  return CFG.people.slice().sort(function(a,b){return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");});
+}
+function savePayout(id,fields){
+  if(!sbClient||!CURRENT_COMP||!PROFILE) return;
+  var payload={competition_id:CURRENT_COMP.id,person_id:id,updated_by:PROFILE.id,updated_at:new Date().toISOString(),
+    amount:PAYOUTS[id]?PAYOUTS[id].amount:25, drink_list:PAYOUTS[id]?PAYOUTS[id].drink!==false:true};
+  for(var k in fields) payload[k]=fields[k];
+  sbClient.from("payouts").upsert(payload).then(function(r){ if(r.error) paySay("Speichern fehlgeschlagen: "+r.error.message,true); });
+}
+function loadPayouts(){
+  if(!sbClient||!PROFILE||!PROFILE.is_admin||!CURRENT_COMP) return;
+  sbClient.from("payouts").select("person_id,amount,drink_list").eq("competition_id",CURRENT_COMP.id).then(function(r){
+    if(r.error){ paySay("Laden fehlgeschlagen: "+r.error.message,true); return; }
+    PAYOUTS={};
+    (r.data||[]).forEach(function(row){ PAYOUTS[row.person_id]={amount:Number(row.amount), drink:row.drink_list!==false}; });
+    renderPayTab();
+  }).catch(function(err){ paySay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
+}
+function renderPayTab(){
+  var body=document.querySelector("#paytab tbody"); if(!body) return;
+  var sumEl=document.getElementById("paySum");
+  if(!PROFILE||!PROFILE.is_admin){ body.innerHTML=""; if(sumEl) sumEl.textContent="—"; return; }
+  var list=sortedPeople(), h="", sum=0;
+  list.forEach(function(p){
+    var amt=payAmount(p); sum+=amt;
+    h+='<tr><td>'+esc(p.name)+'</td><td>'+esc(catName(p.cat))+'</td>'+
+       '<td class="num"><input class="nin payamt" data-p="'+esc(p.id)+'" type="number" min="0" max="9999" step="0.5" value="'+amt+'"></td>'+
+       '<td class="num"><input type="checkbox" class="paydrink" data-p="'+esc(p.id)+'"'+(payDrink(p)?" checked":"")+'></td></tr>';
+  });
+  if(!list.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
+  body.innerHTML=h;
+  if(sumEl) sumEl.textContent=euro(sum);
+  Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(inp){
+    inp.onchange=function(){
+      var v=Math.max(0,parseFloat(this.value)||0); this.value=v;
+      var id=this.getAttribute("data-p");
+      PAYOUTS[id]=PAYOUTS[id]||{drink:true}; PAYOUTS[id].amount=v;
+      var total=0; CFG.people.forEach(function(p){total+=payAmount(p);});
+      if(sumEl) sumEl.textContent=euro(total);
+      savePayout(id,{amount:v});
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".paydrink"),function(cb){
+    cb.onchange=function(){
+      var id=this.getAttribute("data-p"), on=this.checked;
+      PAYOUTS[id]=PAYOUTS[id]||{amount:25}; PAYOUTS[id].drink=on;
+      savePayout(id,{drink_list:on});
+    };
+  });
+}
+var paySub=null;
+function subscribePayouts(){
+  if(!sbClient||paySub||!CURRENT_COMP||!PROFILE||!PROFILE.is_admin) return;
+  paySub=sbClient.channel("payouts-changes")
+    .on("postgres_changes",{event:"*",schema:"public",table:"payouts",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ loadPayouts(); })
+    .subscribe();
+}
+function ensureJsPDF(){
+  return (window.jspdf&&window.jspdf.jsPDF ? Promise.resolve()
+    : loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"))
+    .then(function(){ if(!(window.jspdf&&window.jspdf.jsPDF)) throw new Error("jspdf"); });
+}
+function downloadPdfDoc(doc,filename,msgFn){
+  var blob=doc.output("blob");
+  return (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null))
+    .then(function(dl){
+      if(dl&&dl.save) return dl.save({filename:filename,data:blob}).then(function(){msgFn("PDF gespeichert.");});
+      if(saveBlob(blob,filename)){ msgFn("PDF heruntergeladen."); return; }
+      var url=URL.createObjectURL(blob), w=window.open(url,"_blank");
+      if(!w) throw new Error("popup");
+      setTimeout(function(){URL.revokeObjectURL(url);},60000);
+      msgFn("PDF in neuem Tab geöffnet – dort speichern.");
+    });
+}
+function simplePdfKit(){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  var CP1252="€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
+  var SUB={"→":"->","←":"<-","↔":"<->","⇒":"=>","≥":">=","≤":"<=","≠":"!=","✓":"x"};
+  function P(s){
+    s=String(s); var o="";
+    for(var i=0;i<s.length;i++){
+      var c=s.charAt(i);
+      if(s.charCodeAt(i)<256||CP1252.indexOf(c)>=0) o+=c;
+      else o+=(SUB[c]!=null?SUB[c]:"-");
+    }
+    return o;
+  }
+  var _text=doc.text.bind(doc), _split=doc.splitTextToSize.bind(doc);
+  doc.text=function(t,x,y,o){ return _text(Array.isArray(t)?t.map(P):P(t),x,y,o); };
+  doc.splitTextToSize=function(t,w,o){ return _split(P(t),w,o); };
+  var PW=210, PH=297, ML=16, MR=16, CW=PW-ML-MR, page=0;
+  function head(title,sub){
+    page++; if(page>1) doc.addPage();
+    doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+    doc.rect(0,0,PW,20,"F");
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(title,ML,13);
+    doc.setFont("helvetica","normal"); doc.setFontSize(8);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(sub||"",PW-MR,13,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    return 30;
+  }
+  function foot(){
+    doc.setFont("helvetica","normal"); doc.setFontSize(7);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text("Nur für die Orga – nicht veröffentlichen.",ML,PH-8);
+    doc.text("Seite "+page,PW-MR,PH-8,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  }
+  function table(x,y,cols,rows,opt){
+    opt=opt||{};
+    var rh=opt.rh||7, fs=opt.fs||9, rowH=opt.rowH||8;
+    var tw=cols.reduce(function(a,c){return a+c.w;},0);
+    function headerRow(yy){
+      doc.setFontSize(fs-1); doc.setFont("helvetica","bold");
+      doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+      doc.rect(x,yy,tw,rh,"F");
+      doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+      var cx=x; cols.forEach(function(c){ doc.text(String(c.t),c.r?cx+c.w-2:cx+2,yy+rh-2.2,{align:c.r?"right":"left"}); cx+=c.w; });
+      doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+      return yy+rh;
+    }
+    var yy=headerRow(y);
+    rows.forEach(function(r){
+      if(yy+rowH>PH-18){
+        var ny=head(opt.title||"",opt.sub||"");
+        yy=headerRow(ny);
+      }
+      doc.setFont("helvetica",r.bold?"bold":"normal");
+      if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,rowH,"F"); }
+      var cx2=x;
+      cols.forEach(function(c,i){
+        var v=r.c[i]==null?"":String(r.c[i]);
+        doc.text(v,c.r?cx2+c.w-2:cx2+2,yy+rowH/2+fs*0.35,{align:c.r?"right":"left"});
+        cx2+=c.w;
+      });
+      doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.1);
+      doc.line(x,yy+rowH,x+tw,yy+rowH);
+      yy+=rowH;
+    });
+    return yy;
+  }
+  return {doc:doc, head:head, foot:foot, table:table, PW:PW, PH:PH, ML:ML, MR:MR, CW:CW};
+}
+function buildPayoutPDF(){
+  var kit=simplePdfKit(), doc=kit.doc;
+  var sub="Nur für die Orga – nicht veröffentlichen";
+  var y=kit.head("Auszahlungsliste",sub);
+  var cols=[
+    {t:"Name",w:42},{t:"Funktion",w:36},{t:"Shirt-Rückgabe",w:32},
+    {t:"ausgezahlt",w:26,r:true},{t:"Unterschrift",w:kit.CW-42-36-32-26}
+  ];
+  var sum=0;
+  var rows=sortedPeople().map(function(p){
+    var amt=payAmount(p); sum+=amt;
+    return {c:[p.name,catName(p.cat),"",euro(amt),""]};
+  });
+  rows.push({c:["","","SOLL",euro(sum),""],bold:true,fill:PDFCOL.soft});
+  rows.push({c:["","","IST","",""],bold:true});
+  kit.table(kit.ML,y,cols,rows,{title:"Auszahlungsliste",sub:sub});
+  kit.foot();
+  return doc;
+}
+function buildDrinkPDF(){
+  var kit=simplePdfKit(), doc=kit.doc;
+  var sub="Nur für die Orga – nicht veröffentlichen";
+  var y=kit.head("Getränkeliste",sub);
+  var cols=[{t:"Name",w:70},{t:"2 Getränke nach Wahl",w:kit.CW-70}];
+  var rows=sortedPeople().filter(payDrink).map(function(p){ return {c:[p.name,""]}; });
+  kit.table(kit.ML,y,cols,rows,{title:"Getränkeliste",sub:sub});
+  kit.foot();
+  return doc;
+}
+document.getElementById("payPdfBtn").onclick=function(){
+  if(!PROFILE||!PROFILE.is_admin) return;
+  var btn=this, old=btn.textContent; btn.textContent="PDF wird erstellt …"; paySay("");
+  ensureJsPDF().then(function(){
+    return downloadPdfDoc(buildPayoutPDF(),"Auszahlungsliste.pdf",function(m){paySay(m);});
+  }).catch(function(err){
+    paySay("PDF-Export fehlgeschlagen: "+((err&&err.message)||err),true);
+  }).then(function(){ btn.textContent=old; });
+};
+document.getElementById("drinkPdfBtn").onclick=function(){
+  if(!PROFILE||!PROFILE.is_admin) return;
+  var btn=this, old=btn.textContent; btn.textContent="PDF wird erstellt …"; paySay("");
+  ensureJsPDF().then(function(){
+    return downloadPdfDoc(buildDrinkPDF(),"Getraenkeliste.pdf",function(m){paySay(m);});
+  }).catch(function(err){
+    paySay("PDF-Export fehlgeschlagen: "+((err&&err.message)||err),true);
+  }).then(function(){ btn.textContent=old; });
+};
+function buildPDF(){
+  var jsPDF=window.jspdf&&window.jspdf.jsPDF;
+  var doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+  /* Standardschriften können nur WinAnsi – alles andere ersetzen */
+  var CP1252="€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
+  var SUB={"→":"->","←":"<-","↔":"<->","⇒":"=>","≥":">=","≤":"<=","≠":"!=","✓":"x"," ":" "};
+  function P(s){
+    s=String(s); var o="";
+    for(var i=0;i<s.length;i++){
+      var c=s.charAt(i);
+      if(s.charCodeAt(i)<256||CP1252.indexOf(c)>=0){ o+=(c===" "?" ":c); }
+      else o+=(SUB[c]!=null?SUB[c]:"-");
+    }
+    return o;
+  }
+  function PC(cls){return PDFCOL[ACOF[cls]]||PDFCOL.c7;}
+  var _text=doc.text.bind(doc), _split=doc.splitTextToSize.bind(doc);
+  doc.text=function(t,x,y,o){ return _text(Array.isArray(t)?t.map(P):P(t),x,y,o); };
+  doc.splitTextToSize=function(t,w,o){ return _split(P(t),w,o); };
+  var PW=297, PH=210, ML=12, MR=12, CW=PW-ML-MR, page=0;
+  function head(title,sub){
+    page++;
+    if(page>1) doc.addPage();
+    doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+    doc.rect(0,0,PW,17,"F");
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text(title,ML,11);
+    doc.setFont("helvetica","normal"); doc.setFontSize(8);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(sub||"",PW-MR,11,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    return 26;
+  }
+  function foot(){
+    doc.setFont("helvetica","normal"); doc.setFontSize(7);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text("4. Offener Sächsischer Kidscup 2026 · Quacke Zittau · 26.09.2026",ML,PH-6);
+    doc.text("Seite "+page,PW-MR,PH-6,{align:"right"});
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  }
+  function table(x,y,cols,rows,opt){
+    opt=opt||{}; var rh=opt.rh||6, fs=opt.fs||8;
+    doc.setFontSize(fs-1); doc.setFont("helvetica","bold");
+    doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+    var tw=cols.reduce(function(a,c){return a+c.w;},0);
+    doc.rect(x,y,tw,rh,"F");
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    var cx=x; cols.forEach(function(c){ doc.text(String(c.t),c.r?cx+c.w-1.5:cx+1.5,y+rh-2,{align:c.r?"right":"left"}); cx+=c.w; });
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    var yy=y+rh, lh=fs*1.15*0.3528;
+    doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+    rows.forEach(function(r){
+      if(r.bold) doc.setFont("helvetica","bold"); else doc.setFont("helvetica","normal");
+      var wrapped=cols.map(function(c,i){
+        var v=r.c[i]==null?"":String(r.c[i]);
+        return v===""?[""]:doc.splitTextToSize(v,c.w-3);
+      });
+      var nl=wrapped.reduce(function(a,L){return Math.max(a,L.length);},1);
+      var hh=Math.max(rh, 2.1+nl*lh);
+      if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,hh,"F"); }
+      var top=yy+(hh-nl*lh)/2+lh*0.78, cx2=x;
+      cols.forEach(function(c,i){
+        if(r.col&&r.col[i]) doc.setTextColor(r.col[i][0],r.col[i][1],r.col[i][2]);
+        doc.text(wrapped[i],c.r?cx2+c.w-1.5:cx2+1.5,top,{align:c.r?"right":"left"});
+        doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+        cx2+=c.w;
+      });
+      doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.1);
+      doc.line(x,yy+hh,x+tw,yy+hh);
+      yy+=hh;
+    });
+    return yy;
+  }
+  function gantt(x,y,w,h,plan,list,labw){
+    var t0=plan.o.start,t1=plan.o.end,span=t1-t0;
+    var X=function(t){return x+labw+((t-t0)/span)*(w-labw);};
+    var rows=plan.rows, rh=Math.min(9,(h-8)/Math.max(1,rows.length));
+    doc.setFontSize(6.5); doc.setFont("helvetica","normal");
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    for(var t=Math.ceil(t0/30)*30;t<=t1;t+=30){
+      doc.setDrawColor(228,231,226); doc.setLineWidth(.1);
+      doc.line(X(t),y+5,X(t),y+8+rows.length*rh);
+      doc.text(fmt(t),X(t),y+3,{align:"center"});
+    }
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    rows.forEach(function(r,i){
+      var yy=y+6+i*rh, C=PC(r.cls);
+      doc.setFont("helvetica","bold"); doc.setFontSize(7);
+      doc.setTextColor(C.ac[0],C.ac[1],C.ac[2]); doc.text(r.id,x,yy+rh-2.4);
+      doc.setFont("helvetica","normal"); doc.setFontSize(5.6);
+      doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+      doc.text(plan.desc(r),x+9,yy+rh-2.4,{maxWidth:labw-10});
+      doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.1);
+      doc.line(x,yy+rh,x+w,yy+rh);
+      (plan.o.fixed||[]).filter(function(fx){return fx.r===r.id;}).forEach(function(fx){
+        var bx=X(fx.s), bw=Math.max(1.2,X(fx.s+fx.dur)-X(fx.s));
+        doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.15);
+        if(doc.setLineDashPattern) doc.setLineDashPattern([.7,.7],0);
+        doc.rect(bx,yy+.6,bw,rh-1.8,"D");
+        if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
+        if(bw>16){
+          doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+          doc.setFontSize(5.6); doc.text(fx.lab,bx+1.4,yy+3.1,{maxWidth:bw-2});
+          doc.setFontSize(4.8); doc.text(fmt(fx.s)+"-"+fmt(fx.s+fx.dur),bx+1.4,yy+5.6,{maxWidth:bw-2});
+        }
+      });
+      list.filter(function(b){return b.r===r.id;}).forEach(function(b){
+        var bx=X(b.s), bw=Math.max(1.2,X(b.e)-X(b.s)), f=b.gender==="w"?C.w:C.m;
+        doc.setFillColor(f[0],f[1],f[2]); doc.setDrawColor(C.ac[0],C.ac[1],C.ac[2]); doc.setLineWidth(.15);
+        doc.rect(bx,yy+.6,bw,rh-1.8,"FD");
+        doc.setFillColor(C.ac[0],C.ac[1],C.ac[2]); doc.rect(bx,yy+.6,.7,rh-1.8,"F");
+        if(bw>18){
+          doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+          doc.setFontSize(5.6); doc.text(b.lab,bx+1.4,yy+3.1,{maxWidth:bw-2});
+          doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+          doc.setFontSize(4.8); doc.text(fmt(b.s)+"-"+fmt(b.e)+" · "+b.n+" TN",bx+1.4,yy+5.6,{maxWidth:bw-2});
+        }
+      });
+    });
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+    return y+8+rows.length*rh;
+  }
+
+  var stamp=new Date(), ds=("0"+stamp.getDate()).slice(-2)+"."+("0"+(stamp.getMonth()+1)).slice(-2)+"."+stamp.getFullYear()+
+           ", "+("0"+stamp.getHours()).slice(-2)+":"+("0"+stamp.getMinutes()).slice(-2)+" Uhr";
+  var q=pq.stat, f=pf.stat, ql=q.list, fl=f.list;
+
+  /* --- Seite 1 --- */
+  var y=head("Regieplan Kids Cup – 4. Offener Sächsischer Kidscup 2026","Planstand "+ds);
+  doc.setFontSize(8); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+  doc.text("Lead, U9–U15 · Kletterhalle Quacke Zittau · Samstag, 26.09.2026",ML,y); y+=7;
+  doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  var kpis=[["Athlet*innen",totalAth()],["Routen",pq.rows.length+pf.rows.length],
+            ["Kletterminuten",ql.reduce(function(a,b){return a+(b.e-b.s);},0)],
+            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*CFG.teamPers],
+            ["Quali-Ende",fmt(q.end)],["Finale-Ende",fmt(f.end)]];
+  var kw=CW/kpis.length;
+  kpis.forEach(function(k,i){
+    doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.2);
+    doc.rect(ML+i*kw,y,kw,14);
+    doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text(String(k[1]),ML+i*kw+3,y+7.5);
+    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(String(k[0]).toUpperCase(),ML+i*kw+3,y+11.8);
+    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  });
+  y+=20;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Meldezahlen",ML,y); y+=2;
+  var mrows=CFG.classes.map(function(c){
+    var min=ql.filter(function(b){return b.cls===c.id;}).reduce(function(a,b){return a+(b.e-b.s);},0);
+    return {c:[c.name,c.lm+" "+(+c.m||0),c.lw+" "+(+c.w||0),(+c.m||0)+(+c.w||0),min],col:[PC(c.id).ac]};
+  });
+  mrows.push({bold:true,fill:PDFCOL.soft,c:["Summe",
+    CFG.classes.reduce(function(a,c){return a+(+c.m||0);},0),
+    CFG.classes.reduce(function(a,c){return a+(+c.w||0);},0),totalAth(),ql.reduce(function(a,b){return a+(b.e-b.s);},0)]});
+  var ey=table(ML,y,[{t:"Klasse",w:22},{t:"Gruppe 1",w:26,r:true},{t:"Gruppe 2",w:26,r:true},{t:"gesamt",w:18,r:true},{t:"Kletter-Min",w:24,r:true}],mrows,{fs:7.5});
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Tagesablauf",ML+112,y);
+  var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
+    return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
+               st.querySelector("div span").textContent.trim()]};
+  });
+  var ey2=table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
+  var y3=Math.max(ey,ey2)+9;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+  doc.text("Routenübersicht",ML,y3); y3+=2;
+  function routeRows(plan,list){
+    return plan.rows.map(function(r){
+      var bs=list.filter(function(b){return b.r===r.id;});
+      var st=bs.reduce(function(a,b){return a+b.n;},0);
+      var mi=bs.reduce(function(a,b){return a+(b.e-b.s);},0);
+      var s0=bs.length?Math.min.apply(null,bs.map(function(b){return b.s;})):null;
+      var e0=bs.length?Math.max.apply(null,bs.map(function(b){return b.e;})):null;
+      return {c:[r.id,CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
+                 s0==null?"—":fmt(s0)+"-"+fmt(e0)],col:[PC(r.cls).ac]};
+    });
+  }
+  var rr=routeRows(pq,ql).concat(routeRows(pf,fl));
+  var half=Math.ceil(rr.length/2), RC=[{t:"Route",w:14},{t:"Klasse",w:16},{t:"Typ",w:26},{t:"Sicherung",w:20},
+       {t:"Starts",w:15,r:true},{t:"Min",w:13,r:true},{t:"Zeitfenster",w:26}];
+  table(ML,y3,RC,rr.slice(0,half),{rh:5.2,fs:7});
+  table(ML+140,y3,RC,rr.slice(half),{rh:5.2,fs:7});
+  foot();
+
+  /* --- Seite 2: Quali --- */
+  y=head("Qualifikation – Zeitplan","Ende "+fmt(q.end)+" · max. "+q.maxR+" Routen gleichzeitig · "+(q.maxR*CFG.teamPers)+" Personen");
+  y=gantt(ML,y,CW,110,pq,ql,44)+6;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Laufkarte der Startgruppen",ML,y); y+=2;
+  var lk=[];
+  pq.groups.forEach(function(g){
+    var bs=ql.filter(function(b){return b.gid===g.id;}).sort(function(a,b){return a.s-b.s;});
+    if(bs.length<2) return;
+    var pt=pq.pauseTxt(g,bs);
+    lk.push({c:[pq.label(g),g.n,bs[0].r+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),bs[1].r+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),pt.txt],
+             col:[PC(g.cls).ac,null,null,null,pt.ok?[24,96,69]:[142,47,41]]});
+  });
+  table(ML,y,[{t:"Startgruppe",w:44},{t:"TN",w:12,r:true},{t:"Route 1",w:44},{t:"Route 2",w:44},{t:"Pause",w:20,r:true}],lk,{rh:5.4,fs:7.5});
+  foot();
+
+  /* --- Seite 3: Teams --- */
+  y=head("Team-Zeitplan","Ein Routen-Team = Sicherung + Ergebnisdienst = "+CFG.teamPers+" Personen");
+  var trows=[];
+  LASTQ.T.forEach(function(t){
+    var ps=peopleOfTeam(t.idx), by={};
+    ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name);});
+    var pl=Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ")||"—";
+    t.stations.forEach(function(st,i){
+      trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),st.r+"  "+pq.desc(st.row),
+        st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"-"+fmt(x.e)+")";}).join(", "),
+        i===0?pl:"", i===0?(ps.length?ps.length+" / "+CFG.teamPers:CFG.teamPers):""],
+        col:[null,null,PC(st.row.cls).ac]});
+    });
+  });
+  trows.push({bold:true,fill:PDFCOL.soft,c:[LASTQ.T.length+" Routen-Teams","—",pq.rows.length+" Routen gebaut",
+    "je Team: Sicherung + Ergebnisdienst",
+    CFG.people.filter(function(p){return p.team;}).length+" Personen zugeteilt",LASTQ.T.length*CFG.teamPers]});
+  var ty=table(ML,y,[{t:"Team",w:36},{t:"Zeit",w:22},{t:"Route",w:50},{t:"Wer klettert",w:78},
+                     {t:"Personen",w:62},{t:"Pers.",w:25,r:true}],trows,{rh:5.6,fs:7.5});
+  var frei=CFG.people.filter(function(p){return !p.team;});
+  if(frei.length){
+    ty+=7;
+    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Ohne Team-Zuordnung",ML,ty); ty+=2;
+    var byc={};
+    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+    table(ML,ty,[{t:"Kategorie",w:44},{t:"Personen",w:180}],
+      Object.keys(byc).map(function(k){return {c:[k,byc[k].join(", ")]};}),{rh:5.4,fs:7.5});
+  }
+  foot();
+
+  /* --- Seite 4: Finale --- */
+  y=head("Finale","Ende "+fmt(f.end)+" · max. "+f.maxR+" Routen gleichzeitig");
+  y=gantt(ML,y,CW,66,pf,fl,44)+6;
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Finalquoten",ML,y); y+=2;
+  var frows=[], Tf=teams(pf,fl), rteam={};
+  Tf.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
+  CFG.classes.forEach(function(cc){
+    var c=cc.id, mode=classMode(pf,fl,c);
+    ["m","w"].forEach(function(gd,gi){
+      var n=+cc[gd]||0, qq=quota(n);
+      var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
+      frows.push({c:[CLn(c)+" "+gl(c,gd),n,(n>=20?10:6),qq,blk?blk.r:"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
+                     blk&&rteam[blk.r]?rteam[blk.r]:"—",gi===0?mode:""],
+                  col:[PC(c).ac]});
+    });
+  });
+  var sumG=0,sumF=0;
+  CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
+  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,"—",sumF,pf.rows.length+" Routen","—",Tf.length,
+    Tf.length*CFG.teamPers+" Personen"]});
+  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},{t:"im Finale",w:20,r:true},
+              {t:"Route",w:20},{t:"Zeit",w:28},{t:"Team",w:16,r:true},{t:"Ablauf",w:34}],frows,{rh:5.4,fs:7.5});
+  foot();
+
+  /* --- Seite 5: Wege --- */
+  y=head("Wege der Startgruppen","Eine Zeile je Startgruppe · Pfeil = Pause zwischen den Runden");
+  var lanes=flowLanes(pq,ql), t0=pq.o.start,t1=pq.o.end,span=t1-t0;
+  var lx=ML+42, lw=CW-42, LX=function(t){return lx+((t-t0)/span)*lw;};
+  doc.setFontSize(6.5); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+  for(var tt=Math.ceil(t0/30)*30;tt<=t1;tt+=30){
+    doc.setDrawColor(228,231,226); doc.setLineWidth(.1);
+    doc.line(LX(tt),y+3,LX(tt),y+6+lanes.length*13);
+    doc.text(fmt(tt),LX(tt),y+1.5,{align:"center"});
+  }
+  lanes.forEach(function(L,i){
+    var yy=y+5+i*13, mid=yy+6, C=PC(L.g.cls), w=L.g.gender==="w";
+    doc.setFont("helvetica","bold"); doc.setFontSize(7.5);
+    doc.setTextColor(C.ac[0],C.ac[1],C.ac[2]); doc.text(L.label,ML,mid+1);
+    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
+    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+    doc.text(L.g.n+" TN",lx-2,mid+1,{align:"right"});
+    L.bs.forEach(function(b,k){
+      var bx=LX(b.s), bw=Math.max(1.4,LX(b.e)-LX(b.s)), fcol=w?C.w:C.m;
+      doc.setFillColor(fcol[0],fcol[1],fcol[2]); doc.setDrawColor(C.ac[0],C.ac[1],C.ac[2]); doc.setLineWidth(.15);
+      doc.rect(bx,mid-4,bw,8,"FD");
+      doc.setFillColor(C.ac[0],C.ac[1],C.ac[2]); doc.rect(bx,mid-4,.7,8,"F");
+      if(bw>16){
+        doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setFontSize(6);
+        doc.text(b.r,bx+1.4,mid-.6,{maxWidth:bw-2});
+        doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setFontSize(5);
+        doc.text(fmt(b.s)+"-"+fmt(b.e),bx+1.4,mid+2.8,{maxWidth:bw-2});
+      }
+      if(k===1){
+        var pt=pq.pauseTxt(L.g,L.bs), ok=pt.ok;
+        var xa=LX(L.bs[0].e)+.8, xb=bx-.8;
+        doc.setDrawColor(150,158,150); doc.setLineWidth(.25);
+        if(xb>xa+22){ doc.line(xa,mid,xb,mid); doc.setFontSize(5.4);
+          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+pt.txt,(xa+xb)/2,mid-1.2,{align:"center"}); }
+        else { doc.line(LX(L.bs[0].s)+.6,mid-5.4,bx-.6,mid-5.4); doc.setFontSize(5.4);
+          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+pt.txt,(LX(L.bs[0].s)+bx)/2,mid-6.6,{align:"center"}); }
+        doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      }
+    });
+  });
+  foot();
+
+  return doc;
+}
+var busy=false;
+document.getElementById("pdfbtn").onclick=function(){
+  if(busy) return; busy=true;
+  var btn=this, old=btn.textContent;
+  btn.textContent="PDF wird erstellt …"; pdfSay("");
+  (window.jspdf&&window.jspdf.jsPDF ? Promise.resolve()
+    : loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"))
+  .then(function(){
+    if(!(window.jspdf&&window.jspdf.jsPDF)) throw new Error("jspdf");
+    var doc=buildPDF(), blob=doc.output("blob");
+    return (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null))
+      .then(function(dl){
+        if(dl&&dl.save) return dl.save({filename:"Regieplan-Kidscup-2026.pdf",data:blob})
+          .then(function(){pdfSay("PDF gespeichert.");
+            pdfCount++; try{localStorage.setItem("kidscup-pdfn",String(pdfCount));}catch(e){}
+            logMe("PDF heruntergeladen");});
+        if(saveBlob(blob,"Regieplan-Kidscup-2026.pdf")){
+          pdfCount++; try{localStorage.setItem("kidscup-pdfn",String(pdfCount));}catch(e){}
+          pdfSay("PDF heruntergeladen."); return;
+        }
+        var url=URL.createObjectURL(blob), w=window.open(url,"_blank");
+        if(!w) throw new Error("popup");
+        setTimeout(function(){URL.revokeObjectURL(url);},60000);
+        pdfSay("PDF in neuem Tab geöffnet – dort speichern.");
+      });
+  })
+  .catch(function(err){
+    var c=err&&err.code;
+    if(c==="declined") pdfSay("Speichern abgebrochen.");
+    else if(c==="rate_limited") pdfSay("Gerade läuft schon eine Abfrage – kurz warten.",true);
+    else { pdfSay("Der PDF-Export ist hier nicht verfügbar. Öffne die Seite in einem eigenen Tab und drucke mit Strg + P / Cmd + P als PDF.",true);
+           try{window.print();}catch(e){} }
+  })
+  .then(function(){ btn.textContent=old; busy=false; });
+};
+document.getElementById("printbtn").onclick=function(){ try{window.print();}catch(e){} };
