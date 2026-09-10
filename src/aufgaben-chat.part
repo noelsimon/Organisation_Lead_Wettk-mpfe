@@ -150,7 +150,7 @@ function renderAttendance(){
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
-       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
        '<td>'+(mine
          ? attendanceToggleHtml(m.attendance)
          : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
@@ -162,7 +162,13 @@ function renderAttendance(){
   if(isAdmin){
     Array.prototype.forEach.call(body.querySelectorAll(".person-cell"),function(cell){
       cell.classList.add("clickable");
+      cell.setAttribute("role","button");
+      cell.setAttribute("tabindex","0");
+      cell.setAttribute("aria-label","Profil von "+cell.querySelector("span:last-child").textContent.trim()+" bearbeiten");
       cell.onclick=function(){ openPersonEdit(this.getAttribute("data-pid")); };
+      cell.onkeydown=function(ev){
+        if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openPersonEdit(this.getAttribute("data-pid")); }
+      };
     });
   }
 }
@@ -712,6 +718,7 @@ function renderStands(){
   });
   if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
   body.innerHTML=h;
+  var cnt=document.getElementById("standCount"); if(cnt) cnt.textContent=STANDS.length;
   Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
     b.onclick=function(){
       if(!isAdmin) return;
@@ -754,6 +761,13 @@ function logMe(what){
   if(!DB||!PROFILE) return;
   DB.doc("viewers/"+PROFILE.id).set({name:PROFILE.full_name, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
 }
+var STANDS_LIMIT=10;
+/* Ältere Stände über dem Limit ermitteln (jüngste zuerst behalten) - reine
+   Auswahl, löscht selbst nichts, damit sie für beide Pfade (geteilt/lokal)
+   gleich benutzt werden kann. */
+function excessStands(list){
+  return list.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).slice(STANDS_LIMIT);
+}
 function saveStand(){
   var t=document.getElementById("stTitle").value.trim()||("Stand "+dstr());
   var n=document.getElementById("stNote").value.trim();
@@ -764,12 +778,16 @@ function saveStand(){
       standSay('Stand „'+t+'" gespeichert – für alle sichtbar, die den Link haben.');
       document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
       logMe("gespeichert: "+t);
+      excessStands(STANDS.concat([rec])).forEach(function(s){ DB.doc("stands/"+s.id).delete().catch(function(){}); });
     }).catch(function(e){
       standSay("Speichern fehlgeschlagen"+(e&&e.code?" ("+e.code+")":"")+" – der Stand liegt jetzt nur lokal.",true);
       STANDS.push(rec); saveLocalStands(); renderStands();
     });
   } else {
-    STANDS.push(rec); saveLocalStands(); renderStands();
+    STANDS.push(rec);
+    var extra=excessStands(STANDS);
+    if(extra.length){ var ids=extra.map(function(s){return s.id;}); STANDS=STANDS.filter(function(s){return ids.indexOf(s.id)<0;}); }
+    saveLocalStands(); renderStands();
     standSay('Stand „'+t+'" lokal gespeichert (nur in diesem Browser).');
     document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
   }

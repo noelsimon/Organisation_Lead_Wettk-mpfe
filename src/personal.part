@@ -14,7 +14,7 @@ function renderCats(){
     h+='<tr><td><input class="cin katin" data-k="'+k.id+'" value="'+esc(k.name)+'"></td>'+
        '<td class="num">'+n+'</td>'+
        '<td class="num"><input class="nin katneed" data-k="'+k.id+'" type="number" min="0" max="99" value="'+(k.need||0)+'"></td>'+
-       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen">×</button></td></tr>';
+       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen" aria-label="Kategorie '+esc(k.name||k.id)+' löschen">×</button></td></tr>';
   });
   if(!CFG.cats.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
   body.innerHTML=h;
@@ -53,7 +53,7 @@ function renderPeople(){
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
-       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen">×</button></td></tr>';
+       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
   if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
@@ -140,8 +140,8 @@ function renderFinalTab(){
 }
 
 var routeNoteTimer=null;
-function renderRoutePlan(plan,list){
-  var box=document.getElementById("routenplan"); if(!box) return;
+function renderRoutePlan(plan,list,targetId){
+  var box=document.getElementById(targetId||"routenplan"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;
@@ -181,7 +181,10 @@ function afterQ(plan,list){
   renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
   if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
 }
-function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
+function afterF(plan,list){
+  renderRoutePlan(plan,list,"routenplanFinale");
+  if(pq&&pf){ renderFinalTab(); renderStats(); }
+}
 function autoStep(span){return span>300?60:(span>150?30:15);}
 pq=new Plan({mount:"gq-inner", readout:"roQ", editor:"edQ", laufkarte:"#lk", store:"kidscup-quali-v9", kind:"quali",
   prefix:"Q", start:CFG.win.qs, end:CFG.win.qe, step:autoStep(CFG.win.qe-CFG.win.qs), axisLabel:"Quali",
@@ -242,6 +245,31 @@ document.getElementById("addFgo").onclick=function(){
   addBoxF.hidden=true;
 };
 document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
+
+/* ---- Balken manuell hinzufügen ---- */
+function fillAddBlock(clsSelId,routeSelId,plan){
+  document.getElementById(clsSelId).innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  document.getElementById(routeSelId).innerHTML=plan.rows.map(function(r){return '<option value="'+r.id+'">'+esc(r.id)+' – '+esc(plan.desc(r))+'</option>';}).join("");
+}
+var addBoxQBlock=document.getElementById("addQBlock");
+document.getElementById("addQBlockToggle").onclick=function(){
+  addBoxQBlock.hidden=!addBoxQBlock.hidden; if(!addBoxQBlock.hidden) fillAddBlock("addQBlockCls","addQBlockRoute",pq);
+};
+document.getElementById("addQBlockGo").onclick=function(){
+  pq.addBlock(document.getElementById("addQBlockCls").value,document.getElementById("addQBlockRoute").value,pq.o.start);
+  addBoxQBlock.hidden=true;
+};
+document.getElementById("addQBlockCancel").onclick=function(){addBoxQBlock.hidden=true;};
+
+var addBoxFBlock=document.getElementById("addFBlock");
+document.getElementById("addFBlockToggle").onclick=function(){
+  addBoxFBlock.hidden=!addBoxFBlock.hidden; if(!addBoxFBlock.hidden) fillAddBlock("addFBlockCls","addFBlockRoute",pf);
+};
+document.getElementById("addFBlockGo").onclick=function(){
+  pf.addBlock(document.getElementById("addFBlockCls").value,document.getElementById("addFBlockRoute").value,pf.o.start);
+  addBoxFBlock.hidden=true;
+};
+document.getElementById("addFBlockCancel").onclick=function(){addBoxFBlock.hidden=true;};
 
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");

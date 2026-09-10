@@ -157,6 +157,30 @@ Plan.prototype.delRoute=function(id){
   this.rows=this.rows.filter(function(r){return r.id!==id;});
   this.render(); this.save(); return true;
 };
+/* Manuell einen weiteren Balken für eine Klasse anlegen - anders als
+   addClass() KEINE neuen Gruppen, sondern ein zusätzlicher Termin für die
+   schon vorhandene männliche/weibliche Gruppe dieser Klasse (dasselbe
+   Muster wie die zwei Balken, die addClass() für Quali bereits auf zwei
+   Routen verteilt). Ohne vorhandene Gruppe für eine Seite (Klasse in
+   diesem Plan noch gar nicht angelegt) wird diese Seite übersprungen. */
+Plan.prototype.addBlock=function(cls,routeId,start){
+  if(!this.row(routeId)) return false;
+  var self=this, added=false;
+  ["m","w"].forEach(function(gender){
+    var g=self.groups.filter(function(x){return x.cls===cls&&x.gender===gender;})[0];
+    if(!g) return;
+    self.blocks.push({id:"b"+(++self.seq), gid:g.id, r:routeId, s:Math.round(start/SNAP)*SNAP});
+    added=true;
+  });
+  if(!added) return false;
+  this.render(); this.save(); return true;
+};
+Plan.prototype.delBlock=function(blockId){
+  if(!this.blocks.some(function(b){return b.id===blockId;})) return false;
+  this.blocks=this.blocks.filter(function(b){return b.id!==blockId;});
+  if(this.sel===blockId) this.sel=null;
+  this.render(); this.save(); return true;
+};
 Plan.prototype.toggleDir=function(id){
   var r=this.row(id); if(!r) return;
   r.dir=r.dir==="ab"?"auf":"ab";
@@ -206,9 +230,10 @@ Plan.prototype.render=function(){
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
+         (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken" aria-label="Startreihenfolge '+
          (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken">'+
          (r.dir==="ab"?"n→1":"1→n")+'</button>'+
-       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'" aria-label="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
        '</span></b>'+
        '<span>'+esc(self.desc(r))+'</span></div>';
     h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
@@ -246,7 +271,7 @@ Plan.prototype.mount=function(b){
   var d=document.createElement("div");
   d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
   d.setAttribute("tabindex","0"); d.setAttribute("role","button");
-  d.innerHTML='<b></b><span></span>';
+  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(b.r)+' löschen">×</button>';
   t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
 };
 Plan.prototype.position=function(){
@@ -297,6 +322,13 @@ Plan.prototype.bind=function(d,b){
     window.removeEventListener("pointerup",onUp);
     window.removeEventListener("pointercancel",onUp);
     if(!moved) self.select(b.id); else {self.save(); if(self.sel===b.id) self.editor();}
+  }
+  var delBtn=d.querySelector(".blk-del");
+  if(delBtn){
+    /* pointerdown muss VOR dem Drag-Handler des Balkens selbst gestoppt
+       werden, sonst startet ein Klick auf "×" zusätzlich einen Drag. */
+    delBtn.addEventListener("pointerdown",function(ev){ ev.stopPropagation(); });
+    delBtn.addEventListener("click",function(ev){ ev.stopPropagation(); self.delBlock(b.id); });
   }
   d.addEventListener("pointerdown",function(ev){
     if(ev.button!==0&&ev.pointerType==="mouse") return;
@@ -577,6 +609,7 @@ function afterCfg(replan){
   pq.render(); pf.render(); pq.save(); pf.save();
   renderFilterBtns(); if(typeof fillAddRoute==="function") fillAddRoute();
 }
+function classInPlan(plan,classId){ return plan.rows.some(function(r){return r.cls===classId;}); }
 function renderMeld(){
   var h="", tot={m:0,w:0,n:0,min:0};
   var qlist=(pq.stat&&pq.stat.list)||[];
@@ -595,7 +628,9 @@ function renderMeld(){
          '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
        '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
-       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
+       '<td class="num"><input type="checkbox" class="cq" data-c="'+c.id+'"'+(classInPlan(pq,c.id)?" checked":"")+'></td>'+
+       '<td class="num"><input type="checkbox" class="cf" data-c="'+c.id+'"'+(classInPlan(pf,c.id)?" checked":"")+'></td>'+
+       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
      '<td></td><td></td><td class="num">'+tot.n+'</td><td class="num">'+tot.min+'</td><td></td></tr>';
@@ -623,6 +658,26 @@ function renderMeld(){
       reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
     };
   });
+  /* Quali/Finale einzeln je Klasse: ruft addClass()/delClass() nur auf der
+     jeweils betroffenen Plan-Instanz auf, nie auf beiden zusammen wie beim
+     Löschen der ganzen Klasse. CFG.classes bleibt dabei unverändert - der
+     Klassen-Eintrag selbst (Name/Meldezahlen) geht nie verloren. */
+  function wireClassToggle(sel,plan,otherSel){
+    Array.prototype.forEach.call(document.querySelectorAll(sel),function(cb){
+      cb.onchange=function(){
+        var id=this.getAttribute("data-c"), c=CL(id); if(!c) return;
+        if(!this.checked){
+          var other=document.querySelector(otherSel+'[data-c="'+id+'"]');
+          if(other&&!other.checked){ this.checked=true; return; }
+          plan.delClass(id);
+        } else {
+          plan.addClass(c);
+        }
+      };
+    });
+  }
+  wireClassToggle("#meldtab .cq",pq,"#meldtab .cf");
+  wireClassToggle("#meldtab .cf",pf,"#meldtab .cq");
 }
 function addClass(name,lm,lw,m,w,mode){
   name=String(name||"").trim(); if(!name) return false;

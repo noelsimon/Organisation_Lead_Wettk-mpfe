@@ -7,7 +7,7 @@
   --bg:#F3F6FA; --surface:#FFFFFF; --surface-2:#EAF1F8; --sunken:#EEF3F9;
   --ink:#10151C; --ink-2:#3A4A5E; --muted:#5E7086;
   --line:#DCE6F0; --line-strong:#AFC2D6;
-  --c0:#B87708;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
+  --c0:#9A6407;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
   --c1:#1F7A55; --c1-m-bg:#EDF7F2; --c1-m-br:#C4E0D3; --c1-w-bg:#CBE7D9; --c1-w-br:#8FC3A9;
   --c2:#2559A6; --c2-m-bg:#EEF4FC; --c2-m-br:#C7D9F0; --c2-w-bg:#CFE0F4; --c2-w-br:#98BAE1;
   --c3:#A93B34; --c3-m-bg:#FDF0EE; --c3-m-br:#EDCBC6; --c3-w-bg:#F2D3CE; --c3-w-br:#DBA199;
@@ -15,7 +15,7 @@
   --c5:#0D7480; --c5-m-bg:#EAF7F8; --c5-m-br:#BFDFE3; --c5-w-bg:#C6E7EA; --c5-w-br:#88C0C7;
   --c6:#83592C; --c6-m-bg:#FAF4EB; --c6-m-br:#E2D3BC; --c6-w-bg:#ECDCC4; --c6-w-br:#C9AE83;
   --c7:#4A5666; --c7-m-bg:#F1F3F6; --c7-m-br:#D3D9E1; --c7-w-bg:#D6DCE4; --c7-w-br:#AAB4C1;
-  --ok:#1D8A5D; --warn:#B7791B; --bad:#C0342B; --grid:#DCE6F0;
+  --ok:#1B7E55; --warn:#986516; --bad:#C0342B; --grid:#DCE6F0;
   --ring:#114A7A;
   --shadow:0 1px 2px rgba(16,21,28,.06), 0 12px 28px -18px rgba(16,21,28,.32);
   --r-sm:8px; --r-md:14px; --r-lg:20px; --r-pill:999px;
@@ -209,6 +209,11 @@ li{margin-bottom:6px}
 .blk.clash{outline:2px solid var(--bad); outline-offset:-1px}
 .blk.warn{outline:2px dashed var(--warn); outline-offset:-1px}
 .blk.sel{outline:2px solid var(--ink); outline-offset:-1px; box-shadow:0 2px 10px -3px rgba(0,0,0,.35)}
+.blk-del{position:absolute; top:1px; right:1px; width:15px; height:15px; line-height:13px; text-align:center;
+  font-family:var(--serif); font-size:12px; padding:0; border:none; border-radius:50%; cursor:pointer;
+  background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease}
+.blk:hover .blk-del,.blk-del:focus-visible{opacity:1; color:var(--bad)}
+.blk-del:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
 .ed-head b{font-family:var(--disp); font-weight:600; font-size:17px; color:var(--ac)}
@@ -325,6 +330,16 @@ footer p{max-width:74ch; margin-bottom:8px}
   .modal-sheet{max-width:none; border-radius:var(--r-lg) var(--r-lg) 0 0; max-height:88vh;
     padding:24px 18px calc(20px + env(safe-area-inset-bottom,0px))}
 }
+/* ---------- Sync-Konflikt-Hinweis ---------- */
+.sync-toast{position:fixed; left:20px; bottom:20px; z-index:70; max-width:340px;
+  background:var(--surface); border:1px solid var(--warn); border-radius:var(--r-md);
+  box-shadow:var(--shadow); padding:14px 16px}
+.sync-toast b{display:block; font-family:var(--disp); font-size:13px; font-weight:600; color:var(--warn); margin:0 0 4px}
+.sync-toast p{margin:0 0 10px; font-size:13px; color:var(--ink-2)}
+.sync-toast-btns{display:flex; gap:8px; flex-wrap:wrap}
+@media (max-width:760px){
+  .sync-toast{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
@@ -390,6 +405,11 @@ body:not([data-auth="ok"]) main{display:none}
 .task-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
 .task-box[open] .task-summary::before{transform:rotate(90deg)}
 .task-body{padding:0 16px 16px}
+.stand-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
+  padding:8px 0; font-family:var(--disp); font-weight:500; font-size:14px}
+.stand-summary::-webkit-details-marker{display:none}
+.stand-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
+#standList[open] .stand-summary::before{transform:rotate(90deg)}
 .task-card{background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md);
   box-shadow:var(--shadow); padding:14px 16px; margin:0 0 12px}
 .task-card-head{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px}
@@ -477,6 +497,7 @@ body:not([data-auth="ok"]) .chat-panel{display:none !important}
 body[data-cat]:not([data-cat="orga"]) main section input,
 body[data-cat]:not([data-cat="orga"]) main section select,
 body[data-cat]:not([data-cat="orga"]) main section button,
+body[data-cat]:not([data-cat="orga"]) main section textarea,
 body[data-cat]:not([data-cat="orga"]) main section .rdel,
 body[data-cat]:not([data-cat="orga"]) main section .blk{
   pointer-events:none; opacity:.55; cursor:default;
@@ -522,6 +543,7 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .person-cell{display:flex; align-items:center; gap:10px}
 .person-cell.clickable{cursor:pointer}
 .person-cell.clickable:hover .tk-avatar{outline:2px solid var(--brand-tint-2)}
+.person-cell.clickable:focus-visible{outline:2px solid var(--ring); outline-offset:2px; border-radius:var(--r-sm)}
 .att-summary{margin:-6px 0 12px; font-size:13px; color:var(--muted)}
 .att-filters{display:flex; gap:8px; margin:0 0 14px; overflow-x:auto; scrollbar-width:none}
 .att-filters::-webkit-scrollbar{display:none}
@@ -596,7 +618,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
-  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
+  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel,.sync-toast{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -639,7 +661,7 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="masthead-top">
       <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
-      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten">
+      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten" aria-label="Profil bearbeiten">
         <img id="mastheadAvatarImg" alt="" hidden>
         <span id="mastheadAvatarInitial"></span>
       </button>
@@ -766,7 +788,7 @@ body.editing{caret-color:var(--ink)}
 <section id="start" data-views="orga bau teams sport" data-tab="start">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Für dich</p>
+      <p class="eyebrow" role="heading" aria-level="2">Für dich</p>
       <p class="lede">Dein Status und deine Aufgaben auf einen Blick. Der vollständige Plan folgt darunter.</p>
     </div>
     <div class="cards g3">
@@ -852,12 +874,13 @@ body.editing{caret-color:var(--ink)}
 <section id="melde" data-views="orga" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
+      <p class="eyebrow" role="heading" aria-level="2">Wertungsklassen und Meldezahlen</p>
       <p class="lede">Diese Tabelle ist der Ursprung des ganzen Plans. Klassennamen und Gruppenbezeichnungen sind frei: aus U15 männlich/weiblich wird bei Bedarf U21 Herren/Damen. Jede Änderung verlängert oder verkürzt sofort die Balken im Zeitplan, verschiebt die Endzeiten und passt Laufkarte, Team-Zeitplan, Wegediagramm und Finalquoten an.</p>
     </div>
     <div class="tblwrap"><table id="meldtab">
       <thead><tr><th>Klasse</th><th>Gruppe 1</th><th class="num">TN</th><th>Gruppe 2</th><th class="num">TN</th>
-        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th><th></th></tr></thead>
+        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th>
+        <th class="num">Quali</th><th class="num">Finale</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="toolbar">
@@ -902,7 +925,7 @@ body.editing{caret-color:var(--ink)}
 <section id="tag" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Tagesablauf</p>
+      <p class="eyebrow" role="heading" aria-level="2">Tagesablauf</p>
     </div>
     <div class="rail">
       <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
@@ -925,7 +948,7 @@ body.editing{caret-color:var(--ink)}
 <section id="quali" data-views="orga teams sport bau" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Zeitplan Qualifikation</p>
+      <p class="eyebrow" role="heading" aria-level="2">Zeitplan Qualifikation</p>
       <p class="lede">Alle vier Altersklassen starten um 10:30. Innerhalb einer Klasse laufen die drei Routen so versetzt, dass <strong>nie mehr als zwei gleichzeitig besetzt sind</strong> – das Team der frei werdenden Route wandert zur nächsten. Bei der U9 reicht sogar ein Team für beide Routen. Ein Routen-Team sind drei Personen: Sicherung plus Ergebnisdienst. Helle Balken sind die Jungs, dunkle die Mädchen.</p>
     </div>
 
@@ -940,6 +963,7 @@ body.editing{caret-color:var(--ink)}
       <span id="fbar" style="display:contents"></span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addQtoggle">+ Route</button>
+      <button class="fbtn" id="addQBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetQ">Zurücksetzen</button>
     </div>
 
@@ -953,6 +977,15 @@ body.editing{caret-color:var(--ink)}
           <select id="addQmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
         <label><button class="fbtn" id="addQgo" type="button">Route anlegen</button></label>
         <label><button class="fbtn" id="addQcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
+    <div class="addbox" id="addQBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addQBlockCls"></select></label>
+        <label>Route <select id="addQBlockRoute"></select></label>
+        <label><button class="fbtn" id="addQBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addQBlockCancel" type="button">Abbrechen</button></label>
       </div>
     </div>
 
@@ -1009,7 +1042,7 @@ body.editing{caret-color:var(--ink)}
 <section id="personal" data-views="orga bau teams sport" data-tab="team">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Kontakte</p>
+      <p class="eyebrow" role="heading" aria-level="2">Kontakte</p>
       <p class="lede">Personal, Team-Zuordnung und Anwesenheit an einem Ort. Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
     </div>
 
@@ -1082,7 +1115,7 @@ body.editing{caret-color:var(--ink)}
 <section id="finale" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Finale · 14:15 – 15:29</p>
+      <p class="eyebrow" role="heading" aria-level="2">Finale · 14:15 – 15:29</p>
       <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
     </div>
 
@@ -1098,6 +1131,7 @@ body.editing{caret-color:var(--ink)}
       <span class="lbl">Finale</span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addFtoggle">+ Route</button>
+      <button class="fbtn" id="addFBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetF">Zurücksetzen</button>
     </div>
 
@@ -1114,6 +1148,15 @@ body.editing{caret-color:var(--ink)}
       </div>
     </div>
 
+    <div class="addbox" id="addFBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addFBlockCls"></select></label>
+        <label>Route <select id="addFBlockRoute"></select></label>
+        <label><button class="fbtn" id="addFBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addFBlockCancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
     <div class="readout" id="roF"></div>
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
@@ -1125,6 +1168,10 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
     <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+
+    <h3>Routenplan</h3>
+    <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
+    <div class="routes" id="routenplanFinale" style="margin-bottom:22px"></div>
   </div>
 </section>
 
@@ -1132,7 +1179,7 @@ body.editing{caret-color:var(--ink)}
 <section id="admin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Admin</p>
+      <p class="eyebrow" role="heading" aria-level="2">Admin</p>
       <p class="lede">Wettkämpfe anlegen, Anmeldungen freigeben, Kategorie- und Admin-Rechte verwalten, Auszahlung und Verpflegung.</p>
     </div>
 
@@ -1191,7 +1238,7 @@ body.editing{caret-color:var(--ink)}
 <section id="staende" data-views="orga bau teams sport" data-tab="mehr">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Speicherstände</p>
+      <p class="eyebrow" role="heading" aria-level="2">Speicherstände</p>
       <p class="lede">Jeder Stand friert den kompletten Plan ein: Klassen, Meldezahlen, Zeitfenster, alle Balken, Personal und die bearbeiteten Texte. Unten steht, wer zuletzt hier war und was er oder sie gemacht hat.</p>
     </div>
     <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
@@ -1210,10 +1257,13 @@ body.editing{caret-color:var(--ink)}
     </div>
     <p class="pdfmsg" id="stMsg" role="status"></p>
 
-    <div class="tblwrap"><table id="standtab">
-      <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table></div>
+    <details id="standList">
+      <summary class="stand-summary">Gespeicherte Stände (<span id="standCount">0</span>)</summary>
+      <div class="tblwrap"><table id="standtab">
+        <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </details>
 
     <h4>Wer war zuletzt hier</h4>
     <div id="vlist" style="margin:0 0 8px"></div>
@@ -1244,6 +1294,15 @@ body.editing{caret-color:var(--ink)}
   </div>
 </div>
 
+<div class="sync-toast" id="syncToast" hidden role="alert">
+  <b>Sync-Konflikt</b>
+  <p id="syncToastMsg"></p>
+  <div class="sync-toast-btns">
+    <button type="button" class="fbtn" id="syncToastTake">Übernehmen</button>
+    <button type="button" class="fbtn" id="syncToastKeep">Meine Version behalten</button>
+  </div>
+</div>
+
 <nav class="tabnav" id="tabNav" aria-label="Hauptnavigation">
   <button type="button" data-tabbtn="start" aria-pressed="true">
     <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg>
@@ -1268,7 +1327,7 @@ body.editing{caret-color:var(--ink)}
   </button>
 </nav>
 
-<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
+<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen" aria-label="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
 
 <div id="chatPanel" class="chat-panel" hidden>
   <div class="chat-panel-head">

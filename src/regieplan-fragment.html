@@ -16,7 +16,7 @@ window.SUPABASE_ANON_KEY = "sb_publishable_sQXelgboln7pcrQ3d3p4gg_dKm8TvXg";
   --bg:#F3F6FA; --surface:#FFFFFF; --surface-2:#EAF1F8; --sunken:#EEF3F9;
   --ink:#10151C; --ink-2:#3A4A5E; --muted:#5E7086;
   --line:#DCE6F0; --line-strong:#AFC2D6;
-  --c0:#B87708;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
+  --c0:#9A6407;  --c0-m-bg:#FCF6E8; --c0-m-br:#E6D9B8; --c0-w-bg:#F1E1B8; --c0-w-br:#D5BA80;
   --c1:#1F7A55; --c1-m-bg:#EDF7F2; --c1-m-br:#C4E0D3; --c1-w-bg:#CBE7D9; --c1-w-br:#8FC3A9;
   --c2:#2559A6; --c2-m-bg:#EEF4FC; --c2-m-br:#C7D9F0; --c2-w-bg:#CFE0F4; --c2-w-br:#98BAE1;
   --c3:#A93B34; --c3-m-bg:#FDF0EE; --c3-m-br:#EDCBC6; --c3-w-bg:#F2D3CE; --c3-w-br:#DBA199;
@@ -24,7 +24,7 @@ window.SUPABASE_ANON_KEY = "sb_publishable_sQXelgboln7pcrQ3d3p4gg_dKm8TvXg";
   --c5:#0D7480; --c5-m-bg:#EAF7F8; --c5-m-br:#BFDFE3; --c5-w-bg:#C6E7EA; --c5-w-br:#88C0C7;
   --c6:#83592C; --c6-m-bg:#FAF4EB; --c6-m-br:#E2D3BC; --c6-w-bg:#ECDCC4; --c6-w-br:#C9AE83;
   --c7:#4A5666; --c7-m-bg:#F1F3F6; --c7-m-br:#D3D9E1; --c7-w-bg:#D6DCE4; --c7-w-br:#AAB4C1;
-  --ok:#1D8A5D; --warn:#B7791B; --bad:#C0342B; --grid:#DCE6F0;
+  --ok:#1B7E55; --warn:#986516; --bad:#C0342B; --grid:#DCE6F0;
   --ring:#114A7A;
   --shadow:0 1px 2px rgba(16,21,28,.06), 0 12px 28px -18px rgba(16,21,28,.32);
   --r-sm:8px; --r-md:14px; --r-lg:20px; --r-pill:999px;
@@ -218,6 +218,11 @@ li{margin-bottom:6px}
 .blk.clash{outline:2px solid var(--bad); outline-offset:-1px}
 .blk.warn{outline:2px dashed var(--warn); outline-offset:-1px}
 .blk.sel{outline:2px solid var(--ink); outline-offset:-1px; box-shadow:0 2px 10px -3px rgba(0,0,0,.35)}
+.blk-del{position:absolute; top:1px; right:1px; width:15px; height:15px; line-height:13px; text-align:center;
+  font-family:var(--serif); font-size:12px; padding:0; border:none; border-radius:50%; cursor:pointer;
+  background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease}
+.blk:hover .blk-del,.blk-del:focus-visible{opacity:1; color:var(--bad)}
+.blk-del:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
 .ed-head b{font-family:var(--disp); font-weight:600; font-size:17px; color:var(--ac)}
@@ -334,6 +339,16 @@ footer p{max-width:74ch; margin-bottom:8px}
   .modal-sheet{max-width:none; border-radius:var(--r-lg) var(--r-lg) 0 0; max-height:88vh;
     padding:24px 18px calc(20px + env(safe-area-inset-bottom,0px))}
 }
+/* ---------- Sync-Konflikt-Hinweis ---------- */
+.sync-toast{position:fixed; left:20px; bottom:20px; z-index:70; max-width:340px;
+  background:var(--surface); border:1px solid var(--warn); border-radius:var(--r-md);
+  box-shadow:var(--shadow); padding:14px 16px}
+.sync-toast b{display:block; font-family:var(--disp); font-size:13px; font-weight:600; color:var(--warn); margin:0 0 4px}
+.sync-toast p{margin:0 0 10px; font-size:13px; color:var(--ink-2)}
+.sync-toast-btns{display:flex; gap:8px; flex-wrap:wrap}
+@media (max-width:760px){
+  .sync-toast{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
@@ -399,6 +414,11 @@ body:not([data-auth="ok"]) main{display:none}
 .task-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
 .task-box[open] .task-summary::before{transform:rotate(90deg)}
 .task-body{padding:0 16px 16px}
+.stand-summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px;
+  padding:8px 0; font-family:var(--disp); font-weight:500; font-size:14px}
+.stand-summary::-webkit-details-marker{display:none}
+.stand-summary::before{content:"▸"; color:var(--muted); transition:transform .12s ease}
+#standList[open] .stand-summary::before{transform:rotate(90deg)}
 .task-card{background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-md);
   box-shadow:var(--shadow); padding:14px 16px; margin:0 0 12px}
 .task-card-head{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px}
@@ -486,6 +506,7 @@ body:not([data-auth="ok"]) .chat-panel{display:none !important}
 body[data-cat]:not([data-cat="orga"]) main section input,
 body[data-cat]:not([data-cat="orga"]) main section select,
 body[data-cat]:not([data-cat="orga"]) main section button,
+body[data-cat]:not([data-cat="orga"]) main section textarea,
 body[data-cat]:not([data-cat="orga"]) main section .rdel,
 body[data-cat]:not([data-cat="orga"]) main section .blk{
   pointer-events:none; opacity:.55; cursor:default;
@@ -531,6 +552,7 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .person-cell{display:flex; align-items:center; gap:10px}
 .person-cell.clickable{cursor:pointer}
 .person-cell.clickable:hover .tk-avatar{outline:2px solid var(--brand-tint-2)}
+.person-cell.clickable:focus-visible{outline:2px solid var(--ring); outline-offset:2px; border-radius:var(--r-sm)}
 .att-summary{margin:-6px 0 12px; font-size:13px; color:var(--muted)}
 .att-filters{display:flex; gap:8px; margin:0 0 14px; overflow-x:auto; scrollbar-width:none}
 .att-filters::-webkit-scrollbar{display:none}
@@ -605,7 +627,7 @@ body.editing{caret-color:var(--ink)}
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
   .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
-  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel{display:none !important}
+  #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel,.sync-toast{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
   body.editing [data-ed]{outline:none !important}
@@ -648,7 +670,7 @@ body.editing{caret-color:var(--ink)}
   <div class="wrap">
     <div class="masthead-top">
       <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
-      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten">
+      <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten" aria-label="Profil bearbeiten">
         <img id="mastheadAvatarImg" alt="" hidden>
         <span id="mastheadAvatarInitial"></span>
       </button>
@@ -775,7 +797,7 @@ body.editing{caret-color:var(--ink)}
 <section id="start" data-views="orga bau teams sport" data-tab="start">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Für dich</p>
+      <p class="eyebrow" role="heading" aria-level="2">Für dich</p>
       <p class="lede">Dein Status und deine Aufgaben auf einen Blick. Der vollständige Plan folgt darunter.</p>
     </div>
     <div class="cards g3">
@@ -861,12 +883,13 @@ body.editing{caret-color:var(--ink)}
 <section id="melde" data-views="orga" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Wertungsklassen und Meldezahlen</p>
+      <p class="eyebrow" role="heading" aria-level="2">Wertungsklassen und Meldezahlen</p>
       <p class="lede">Diese Tabelle ist der Ursprung des ganzen Plans. Klassennamen und Gruppenbezeichnungen sind frei: aus U15 männlich/weiblich wird bei Bedarf U21 Herren/Damen. Jede Änderung verlängert oder verkürzt sofort die Balken im Zeitplan, verschiebt die Endzeiten und passt Laufkarte, Team-Zeitplan, Wegediagramm und Finalquoten an.</p>
     </div>
     <div class="tblwrap"><table id="meldtab">
       <thead><tr><th>Klasse</th><th>Gruppe 1</th><th class="num">TN</th><th>Gruppe 2</th><th class="num">TN</th>
-        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th><th></th></tr></thead>
+        <th>Sicherung</th><th>Farbe</th><th class="num">gesamt</th><th class="num">Kletter-Min</th>
+        <th class="num">Quali</th><th class="num">Finale</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="toolbar">
@@ -911,7 +934,7 @@ body.editing{caret-color:var(--ink)}
 <section id="tag" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Tagesablauf</p>
+      <p class="eyebrow" role="heading" aria-level="2">Tagesablauf</p>
     </div>
     <div class="rail">
       <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
@@ -934,7 +957,7 @@ body.editing{caret-color:var(--ink)}
 <section id="quali" data-views="orga teams sport bau" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Zeitplan Qualifikation</p>
+      <p class="eyebrow" role="heading" aria-level="2">Zeitplan Qualifikation</p>
       <p class="lede">Alle vier Altersklassen starten um 10:30. Innerhalb einer Klasse laufen die drei Routen so versetzt, dass <strong>nie mehr als zwei gleichzeitig besetzt sind</strong> – das Team der frei werdenden Route wandert zur nächsten. Bei der U9 reicht sogar ein Team für beide Routen. Ein Routen-Team sind drei Personen: Sicherung plus Ergebnisdienst. Helle Balken sind die Jungs, dunkle die Mädchen.</p>
     </div>
 
@@ -949,6 +972,7 @@ body.editing{caret-color:var(--ink)}
       <span id="fbar" style="display:contents"></span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addQtoggle">+ Route</button>
+      <button class="fbtn" id="addQBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetQ">Zurücksetzen</button>
     </div>
 
@@ -962,6 +986,15 @@ body.editing{caret-color:var(--ink)}
           <select id="addQmode"><option value="TR">Toprope</option><option value="Vorstieg">Vorstieg</option></select></label>
         <label><button class="fbtn" id="addQgo" type="button">Route anlegen</button></label>
         <label><button class="fbtn" id="addQcancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
+    <div class="addbox" id="addQBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addQBlockCls"></select></label>
+        <label>Route <select id="addQBlockRoute"></select></label>
+        <label><button class="fbtn" id="addQBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addQBlockCancel" type="button">Abbrechen</button></label>
       </div>
     </div>
 
@@ -1018,7 +1051,7 @@ body.editing{caret-color:var(--ink)}
 <section id="personal" data-views="orga bau teams sport" data-tab="team">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Kontakte</p>
+      <p class="eyebrow" role="heading" aria-level="2">Kontakte</p>
       <p class="lede">Personal, Team-Zuordnung und Anwesenheit an einem Ort. Ein <strong>Routen-Team</strong> ist ein Sicherungsteam plus Ergebnisdienst, zusammen <strong>drei Personen</strong>. Die Tabelle wird direkt aus dem Zeitplan oben abgeleitet: Jede Route bekommt ein Team, und ein Team übernimmt eine weitere Route, sobald seine erste fertig ist. Verschiebst du oben einen Balken, ändert sich diese Tabelle mit.</p>
     </div>
 
@@ -1091,7 +1124,7 @@ body.editing{caret-color:var(--ink)}
 <section id="finale" data-views="orga teams sport" data-tab="zeitplan">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Finale · 14:15 – 15:29</p>
+      <p class="eyebrow" role="heading" aria-level="2">Finale · 14:15 – 15:29</p>
       <p class="lede">Um 13:30 besichtigen alle Finalist*innen 25 Minuten lang gemeinsam die Routen, danach 20 Minuten ISO zum Aufstellen in Startreihenfolge. Ab 14:15 läuft alles parallel: U9 durchgehend, U11 und U15 jeweils weiblich vor männlich auf demselben Team, U13 weiblich und männlich gleichzeitig.</p>
     </div>
 
@@ -1107,6 +1140,7 @@ body.editing{caret-color:var(--ink)}
       <span class="lbl">Finale</span>
       <span style="flex:1"></span>
       <button class="fbtn" id="addFtoggle">+ Route</button>
+      <button class="fbtn" id="addFBlockToggle">+ Balken</button>
       <button class="fbtn" id="resetF">Zurücksetzen</button>
     </div>
 
@@ -1123,6 +1157,15 @@ body.editing{caret-color:var(--ink)}
       </div>
     </div>
 
+    <div class="addbox" id="addFBlock" hidden>
+      <div class="ed-grid">
+        <label>Altersklasse <select id="addFBlockCls"></select></label>
+        <label>Route <select id="addFBlockRoute"></select></label>
+        <label><button class="fbtn" id="addFBlockGo" type="button">Balken hinzufügen</button></label>
+        <label><button class="fbtn" id="addFBlockCancel" type="button">Abbrechen</button></label>
+      </div>
+    </div>
+
     <div class="readout" id="roF"></div>
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
@@ -1134,6 +1177,10 @@ body.editing{caret-color:var(--ink)}
       <tbody></tbody>
     </table></div>
     <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+
+    <h3>Routenplan</h3>
+    <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
+    <div class="routes" id="routenplanFinale" style="margin-bottom:22px"></div>
   </div>
 </section>
 
@@ -1141,7 +1188,7 @@ body.editing{caret-color:var(--ink)}
 <section id="admin" data-views="orga" data-tab="mehr" hidden>
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Admin</p>
+      <p class="eyebrow" role="heading" aria-level="2">Admin</p>
       <p class="lede">Wettkämpfe anlegen, Anmeldungen freigeben, Kategorie- und Admin-Rechte verwalten, Auszahlung und Verpflegung.</p>
     </div>
 
@@ -1200,7 +1247,7 @@ body.editing{caret-color:var(--ink)}
 <section id="staende" data-views="orga bau teams sport" data-tab="mehr">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Speicherstände</p>
+      <p class="eyebrow" role="heading" aria-level="2">Speicherstände</p>
       <p class="lede">Jeder Stand friert den kompletten Plan ein: Klassen, Meldezahlen, Zeitfenster, alle Balken, Personal und die bearbeiteten Texte. Unten steht, wer zuletzt hier war und was er oder sie gemacht hat.</p>
     </div>
     <p class="hint" id="standMode" style="margin:-14px 0 18px"></p>
@@ -1219,10 +1266,13 @@ body.editing{caret-color:var(--ink)}
     </div>
     <p class="pdfmsg" id="stMsg" role="status"></p>
 
-    <div class="tblwrap"><table id="standtab">
-      <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table></div>
+    <details id="standList">
+      <summary class="stand-summary">Gespeicherte Stände (<span id="standCount">0</span>)</summary>
+      <div class="tblwrap"><table id="standtab">
+        <thead><tr><th>Stand</th><th>von</th><th>gespeichert</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </details>
 
     <h4>Wer war zuletzt hier</h4>
     <div id="vlist" style="margin:0 0 8px"></div>
@@ -1253,6 +1303,15 @@ body.editing{caret-color:var(--ink)}
   </div>
 </div>
 
+<div class="sync-toast" id="syncToast" hidden role="alert">
+  <b>Sync-Konflikt</b>
+  <p id="syncToastMsg"></p>
+  <div class="sync-toast-btns">
+    <button type="button" class="fbtn" id="syncToastTake">Übernehmen</button>
+    <button type="button" class="fbtn" id="syncToastKeep">Meine Version behalten</button>
+  </div>
+</div>
+
 <nav class="tabnav" id="tabNav" aria-label="Hauptnavigation">
   <button type="button" data-tabbtn="start" aria-pressed="true">
     <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg>
@@ -1277,7 +1336,7 @@ body.editing{caret-color:var(--ink)}
   </button>
 </nav>
 
-<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
+<button type="button" id="chatBubble" class="chat-bubble" hidden title="Chat öffnen" aria-label="Chat öffnen">💬<span class="chat-badge" id="chatBadge" hidden>0</span></button>
 
 <div id="chatPanel" class="chat-panel" hidden>
   <div class="chat-panel-head">
@@ -1583,6 +1642,30 @@ Plan.prototype.delRoute=function(id){
   this.rows=this.rows.filter(function(r){return r.id!==id;});
   this.render(); this.save(); return true;
 };
+/* Manuell einen weiteren Balken für eine Klasse anlegen - anders als
+   addClass() KEINE neuen Gruppen, sondern ein zusätzlicher Termin für die
+   schon vorhandene männliche/weibliche Gruppe dieser Klasse (dasselbe
+   Muster wie die zwei Balken, die addClass() für Quali bereits auf zwei
+   Routen verteilt). Ohne vorhandene Gruppe für eine Seite (Klasse in
+   diesem Plan noch gar nicht angelegt) wird diese Seite übersprungen. */
+Plan.prototype.addBlock=function(cls,routeId,start){
+  if(!this.row(routeId)) return false;
+  var self=this, added=false;
+  ["m","w"].forEach(function(gender){
+    var g=self.groups.filter(function(x){return x.cls===cls&&x.gender===gender;})[0];
+    if(!g) return;
+    self.blocks.push({id:"b"+(++self.seq), gid:g.id, r:routeId, s:Math.round(start/SNAP)*SNAP});
+    added=true;
+  });
+  if(!added) return false;
+  this.render(); this.save(); return true;
+};
+Plan.prototype.delBlock=function(blockId){
+  if(!this.blocks.some(function(b){return b.id===blockId;})) return false;
+  this.blocks=this.blocks.filter(function(b){return b.id!==blockId;});
+  if(this.sel===blockId) this.sel=null;
+  this.render(); this.save(); return true;
+};
 Plan.prototype.toggleDir=function(id){
   var r=this.row(id); if(!r) return;
   r.dir=r.dir==="ab"?"auf":"ab";
@@ -1632,9 +1715,10 @@ Plan.prototype.render=function(){
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
+         (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken" aria-label="Startreihenfolge '+
          (r.dir==="ab"?"absteigend (letzte Startnummer zuerst)":"aufsteigend (Startnummer 1 zuerst)")+' – zum Umkehren klicken">'+
          (r.dir==="ab"?"n→1":"1→n")+'</button>'+
-       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
+       '<button class="rdel" type="button" data-del="'+r.id+'" title="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'" aria-label="'+(busy?"Route ist belegt – erst Balken wegziehen":"Route löschen")+'"'+(busy?" disabled":"")+'>×</button>'+
        '</span></b>'+
        '<span>'+esc(self.desc(r))+'</span></div>';
     h+='<div class="track" data-route="'+r.id+'" style="--tick:'+(100/ticks).toFixed(4)+'%"></div></div>';
@@ -1672,7 +1756,7 @@ Plan.prototype.mount=function(b){
   var d=document.createElement("div");
   d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
   d.setAttribute("tabindex","0"); d.setAttribute("role","button");
-  d.innerHTML='<b></b><span></span>';
+  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(b.r)+' löschen">×</button>';
   t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
 };
 Plan.prototype.position=function(){
@@ -1723,6 +1807,13 @@ Plan.prototype.bind=function(d,b){
     window.removeEventListener("pointerup",onUp);
     window.removeEventListener("pointercancel",onUp);
     if(!moved) self.select(b.id); else {self.save(); if(self.sel===b.id) self.editor();}
+  }
+  var delBtn=d.querySelector(".blk-del");
+  if(delBtn){
+    /* pointerdown muss VOR dem Drag-Handler des Balkens selbst gestoppt
+       werden, sonst startet ein Klick auf "×" zusätzlich einen Drag. */
+    delBtn.addEventListener("pointerdown",function(ev){ ev.stopPropagation(); });
+    delBtn.addEventListener("click",function(ev){ ev.stopPropagation(); self.delBlock(b.id); });
   }
   d.addEventListener("pointerdown",function(ev){
     if(ev.button!==0&&ev.pointerType==="mouse") return;
@@ -2003,6 +2094,7 @@ function afterCfg(replan){
   pq.render(); pf.render(); pq.save(); pf.save();
   renderFilterBtns(); if(typeof fillAddRoute==="function") fillAddRoute();
 }
+function classInPlan(plan,classId){ return plan.rows.some(function(r){return r.cls===classId;}); }
 function renderMeld(){
   var h="", tot={m:0,w:0,n:0,min:0};
   var qlist=(pq.stat&&pq.stat.list)||[];
@@ -2021,7 +2113,9 @@ function renderMeld(){
          '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
        '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
-       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
+       '<td class="num"><input type="checkbox" class="cq" data-c="'+c.id+'"'+(classInPlan(pq,c.id)?" checked":"")+'></td>'+
+       '<td class="num"><input type="checkbox" class="cf" data-c="'+c.id+'"'+(classInPlan(pf,c.id)?" checked":"")+'></td>'+
+       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
      '<td></td><td></td><td class="num">'+tot.n+'</td><td class="num">'+tot.min+'</td><td></td></tr>';
@@ -2049,6 +2143,26 @@ function renderMeld(){
       reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
     };
   });
+  /* Quali/Finale einzeln je Klasse: ruft addClass()/delClass() nur auf der
+     jeweils betroffenen Plan-Instanz auf, nie auf beiden zusammen wie beim
+     Löschen der ganzen Klasse. CFG.classes bleibt dabei unverändert - der
+     Klassen-Eintrag selbst (Name/Meldezahlen) geht nie verloren. */
+  function wireClassToggle(sel,plan,otherSel){
+    Array.prototype.forEach.call(document.querySelectorAll(sel),function(cb){
+      cb.onchange=function(){
+        var id=this.getAttribute("data-c"), c=CL(id); if(!c) return;
+        if(!this.checked){
+          var other=document.querySelector(otherSel+'[data-c="'+id+'"]');
+          if(other&&!other.checked){ this.checked=true; return; }
+          plan.delClass(id);
+        } else {
+          plan.addClass(c);
+        }
+      };
+    });
+  }
+  wireClassToggle("#meldtab .cq",pq,"#meldtab .cf");
+  wireClassToggle("#meldtab .cf",pf,"#meldtab .cq");
 }
 function addClass(name,lm,lw,m,w,mode){
   name=String(name||"").trim(); if(!name) return false;
@@ -2097,7 +2211,7 @@ function renderCats(){
     h+='<tr><td><input class="cin katin" data-k="'+k.id+'" value="'+esc(k.name)+'"></td>'+
        '<td class="num">'+n+'</td>'+
        '<td class="num"><input class="nin katneed" data-k="'+k.id+'" type="number" min="0" max="99" value="'+(k.need||0)+'"></td>'+
-       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen">×</button></td></tr>';
+       '<td><button class="rdel katdel" type="button" data-k="'+k.id+'" title="Kategorie löschen" aria-label="Kategorie '+esc(k.name||k.id)+' löschen">×</button></td></tr>';
   });
   if(!CFG.cats.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch keine Kategorie – lege unten eine an.</td></tr>';
   body.innerHTML=h;
@@ -2136,7 +2250,7 @@ function renderPeople(){
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
-       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen">×</button></td></tr>';
+       '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
   if(!CFG.people.length) h='<tr><td colspan="5" style="color:var(--muted)">Noch keine Personen erfasst.</td></tr>';
   body.innerHTML=h;
@@ -2223,8 +2337,8 @@ function renderFinalTab(){
 }
 
 var routeNoteTimer=null;
-function renderRoutePlan(plan,list){
-  var box=document.getElementById("routenplan"); if(!box) return;
+function renderRoutePlan(plan,list,targetId){
+  var box=document.getElementById(targetId||"routenplan"); if(!box) return;
   var wasOpen={};
   Array.prototype.forEach.call(box.querySelectorAll("details.route[data-id]"),function(d){
     if(d.open) wasOpen[d.getAttribute("data-id")]=true;
@@ -2264,7 +2378,10 @@ function afterQ(plan,list){
   renderTeams(plan,list); renderFlow(plan,list); renderRoutePlan(plan,list);
   if(pq&&pf){ renderMeld(); renderStats(); renderPeople(); refreshTeamSel(); }
 }
-function afterF(){ if(pq&&pf){ renderFinalTab(); renderStats(); } }
+function afterF(plan,list){
+  renderRoutePlan(plan,list,"routenplanFinale");
+  if(pq&&pf){ renderFinalTab(); renderStats(); }
+}
 function autoStep(span){return span>300?60:(span>150?30:15);}
 pq=new Plan({mount:"gq-inner", readout:"roQ", editor:"edQ", laufkarte:"#lk", store:"kidscup-quali-v9", kind:"quali",
   prefix:"Q", start:CFG.win.qs, end:CFG.win.qe, step:autoStep(CFG.win.qe-CFG.win.qs), axisLabel:"Quali",
@@ -2325,6 +2442,31 @@ document.getElementById("addFgo").onclick=function(){
   addBoxF.hidden=true;
 };
 document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
+
+/* ---- Balken manuell hinzufügen ---- */
+function fillAddBlock(clsSelId,routeSelId,plan){
+  document.getElementById(clsSelId).innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  document.getElementById(routeSelId).innerHTML=plan.rows.map(function(r){return '<option value="'+r.id+'">'+esc(r.id)+' – '+esc(plan.desc(r))+'</option>';}).join("");
+}
+var addBoxQBlock=document.getElementById("addQBlock");
+document.getElementById("addQBlockToggle").onclick=function(){
+  addBoxQBlock.hidden=!addBoxQBlock.hidden; if(!addBoxQBlock.hidden) fillAddBlock("addQBlockCls","addQBlockRoute",pq);
+};
+document.getElementById("addQBlockGo").onclick=function(){
+  pq.addBlock(document.getElementById("addQBlockCls").value,document.getElementById("addQBlockRoute").value,pq.o.start);
+  addBoxQBlock.hidden=true;
+};
+document.getElementById("addQBlockCancel").onclick=function(){addBoxQBlock.hidden=true;};
+
+var addBoxFBlock=document.getElementById("addFBlock");
+document.getElementById("addFBlockToggle").onclick=function(){
+  addBoxFBlock.hidden=!addBoxFBlock.hidden; if(!addBoxFBlock.hidden) fillAddBlock("addFBlockCls","addFBlockRoute",pf);
+};
+document.getElementById("addFBlockGo").onclick=function(){
+  pf.addBlock(document.getElementById("addFBlockCls").value,document.getElementById("addFBlockRoute").value,pf.o.start);
+  addBoxFBlock.hidden=true;
+};
+document.getElementById("addFBlockCancel").onclick=function(){addBoxFBlock.hidden=true;};
 
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");
@@ -2510,23 +2652,44 @@ function saveTextBlocks(){
    (neuer Abschnitt, gelöschter Abschnitt, umsortierter Block) nicht
    die Nummerierung alter Elemente verschiebt und damit gelöschte/
    bearbeitete Textbausteine an einem völlig anderen Element wieder
-   auftauchen lässt. Zählt pro (Abschnitt, Tag) getrennt hoch. */
+   auftauchen lässt. Zählt pro (Abschnitt, Tag) getrennt hoch.
+
+   Einmalige Migration: vor diesem Schema liefen dieselben Elemente unter
+   einem flachen, über die ganze Seite fortlaufenden Schlüssel (t0, t1,
+   t2, ...). Beim ersten Laden nach der Umstellung wird hier pro Element
+   zusätzlich der alte Schlüssel anhand derselben DOM-Reihenfolge
+   nachgebildet - existiert unter dem alten Schlüssel ein gespeicherter
+   Text, aber noch keiner unter dem neuen, wird er übernommen, statt
+   kommentarlos auf den Ursprungstext zurückzufallen. */
 function initTexts(){
-  var counters={};
+  var counters={}, flatCounter=0, keyMap={}, migrated=false;
   editables().forEach(function(el){
+    var oldKey="t"+(flatCounter++);
     var host=el.closest("section[id]")||el.closest("header,footer");
     var scope=host?(host.id||host.tagName.toLowerCase()):"root";
     var group=scope+"_"+el.tagName;
     counters[group]=(counters[group]||0)+1;
     var k=group+"_"+counters[group];
+    keyMap[oldKey]=k;
+    if(TXT[k]==null&&TXT[oldKey]!=null){ TXT[k]=TXT[oldKey]; migrated=true; }
     el.setAttribute("data-ed",k);
     if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
     updateEmptyFlag(el);
   });
+  var remappedHidden=TXTBLOCKS.hidden.map(function(k){ return keyMap[k]||k; });
+  if(remappedHidden.some(function(k,i){ return k!==TXTBLOCKS.hidden[i]; })){
+    TXTBLOCKS.hidden=remappedHidden;
+    migrated=true;
+  }
   renderAddedBlocks();
   document.querySelectorAll(".txt-added[data-ed]").forEach(updateEmptyFlag);
   applyHiddenBlocks();
   updateEmptyContainers();
+  if(migrated){
+    try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
+    pushState("texts",TXT);
+    saveTextBlocks();
+  }
 }
 var txtTimer=null;
 function markText(el){
@@ -3047,7 +3210,7 @@ function renderCompAdmin(){
     h+='<tr><td>'+esc(c.name)+(c.is_default?' <span class="pill ok">Standard</span>':'')+'</td>'+
        '<td><span class="mono" style="font-size:12px">'+esc(link)+'</span> <button class="fbtn compcopy" data-link="'+esc(link)+'" type="button">Kopieren</button></td>'+
        '<td class="num">'+((c.competition_members||[]).length)+'</td>'+
-       '<td></td></tr>';
+       '<td><button class="fbtn compdel" type="button" data-id="'+esc(c.id)+'"'+(c.is_default?' disabled title="Standard-Wettkampf lässt sich nicht löschen"':'')+'>Löschen</button></td></tr>';
   });
   if(!ALLCOMPS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Wettkampf.</td></tr>';
   body.innerHTML=h;
@@ -3059,8 +3222,53 @@ function renderCompAdmin(){
         .catch(function(){ prompt("Link kopieren:",link); });
     };
   });
+  Array.prototype.forEach.call(body.querySelectorAll(".compdel"),function(b){
+    b.onclick=function(){ openCompetitionDelete(this.getAttribute("data-id")); };
+  });
   var dupSel=document.getElementById("ccDupFrom");
   if(dupSel) dupSel.innerHTML=ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join("");
+}
+function competitionDeleteHtml(c){
+  return '<h3>Wettkampf löschen</h3>'+
+    '<p class="hint" style="margin-top:-8px">Wettkampf „'+esc(c.name)+'" wirklich löschen? Das entfernt unwiderruflich Zeitplan, Personen, Chat, Aufgaben und Speicherstände dieses Wettkampfs.</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<button class="fbtn" id="compDelConfirm" type="button">Endgültig löschen</button>'+
+      '<button class="fbtn" id="compDelCancel" type="button">Abbrechen</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="compDelMsg" role="status"></p>';
+}
+/* Fremdschlüssel auf competitions sind in supabase/schema.sql bereits
+   "on delete cascade" (plan_state, competition_members, tasks, chat,
+   payouts, attendance, people_contacts, ...) - keine weitere
+   Aufräum-Logik hier nötig. */
+function openCompetitionDelete(id){
+  if(!PROFILE||!PROFILE.is_admin||!id) return;
+  var c=ALLCOMPS.filter(function(x){return x.id===id;})[0]; if(!c) return;
+  if(c.is_default){
+    ccSay('„'+c.name+'" ist der Standard-Wettkampf (erreichbar ohne ?w=-Link) und lässt sich nicht löschen, solange kein anderer Wettkampf als Standard gesetzt ist.',true);
+    return;
+  }
+  document.getElementById("modalBody").innerHTML=competitionDeleteHtml(c);
+  function cdSay(msg,bad){ var m=document.getElementById("compDelMsg"); if(m){ m.textContent=msg||""; m.className="pdfmsg"+(bad?" bad":""); } }
+  document.getElementById("compDelCancel").onclick=closeModal;
+  document.getElementById("compDelConfirm").onclick=function(){
+    var btn=this; btn.disabled=true; cdSay("Lösche …");
+    sbClient.from("competitions").delete().eq("id",c.id).then(function(r){
+      if(r.error){ cdSay(r.error.message,true); btn.disabled=false; return; }
+      closeModal();
+      if(CURRENT_COMP&&CURRENT_COMP.id===c.id){
+        /* War der gerade angezeigte Wettkampf: ?w=<gelöschter-slug> zeigt
+           jetzt ins Leere. Link ohne ?w= neu laden - das lässt
+           resolveCompetition() ganz regulär auf den Standard-Wettkampf
+           auflösen, wie beim ersten Besuch ohne Link. */
+        var url=new URL(location.href); url.searchParams.delete("w");
+        location.href=url.pathname+(url.search||"")+url.hash;
+      } else {
+        loadAllCompetitions();
+      }
+    }).catch(function(err){ cdSay(String((err&&err.message)||err),true); btn.disabled=false; });
+  };
+  openModal();
 }
 function resetCompForm(){
   document.getElementById("ccName").value=""; document.getElementById("ccSlug").value="";
@@ -3090,7 +3298,17 @@ function createCompetition(){
           {key:"textblocks",data:{added:[],hidden:[]}}
         ]);
     seedP.then(function(rows){
-      var payload=(rows||[]).map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
+      /* Vorlage übernimmt Wertungsklassen, Kategorien und Zeitraster - bewusst
+         NICHT Personen/Zuordnungen: die gehören zum jeweiligen Wettkampftag,
+         nicht zur Vorlage (siehe Hinweistext im Formular). cfg.people liegt
+         mit im selben JSON-Datensatz wie classes/cats/win, deshalb hier
+         gezielt herausnehmen statt den ganzen Datensatz zu kopieren. */
+      rows=(rows||[]).map(function(row){
+        if(row.key!=="cfg"||!row.data) return row;
+        var cfg=clone(row.data); cfg.people=[];
+        return {key:row.key, data:cfg};
+      });
+      var payload=rows.map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
       if(!payload.length) return {error:null};
       return sbClient.from("plan_state").insert(payload);
     }).then(function(r3){
@@ -3111,27 +3329,89 @@ document.getElementById("ccCancel").onclick=resetCompForm;
 document.getElementById("ccGo").onclick=createCompetition;
 
 /* ---- Plan-Zustand mit Supabase abgleichen (ersetzt localStorage als Quelle der Wahrheit) ---- */
+/* Sync-Konflikt-Erkennung (optimistisches Locking): STATEVER[key] hält die
+   zuletzt vom Server gesehene Versionsnummer. pushState() schreibt nur,
+   wenn der Server noch auf genau dieser Version steht (WHERE version=…);
+   betrifft das UPDATE 0 Zeilen, hat zwischenzeitlich jemand anderes
+   gespeichert - dann kommt der Sync-Konflikt-Hinweis statt eines stillen
+   Überschreibens. Ohne bekannte Version (frisch geladene Seite, brandneuer
+   Wettkampf) wird wie bisher per upsert geschrieben. Läuft die Migration
+   0009 noch nicht (Spalte "version" fehlt), meldet Postgres einen Fehler -
+   pushState fällt dann auf die bisherige Warnung zurück, ohne die Seite zu
+   blockieren; pullState() ist davon bewusst unabhängig (siehe unten). */
+var STATEVER={};
 function pushState(key,data){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
-  sbClient.from("plan_state").upsert({competition_id:CURRENT_COMP.id,key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
-    .then(function(r){ if(r.error) console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); });
+  var known=STATEVER[key];
+  var write=(known!=null)
+    ? sbClient.from("plan_state").update({data:data,updated_by:PROFILE.id})
+        .eq("competition_id",CURRENT_COMP.id).eq("key",key).eq("version",known).select("version")
+    : sbClient.from("plan_state").upsert({competition_id:CURRENT_COMP.id,key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
+        .select("version");
+  write.then(function(r){
+    if(r.error){ console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); return; }
+    if(known!=null&&(!r.data||!r.data.length)){ handleSyncConflict(key,data); return; }
+    if(r.data&&r.data[0]&&r.data[0].version!=null) STATEVER[key]=r.data[0].version;
+  }).catch(function(err){ console.warn("Sync ("+key+") fehlgeschlagen:",err); });
 }
+var SYNCKEYLABEL={cfg:"Wertungsklassen und Zeitplan", quali:"Zeitplan Qualifikation", finale:"Finale", texts:"Texte", textblocks:"Textbausteine"};
+var syncConflictQueue=[];
+function handleSyncConflict(key,data){
+  if(syncConflictQueue.some(function(c){return c.key===key;})) return;
+  syncConflictQueue.push({key:key,data:data});
+  if(syncConflictQueue.length===1) showNextSyncConflict();
+}
+function showNextSyncConflict(){
+  var c=syncConflictQueue[0], box=document.getElementById("syncToast"); if(!c||!box) return;
+  document.getElementById("syncToastMsg").textContent=
+    "Jemand hat „"+(SYNCKEYLABEL[c.key]||c.key)+"“ seit deinem letzten Speichern geändert. Deine Version behalten oder die andere übernehmen?";
+  box.hidden=false;
+}
+function resolveSyncConflict(keepMine){
+  var c=syncConflictQueue.shift();
+  var box=document.getElementById("syncToast"); if(box) box.hidden=true;
+  if(c){
+    if(keepMine){
+      sbClient.from("plan_state").select("version").eq("competition_id",CURRENT_COMP.id).eq("key",c.key).maybeSingle()
+        .then(function(r){ if(r.data&&r.data.version!=null) STATEVER[c.key]=r.data.version; pushState(c.key,c.data); })
+        .catch(function(){ pushState(c.key,c.data); });
+    } else {
+      pullState();
+    }
+  }
+  if(syncConflictQueue.length) showNextSyncConflict();
+}
+document.getElementById("syncToastKeep").onclick=function(){ resolveSyncConflict(true); };
+document.getElementById("syncToastTake").onclick=function(){ resolveSyncConflict(false); };
 function pullState(){
   if(!sbClient||!CURRENT_COMP) return;
-  sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
-    if(r.error||!r.data) return;
-    var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
-    if(by.cfg&&by.quali&&by.finale){
-      applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
-    } else {
-      /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
-      pushState("cfg",CFG);
-      pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
-      pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
-      pushState("texts",TXT);
-      pushState("textblocks",TXTBLOCKS);
-    }
-  }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
+  /* Erst die Versionsstände auffrischen (eigene, unkritische Abfrage - schlägt
+     sie fehl, z. B. weil Migration 0009 noch nicht angewendet ist, geht es
+     trotzdem weiter, Konflikterkennung ist dann schlicht noch aus), DANACH
+     erst die eigentlichen Daten laden. Reihenfolge ist wichtig: applySnapshot()
+     speichert direkt danach automatisch wieder (saveCfg()/pq.save()/pf.save()),
+     und dieser Re-Save muss schon die frische Version sehen - sonst würde er
+     mit einer veralteten Version schreiben und einen Konflikt vortäuschen, wo
+     gar keiner ist. */
+  sbClient.from("plan_state").select("key,version").eq("competition_id",CURRENT_COMP.id)
+    .then(function(r){
+      if(!r.error&&r.data) r.data.forEach(function(row){ if(row.version!=null) STATEVER[row.key]=row.version; });
+    }).catch(function(){}).then(function(){
+      sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
+        if(r.error||!r.data) return;
+        var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
+        if(by.cfg&&by.quali&&by.finale){
+          applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
+        } else {
+          /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
+          pushState("cfg",CFG);
+          pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
+          pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
+          pushState("texts",TXT);
+          pushState("textblocks",TXTBLOCKS);
+        }
+      }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
+    });
 }
 var planSub=null;
 function subscribePlanState(){
@@ -3293,7 +3573,7 @@ function renderAttendance(){
        '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
        '<span>'+esc(p.full_name)+(mine?' <span class="pill">Du</span>':'')+'</span></div></td>'+
        '<td>'+esc(CATLABEL[p.category]||p.category)+'</td>'+
-       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+       '<td>'+(p.phone?('<a class="tel-btn" href="tel:'+esc(p.phone)+'" title="'+esc(p.phone)+' anrufen" aria-label="'+esc(p.phone)+' anrufen">'+PHONE_SVG+'</a>'+esc(p.phone)):'<span style="color:var(--muted)">—</span>')+'</td>'+
        '<td>'+(mine
          ? attendanceToggleHtml(m.attendance)
          : (m.attendance?'<span class="pill'+(m.attendance==="da"?" ok":"")+'">'+esc(ATTLABEL[m.attendance])+'</span>':'<span style="color:var(--muted)">—</span>'))+
@@ -3305,7 +3585,13 @@ function renderAttendance(){
   if(isAdmin){
     Array.prototype.forEach.call(body.querySelectorAll(".person-cell"),function(cell){
       cell.classList.add("clickable");
+      cell.setAttribute("role","button");
+      cell.setAttribute("tabindex","0");
+      cell.setAttribute("aria-label","Profil von "+cell.querySelector("span:last-child").textContent.trim()+" bearbeiten");
       cell.onclick=function(){ openPersonEdit(this.getAttribute("data-pid")); };
+      cell.onkeydown=function(ev){
+        if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); openPersonEdit(this.getAttribute("data-pid")); }
+      };
     });
   }
 }
@@ -3855,6 +4141,7 @@ function renderStands(){
   });
   if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
   body.innerHTML=h;
+  var cnt=document.getElementById("standCount"); if(cnt) cnt.textContent=STANDS.length;
   Array.prototype.forEach.call(document.querySelectorAll(".stload"),function(b){
     b.onclick=function(){
       if(!isAdmin) return;
@@ -3897,6 +4184,13 @@ function logMe(what){
   if(!DB||!PROFILE) return;
   DB.doc("viewers/"+PROFILE.id).set({name:PROFILE.full_name, at:new Date().toISOString(), last:what||"geöffnet", pdf:pdfCount}).catch(function(){});
 }
+var STANDS_LIMIT=10;
+/* Ältere Stände über dem Limit ermitteln (jüngste zuerst behalten) - reine
+   Auswahl, löscht selbst nichts, damit sie für beide Pfade (geteilt/lokal)
+   gleich benutzt werden kann. */
+function excessStands(list){
+  return list.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));}).slice(STANDS_LIMIT);
+}
 function saveStand(){
   var t=document.getElementById("stTitle").value.trim()||("Stand "+dstr());
   var n=document.getElementById("stNote").value.trim();
@@ -3907,12 +4201,16 @@ function saveStand(){
       standSay('Stand „'+t+'" gespeichert – für alle sichtbar, die den Link haben.');
       document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
       logMe("gespeichert: "+t);
+      excessStands(STANDS.concat([rec])).forEach(function(s){ DB.doc("stands/"+s.id).delete().catch(function(){}); });
     }).catch(function(e){
       standSay("Speichern fehlgeschlagen"+(e&&e.code?" ("+e.code+")":"")+" – der Stand liegt jetzt nur lokal.",true);
       STANDS.push(rec); saveLocalStands(); renderStands();
     });
   } else {
-    STANDS.push(rec); saveLocalStands(); renderStands();
+    STANDS.push(rec);
+    var extra=excessStands(STANDS);
+    if(extra.length){ var ids=extra.map(function(s){return s.id;}); STANDS=STANDS.filter(function(s){return ids.indexOf(s.id)<0;}); }
+    saveLocalStands(); renderStands();
     standSay('Stand „'+t+'" lokal gespeichert (nur in diesem Browser).');
     document.getElementById("stTitle").value=""; document.getElementById("stNote").value="";
   }
