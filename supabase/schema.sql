@@ -262,10 +262,41 @@ create policy "plan_state: Orga/Routenbau/Admin legen Texte-Zeile an" on public.
   for insert
   with check (public.is_admin() or (public.my_status() = 'approved' and key in ('texts','textblocks') and public.my_category() in ('orga','routenbau') and public.is_member(competition_id)));
 
--- Bekannte Einschränkung: die Trennung "Routenbau darf nur einzelne Textstellen
--- ändern" wird nur clientseitig durchgesetzt (die UI zeigt nur die für die Rolle
--- relevanten Textfelder als bearbeitbar) — der 'texts'-Datensatz ist ein einziges
--- JSON-Objekt, RLS kann nicht auf einzelne Schlüssel darin eingrenzen.
+-- Der 'texts'-Schlüssel oben bleibt in der key-Liste erlaubt (alte Clients
+-- schreiben während der Umstellung noch darauf), wird von aktuellen Clients
+-- aber nicht mehr benutzt: einzelne Textstellen liegen jetzt in plan_texts
+-- unten, eine Zeile je Textbaustein statt eines einzigen JSON-Blobs — nur so
+-- kann RLS die Kategorie "Routenbau" auf den Routenplan-Bereich eingrenzen.
+
+-- ---------- Texte je Abschnitt (1 Zeile je Textbaustein, je Wettkampf) ----------
+-- "scope" ist der Abschnitt, dem der Textbaustein zugeordnet ist (aus dem
+-- Element-Schlüssel abgeleitet, siehe initTexts() in src/script.part) -
+-- z. B. "quali", "routenplan", "staende". Damit kann RLS unten die Kategorie
+-- "Routenbau" auf scope = 'routenplan' einschränken, was mit einem
+-- einzelnen JSON-Blob (der alte 'texts'-Datensatz oben) nicht ging.
+create table public.plan_texts (
+  competition_id uuid not null references public.competitions(id) on delete cascade,
+  ed_key         text not null,
+  scope          text not null,
+  html           text not null default '',
+  updated_at     timestamptz not null default now(),
+  updated_by     uuid references public.profiles(id),
+  primary key (competition_id, ed_key)
+);
+alter table public.plan_texts enable row level security;
+
+create policy "plan_texts: Mitglieder oder Admin lesen" on public.plan_texts
+  for select using (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id)));
+create policy "plan_texts: Orga/Admin aktualisieren, Routenbau nur Routenplan" on public.plan_texts
+  for update
+  using (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id) and (
+           public.my_category() = 'orga' or (public.my_category() = 'routenbau' and scope = 'routenplan'))))
+  with check (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id) and (
+           public.my_category() = 'orga' or (public.my_category() = 'routenbau' and scope = 'routenplan'))));
+create policy "plan_texts: Orga/Admin legen Zeile an, Routenbau nur Routenplan" on public.plan_texts
+  for insert
+  with check (public.is_admin() or (public.my_status() = 'approved' and public.is_member(competition_id) and (
+           public.my_category() = 'orga' or (public.my_category() = 'routenbau' and scope = 'routenplan'))));
 
 -- ---------- Speicherstände (je Wettkampf) ----------
 -- id ist text, kein uuid: der Client erzeugt eigene IDs wie "s1a2b3c4d5e6"

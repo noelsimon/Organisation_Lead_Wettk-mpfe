@@ -402,25 +402,34 @@ function createCompetition(){
           {key:"cfg",data:CFG0},
           {key:"quali",data:{rows:QROWS,groups:QGROUPS,blocks:QBLOCKS,seq:1000}},
           {key:"finale",data:{rows:FROWS,groups:FGROUPS,blocks:FBLOCKS,seq:1000}},
-          {key:"texts",data:{}},
           {key:"textblocks",data:{added:[],hidden:[]}}
         ]);
-    seedP.then(function(rows){
+    /* Texte liegen seit Migration 0010 nicht mehr im plan_state-Blob,
+       sondern als eigene Zeilen in plan_texts - beim Duplizieren also
+       getrennt mitkopieren. */
+    var seedTextsP = (src==="dup"&&dupFrom)
+      ? sbClient.from("plan_texts").select("ed_key,scope,html").eq("competition_id",dupFrom).then(function(r2){ return r2.data||[]; })
+      : Promise.resolve([]);
+    Promise.all([seedP,seedTextsP]).then(function(results){
       /* Vorlage übernimmt Wertungsklassen, Kategorien und Zeitraster - bewusst
          NICHT Personen/Zuordnungen: die gehören zum jeweiligen Wettkampftag,
          nicht zur Vorlage (siehe Hinweistext im Formular). cfg.people liegt
          mit im selben JSON-Datensatz wie classes/cats/win, deshalb hier
          gezielt herausnehmen statt den ganzen Datensatz zu kopieren. */
-      rows=(rows||[]).map(function(row){
+      var rows=results[0]||[], textRows=results[1]||[];
+      rows=rows.map(function(row){
         if(row.key!=="cfg"||!row.data) return row;
         var cfg=clone(row.data); cfg.people=[];
         return {key:row.key, data:cfg};
       });
       var payload=rows.map(function(row){return {competition_id:comp.id, key:row.key, data:row.data};});
-      if(!payload.length) return {error:null};
-      return sbClient.from("plan_state").insert(payload);
-    }).then(function(r3){
-      if(r3&&r3.error){ ccSay("Wettkampf angelegt, aber Struktur konnte nicht kopiert werden: "+r3.error.message,true); }
+      var textPayload=textRows.map(function(row){return {competition_id:comp.id, ed_key:row.ed_key, scope:row.scope, html:row.html};});
+      var p1=payload.length?sbClient.from("plan_state").insert(payload):Promise.resolve({error:null});
+      var p2=textPayload.length?sbClient.from("plan_texts").insert(textPayload):Promise.resolve({error:null});
+      return Promise.all([p1,p2]);
+    }).then(function(rs){
+      var err=(rs[0]&&rs[0].error)||(rs[1]&&rs[1].error);
+      if(err){ ccSay("Wettkampf angelegt, aber Struktur konnte nicht kopiert werden: "+err.message,true); }
       else ccSay('Wettkampf „'+name+'" angelegt: '+competitionLink(slug));
       resetCompForm(); loadAllCompetitions();
     }).catch(function(err){ ccSay("Fehler beim Anlegen der Struktur: "+((err&&err.message)||err),true); });
@@ -493,6 +502,13 @@ document.getElementById("syncToastKeep").onclick=function(){ resolveSyncConflict
 document.getElementById("syncToastTake").onclick=function(){ resolveSyncConflict(false); };
 function pullState(){
   if(!sbClient||!CURRENT_COMP) return;
+  /* Eigene Abfrage, eine Zeile je Textbaustein statt eines JSON-Blobs (siehe
+     plan_texts, Migration 0010). Läuft die Migration noch nicht, kommt hier
+     einfach ein Fehler zurück - texts bleibt dann leer, der Rest lädt
+     unbeeinflusst weiter. */
+  var textsP=sbClient.from("plan_texts").select("ed_key,html").eq("competition_id",CURRENT_COMP.id)
+    .then(function(r){ return (r.error||!r.data)?{}:r.data.reduce(function(acc,row){acc[row.ed_key]=row.html; return acc;},{}); })
+    .catch(function(){ return {}; });
   /* Erst die Versionsstände auffrischen (eigene, unkritische Abfrage - schlägt
      sie fehl, z. B. weil Migration 0009 noch nicht angewendet ist, geht es
      trotzdem weiter, Konflikterkennung ist dann schlicht noch aus), DANACH
@@ -505,18 +521,23 @@ function pullState(){
     .then(function(r){
       if(!r.error&&r.data) r.data.forEach(function(row){ if(row.version!=null) STATEVER[row.key]=row.version; });
     }).catch(function(){}).then(function(){
-      sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id).then(function(r){
+      var mainP=sbClient.from("plan_state").select("key,data").eq("competition_id",CURRENT_COMP.id);
+      Promise.all([mainP,textsP]).then(function(results){
+        var r=results[0], texts=results[1];
         if(r.error||!r.data) return;
         var by={}; r.data.forEach(function(row){by[row.key]=row.data;});
         if(by.cfg&&by.quali&&by.finale){
-          applySnapshot({cfg:by.cfg, texts:by.texts||{}, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
+          applySnapshot({cfg:by.cfg, texts:texts, textblocks:by.textblocks||{added:[],hidden:[]}, q:by.quali, f:by.finale});
         } else {
           /* Datenbank noch leer (erster Start) – lokalen Stand als Ausgangsbasis hochladen */
           pushState("cfg",CFG);
           pushState("quali",{rows:pq.rows,groups:pq.groups,blocks:pq.blocks,seq:pq.seq});
           pushState("finale",{rows:pf.rows,groups:pf.groups,blocks:pf.blocks,seq:pf.seq});
-          pushState("texts",TXT);
           pushState("textblocks",TXTBLOCKS);
+          Object.keys(TXT).forEach(function(k){
+            var el=document.querySelector('[data-ed="'+cssEsc(k)+'"]');
+            pushText(k,TXT[k],el?el.getAttribute("data-scope"):"root");
+          });
         }
       }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
     });
