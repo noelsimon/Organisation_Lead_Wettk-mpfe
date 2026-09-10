@@ -4040,7 +4040,7 @@ function T(el,fb){var n=document.querySelector('[data-ed="'+el+'"]'); return n?n
 /* ================= Kontakt-E-Mail je Person (nur Admin) =================
    Liegt bewusst NICHT in CFG/plan_state (das ist für alle freigegebenen
    Mitglieder lesbar), sondern in einer eigenen Tabelle mit admin-only RLS –
-   siehe supabase/migrations/0009_people_contacts.sql. */
+   siehe supabase/migrations/0011_people_contacts.sql. */
 var CONTACTS={};
 function saveContact(id,email){
   if(!sbClient||!CURRENT_COMP||!PROFILE) return;
