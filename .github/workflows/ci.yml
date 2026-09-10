@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  build-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (config.part + head.part + script-*.part -> index.html)
+        run: python3 src/build.py
+
+      - name: Verify build output is committed (index.html / regieplan-fragment.html in sync)
+        run: |
+          git diff --exit-code -- index.html src/regieplan-fragment.html || {
+            echo "::error::index.html / src/regieplan-fragment.html sind nicht auf dem Stand von src/*.part. Bitte 'python3 src/build.py' laufen lassen und das Ergebnis mit committen.";
+            exit 1;
+          }
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
