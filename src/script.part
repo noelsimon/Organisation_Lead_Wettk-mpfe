@@ -286,6 +286,30 @@ Plan.prototype.delRoute=function(id){
   this.rows=this.rows.filter(function(r){return r.id!==id;});
   this.render(); this.save(); return true;
 };
+/* Manuell einen weiteren Balken für eine Klasse anlegen - anders als
+   addClass() KEINE neuen Gruppen, sondern ein zusätzlicher Termin für die
+   schon vorhandene männliche/weibliche Gruppe dieser Klasse (dasselbe
+   Muster wie die zwei Balken, die addClass() für Quali bereits auf zwei
+   Routen verteilt). Ohne vorhandene Gruppe für eine Seite (Klasse in
+   diesem Plan noch gar nicht angelegt) wird diese Seite übersprungen. */
+Plan.prototype.addBlock=function(cls,routeId,start){
+  if(!this.row(routeId)) return false;
+  var self=this, added=false;
+  ["m","w"].forEach(function(gender){
+    var g=self.groups.filter(function(x){return x.cls===cls&&x.gender===gender;})[0];
+    if(!g) return;
+    self.blocks.push({id:"b"+(++self.seq), gid:g.id, r:routeId, s:Math.round(start/SNAP)*SNAP});
+    added=true;
+  });
+  if(!added) return false;
+  this.render(); this.save(); return true;
+};
+Plan.prototype.delBlock=function(blockId){
+  if(!this.blocks.some(function(b){return b.id===blockId;})) return false;
+  this.blocks=this.blocks.filter(function(b){return b.id!==blockId;});
+  if(this.sel===blockId) this.sel=null;
+  this.render(); this.save(); return true;
+};
 Plan.prototype.toggleDir=function(id){
   var r=this.row(id); if(!r) return;
   r.dir=r.dir==="ab"?"auf":"ab";
@@ -375,7 +399,7 @@ Plan.prototype.mount=function(b){
   var d=document.createElement("div");
   d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
   d.setAttribute("tabindex","0"); d.setAttribute("role","button");
-  d.innerHTML='<b></b><span></span>';
+  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(b.r)+' löschen">×</button>';
   t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
 };
 Plan.prototype.position=function(){
@@ -426,6 +450,13 @@ Plan.prototype.bind=function(d,b){
     window.removeEventListener("pointerup",onUp);
     window.removeEventListener("pointercancel",onUp);
     if(!moved) self.select(b.id); else {self.save(); if(self.sel===b.id) self.editor();}
+  }
+  var delBtn=d.querySelector(".blk-del");
+  if(delBtn){
+    /* pointerdown muss VOR dem Drag-Handler des Balkens selbst gestoppt
+       werden, sonst startet ein Klick auf "×" zusätzlich einen Drag. */
+    delBtn.addEventListener("pointerdown",function(ev){ ev.stopPropagation(); });
+    delBtn.addEventListener("click",function(ev){ ev.stopPropagation(); self.delBlock(b.id); });
   }
   d.addEventListener("pointerdown",function(ev){
     if(ev.button!==0&&ev.pointerType==="mouse") return;
@@ -1028,6 +1059,31 @@ document.getElementById("addFgo").onclick=function(){
   addBoxF.hidden=true;
 };
 document.getElementById("addFcancel").onclick=function(){addBoxF.hidden=true;};
+
+/* ---- Balken manuell hinzufügen ---- */
+function fillAddBlock(clsSelId,routeSelId,plan){
+  document.getElementById(clsSelId).innerHTML=CFG.classes.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join("");
+  document.getElementById(routeSelId).innerHTML=plan.rows.map(function(r){return '<option value="'+r.id+'">'+esc(r.id)+' – '+esc(plan.desc(r))+'</option>';}).join("");
+}
+var addBoxQBlock=document.getElementById("addQBlock");
+document.getElementById("addQBlockToggle").onclick=function(){
+  addBoxQBlock.hidden=!addBoxQBlock.hidden; if(!addBoxQBlock.hidden) fillAddBlock("addQBlockCls","addQBlockRoute",pq);
+};
+document.getElementById("addQBlockGo").onclick=function(){
+  pq.addBlock(document.getElementById("addQBlockCls").value,document.getElementById("addQBlockRoute").value,pq.o.start);
+  addBoxQBlock.hidden=true;
+};
+document.getElementById("addQBlockCancel").onclick=function(){addBoxQBlock.hidden=true;};
+
+var addBoxFBlock=document.getElementById("addFBlock");
+document.getElementById("addFBlockToggle").onclick=function(){
+  addBoxFBlock.hidden=!addBoxFBlock.hidden; if(!addBoxFBlock.hidden) fillAddBlock("addFBlockCls","addFBlockRoute",pf);
+};
+document.getElementById("addFBlockGo").onclick=function(){
+  pf.addBlock(document.getElementById("addFBlockCls").value,document.getElementById("addFBlockRoute").value,pf.o.start);
+  addBoxFBlock.hidden=true;
+};
+document.getElementById("addFBlockCancel").onclick=function(){addBoxFBlock.hidden=true;};
 
 /* ---- Klasse hinzufügen ---- */
 var clsBox=document.getElementById("addCls");
