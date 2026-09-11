@@ -236,7 +236,7 @@ function autoStep(span){return span>300?60:(span>150?30:15);}
 pq=new Plan({mount:"gq-inner", readout:"roQ", editor:"edQ", laufkarte:"#lk", store:"kidscup-quali-v9", kind:"quali",
   prefix:"Q", start:CFG.win.qs, end:CFG.win.qe, step:autoStep(CFG.win.qe-CFG.win.qs), axisLabel:"Quali",
   rows:QROWS, groups:QGROUPS, blocks:QBLOCKS, onchange:afterQ});
-pf=new Plan({mount:"gf-inner", readout:"roF", editor:"edF", store:"kidscup-finale-v9", kind:"finale",
+pf=new Plan({mount:"gf-inner", readout:"roF", editor:"edF", laufkarte:"#lkf", store:"kidscup-finale-v9", kind:"finale",
   prefix:"F", start:CFG.win.fs, end:CFG.win.fe, step:autoStep(CFG.win.fe-CFG.win.fs), axisLabel:"Finale",
   rows:FROWS, groups:FGROUPS, blocks:FBLOCKS, fixedGen:ffix, onchange:afterF});
 pq.applyField(); pf.applyField(); pq.render(); pf.render();

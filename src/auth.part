@@ -462,19 +462,52 @@ document.getElementById("ccGo").onclick=createCompetition;
    pushState fällt dann auf die bisherige Warnung zurück, ohne die Seite zu
    blockieren; pullState() ist davon bewusst unabhängig (siehe unten). */
 var STATEVER={};
+/* Self-Echo-Erkennung für die plan_state-Realtime-Subscription (Issue #76):
+   der bump_plan_state_version()-Trigger erhöht die Version bei jedem UPDATE
+   serverseitig immer genau um 1, ausgehend von der Version, gegen die das
+   UPDATE erfolgreich gematcht hat (WHERE version=known). Ein Update mit
+   bekanntem known kann also, BEVOR die eigene Antwort zurück ist, die von
+   ihm erwartete neue Version vormerken. Kommt später per Realtime genau
+   diese (key,version)-Kombination herein, ist das die Bestätigung des
+   eigenen Schreibvorgangs (Self-Echo) und kein fremder Sync - dann braucht
+   es kein pullState()/applySnapshot(), das sonst gerade erst lokal
+   gemachte, noch nicht bestätigte Änderungen (z. B. eine zweite, schnell
+   danach gemachte Aktion) wieder überschreiben würde. Schreibvorgänge von
+   anderen Tabs/Geräten/Personen erzeugen eine andere Version bzw. sind hier
+   nie vorgemerkt und lösen weiterhin ganz normal pullState() aus. */
+var PENDINGVER={};
+function markPendingVersion(key,ver){
+  if(ver==null) return;
+  (PENDINGVER[key]=PENDINGVER[key]||{})[ver]=true;
+}
+function consumePendingVersion(key,ver){
+  if(ver==null||!PENDINGVER[key]||!PENDINGVER[key][ver]) return false;
+  delete PENDINGVER[key][ver];
+  return true;
+}
 function pushState(key,data){
   if(!sbClient||!PROFILE||PROFILE.status!=="approved"||!CURRENT_COMP) return;
   var known=STATEVER[key];
+  var expected=known!=null?known+1:null;
+  markPendingVersion(key,expected);
   var write=(known!=null)
     ? sbClient.from("plan_state").update({data:data,updated_by:PROFILE.id})
         .eq("competition_id",CURRENT_COMP.id).eq("key",key).eq("version",known).select("version")
     : sbClient.from("plan_state").upsert({competition_id:CURRENT_COMP.id,key:key,data:data,updated_at:new Date().toISOString(),updated_by:PROFILE.id})
         .select("version");
   write.then(function(r){
-    if(r.error){ console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); return; }
-    if(known!=null&&(!r.data||!r.data.length)){ handleSyncConflict(key,data); return; }
-    if(r.data&&r.data[0]&&r.data[0].version!=null) STATEVER[key]=r.data[0].version;
-  }).catch(function(err){ console.warn("Sync ("+key+") fehlgeschlagen:",err); });
+    if(r.error){ consumePendingVersion(key,expected); console.warn("Sync ("+key+") fehlgeschlagen:",r.error.message); return; }
+    if(known!=null&&(!r.data||!r.data.length)){ consumePendingVersion(key,expected); handleSyncConflict(key,data); return; }
+    if(r.data&&r.data[0]&&r.data[0].version!=null){
+      var actual=r.data[0].version;
+      /* weicht die tatsächliche Version von der Vorhersage ab (sollte bei
+         erfolgreichem UPDATE laut Trigger nicht vorkommen, beim allerersten
+         upsert einer Zeile aber möglich, da dort known unbekannt war),
+         Vormerkung korrigieren statt auf die falsche Version zu warten */
+      if(actual!==expected){ consumePendingVersion(key,expected); markPendingVersion(key,actual); }
+      STATEVER[key]=actual;
+    }
+  }).catch(function(err){ consumePendingVersion(key,expected); console.warn("Sync ("+key+") fehlgeschlagen:",err); });
 }
 var SYNCKEYLABEL={cfg:"Wertungsklassen und Zeitplan", quali:"Zeitplan Qualifikation", finale:"Finale", texts:"Texte", textblocks:"Textbausteine"};
 var syncConflictQueue=[];
@@ -551,7 +584,14 @@ var planSub=null;
 function subscribePlanState(){
   if(!sbClient||planSub||!CURRENT_COMP) return;
   planSub=sbClient.channel("plan_state-changes")
-    .on("postgres_changes",{event:"*",schema:"public",table:"plan_state",filter:"competition_id=eq."+CURRENT_COMP.id},function(){ pullState(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"plan_state",filter:"competition_id=eq."+CURRENT_COMP.id},function(payload){
+      var row=payload&&payload.new;
+      if(row&&row.key&&consumePendingVersion(row.key,row.version)){
+        if(row.version!=null) STATEVER[row.key]=row.version;
+        return; /* eigener Schreibvorgang bestätigt sich selbst - kein Reload nötig */
+      }
+      pullState();
+    })
     .subscribe();
 }
 

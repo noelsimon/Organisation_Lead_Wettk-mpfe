@@ -1427,6 +1427,12 @@ body.editing{caret-color:var(--ink)}
     <p class="gantt-hint">← Route fixiert · nach rechts wischen für spätere Zeiten →</p>
     <p class="hint">Besichtigung und ISO sind als Block fixiert; ihre Dauer stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
 
+    <h3>Laufkarte der Startgruppen</h3>
+    <div class="tblwrap"><table id="lkf">
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Route 2</th><th class="num">Pause</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
     <h3>Finalquoten</h3>
     <div class="tblwrap"><table id="finaltab">
       <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th class="num">im Finale</th><th>Route</th><th>Zeit</th><th class="num">Team</th><th>Ablauf</th></tr></thead>
