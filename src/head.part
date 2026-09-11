@@ -605,8 +605,10 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .tsw input:checked+.tsw-track .tsw-thumb{transform:translateX(16px)}
 .tsw input:focus-visible+.tsw-track{outline:2px solid var(--ring); outline-offset:2px}
 .stepper{display:inline-flex; align-items:center; gap:8px; background:var(--bg); border-radius:var(--r-pill); padding:3px 3px 3px 12px}
-.stepper-val{font-family:var(--disp); font-weight:600; font-size:13.5px; min-width:52px; text-align:center; cursor:pointer; border-radius:var(--r-sm)}
-.stepper-val:hover,.stepper-val:focus-visible{background:var(--surface-2); outline:none}
+.stepper input.payamt{font-family:var(--disp); font-weight:600; font-size:13.5px; width:58px; text-align:center;
+  border:none; background:transparent; color:inherit; padding:4px 2px; border-radius:var(--r-sm); -moz-appearance:textfield}
+.stepper input.payamt::-webkit-outer-spin-button,.stepper input.payamt::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.stepper input.payamt:hover,.stepper input.payamt:focus-visible{background:var(--surface-2); outline:none}
 .stepper-btn{width:30px; height:30px; border-radius:50%; border:none; background:var(--surface); box-shadow:var(--shadow);
   color:var(--ink-2); font-size:16px; font-weight:700; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center}
 .stepper-btn:hover{color:var(--ink)}
