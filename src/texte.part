@@ -257,10 +257,16 @@ document.addEventListener("input",function(ev){
 });
 document.getElementById("txtToggle").onclick=function(){setEditing(!editing);};
 document.getElementById("txtReset").onclick=function(){
-  TXT={}; TXTBLOCKS={added:[],hidden:[]};
-  try{localStorage.removeItem(TXTKEY);}catch(e){}
-  try{localStorage.removeItem(TXTBLOCKKEY);}catch(e){}
-  location.reload();
+  confirmDestructive({
+    title:"Texte zurücksetzen",
+    message:"Alle bearbeiteten und hinzugefügten Texte werden auf die Vorlage zurückgesetzt. Das kann nicht rückgängig gemacht werden.",
+    onConfirm:function(){
+      TXT={}; TXTBLOCKS={added:[],hidden:[]};
+      try{localStorage.removeItem(TXTKEY);}catch(e){}
+      try{localStorage.removeItem(TXTBLOCKKEY);}catch(e){}
+      location.reload();
+    }
+  });
 };
 document.getElementById("txtRestoreToggle").onclick=function(){
   var box=document.getElementById("txtRestoreBox");

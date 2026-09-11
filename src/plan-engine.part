@@ -242,7 +242,15 @@ Plan.prototype.render=function(){
   this.tracks={};
   Array.prototype.forEach.call(this.el.querySelectorAll(".track[data-route]"),function(t){self.tracks[t.getAttribute("data-route")]=t;});
   Array.prototype.forEach.call(this.el.querySelectorAll(".rdel"),function(btn){
-    btn.onclick=function(ev){ev.stopPropagation(); self.delRoute(btn.getAttribute("data-del"));};
+    btn.onclick=function(ev){
+      ev.stopPropagation();
+      var id=btn.getAttribute("data-del");
+      confirmDestructive({
+        title:"Route löschen",
+        message:'Route „'+esc(id)+'" aus dem '+(o.kind==="quali"?"Quali":"Finale")+'-Zeitplan wirklich löschen?',
+        onConfirm:function(){ self.delRoute(id); closeModal(); }
+      });
+    };
   });
   Array.prototype.forEach.call(this.el.querySelectorAll(".rdir"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleDir(btn.getAttribute("data-dir"));};
@@ -676,28 +684,20 @@ function renderMeld(){
 }
 /* Bestätigungs-Dialog vor dem Löschen (Issue #69: das × war auf dem Handy
    kaum sichtbar - kein :hover - und löschte bisher sofort und endgültig,
-   inklusive aller zugehörigen Quali-/Finale-Blöcke und -Gruppen). Gleiches
-   Muster wie beim Wettkampf-Löschen, siehe auth.part
-   competitionDeleteHtml()/openCompetitionDelete(). */
-function classDeleteHtml(c){
-  return '<h3>Wertungsklasse löschen</h3>'+
-    '<p class="hint" style="margin-top:-8px">Wertungsklasse „'+esc(c.name||c.id)+'" wirklich löschen? Das entfernt auch alle zugehörigen Blöcke und Gruppen im Quali- und Finale-Zeitplan.</p>'+
-    '<div class="cfgrow" style="margin-top:14px">'+
-      '<button class="fbtn" id="classDelConfirm" type="button">Endgültig löschen</button>'+
-      '<button class="fbtn" id="classDelCancel" type="button">Abbrechen</button>'+
-    '</div>';
-}
+   inklusive aller zugehörigen Quali-/Finale-Blöcke und -Gruppen). Nutzt den
+   gemeinsamen Helfer confirmDestructive() (personal.part, Issue #73). */
 function openClassDelete(id){
   if(CFG.classes.length<2) return;
   var c=CL(id); if(!c) return;
-  document.getElementById("modalBody").innerHTML=classDeleteHtml(c);
-  document.getElementById("classDelCancel").onclick=closeModal;
-  document.getElementById("classDelConfirm").onclick=function(){
-    CFG.classes=CFG.classes.filter(function(x){return x.id!==id;});
-    reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
-    closeModal();
-  };
-  openModal();
+  confirmDestructive({
+    title:"Wertungsklasse löschen",
+    message:'Wertungsklasse „'+esc(c.name||c.id)+'" wirklich löschen? Das entfernt auch alle zugehörigen Blöcke und Gruppen im Quali- und Finale-Zeitplan.',
+    onConfirm:function(){
+      CFG.classes=CFG.classes.filter(function(x){return x.id!==id;});
+      reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
+      closeModal();
+    }
+  });
 }
 function addClass(name,lm,lw,m,w,mode){
   name=String(name||"").trim(); if(!name) return false;

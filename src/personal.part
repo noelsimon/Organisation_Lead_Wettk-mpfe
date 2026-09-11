@@ -242,12 +242,30 @@ pf=new Plan({mount:"gf-inner", readout:"roF", editor:"edF", store:"kidscup-final
 pq.applyField(); pf.applyField(); pq.render(); pf.render();
 renderWin(); renderCats(); renderPeople();
 
-document.getElementById("resetQ").onclick=function(){pq.reset();};
-document.getElementById("resetF").onclick=function(){pf.reset();};
+document.getElementById("resetQ").onclick=function(){
+  confirmDestructive({
+    title:"Zeitplan zurücksetzen",
+    message:"Der komplette Quali-Zeitplan wird auf die Vorlage zurückgesetzt. Alle manuellen Änderungen an Routen und Blöcken in der Quali gehen dabei verloren.",
+    onConfirm:function(){ pq.reset(); closeModal(); }
+  });
+};
+document.getElementById("resetF").onclick=function(){
+  confirmDestructive({
+    title:"Zeitplan zurücksetzen",
+    message:"Der komplette Finale-Zeitplan wird auf die Vorlage zurückgesetzt. Alle manuellen Änderungen an Routen und Blöcken im Finale gehen dabei verloren.",
+    onConfirm:function(){ pf.reset(); closeModal(); }
+  });
+};
 document.getElementById("resetField").onclick=function(){
-  CFG.classes=clone(CFG0.classes); reindex(); saveCfg();
-  try{localStorage.removeItem("kidscup-quali-v9"); localStorage.removeItem("kidscup-finale-v9");}catch(e){}
-  location.reload();
+  confirmDestructive({
+    title:"Wertungsklassen zurücksetzen",
+    message:"Alle Wertungsklassen werden auf die Vorlage zurückgesetzt, inklusive des Quali- und Finale-Zeitplans. Das kann nicht rückgängig gemacht werden.",
+    onConfirm:function(){
+      CFG.classes=clone(CFG0.classes); reindex(); saveCfg();
+      try{localStorage.removeItem("kidscup-quali-v9"); localStorage.removeItem("kidscup-finale-v9");}catch(e){}
+      location.reload();
+    }
+  });
 };
 var addBox=document.getElementById("addQ");
 document.getElementById("addQtoggle").onclick=function(){addBox.hidden=!addBox.hidden; if(!addBox.hidden) fillAddRoute();};
@@ -419,6 +437,36 @@ document.getElementById("modalOverlay").onclick=function(ev){ if(ev.target===thi
 document.addEventListener("keydown",function(ev){
   if(ev.key==="Escape"&&document.getElementById("modalOverlay").classList.contains("open")) closeModal();
 });
+
+/* Gemeinsamer Bestätigungs-Dialog vor destruktiven Aktionen (Issue #69/#73):
+   ein Klick allein darf nirgends sofort löschen/zurücksetzen - erst nach
+   ausdrücklicher Bestätigung in diesem Modal. onConfirm(btn,say) bekommt den
+   Bestätigen-Button und eine say(text,bad)-Funktion für die Statuszeile
+   übergeben und schließt selbst per closeModal(), sobald die Aktion
+   abgeschlossen ist - synchron sofort, oder erst nach einer async-Operation
+   wie einem Supabase-Delete (Fehlerfall: Modal bleibt offen, Button wird
+   wieder aktiviert). Ersetzt die vormals doppelt vorhandenen
+   competitionDeleteHtml()/openCompetitionDelete()- und
+   classDeleteHtml()/openClassDelete()-Implementierungen. */
+function confirmDestructive(opts){
+  document.getElementById("modalBody").innerHTML=
+    '<h3>'+esc(opts.title)+'</h3>'+
+    '<p class="hint" style="margin-top:-8px">'+opts.message+'</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<button class="fbtn" id="cfdOk" type="button">'+esc(opts.confirmLabel||"Endgültig löschen")+'</button>'+
+      '<button class="fbtn" id="cfdCancel" type="button">Abbrechen</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="cfdMsg" role="status"></p>';
+  document.getElementById("cfdCancel").onclick=closeModal;
+  document.getElementById("cfdOk").onclick=function(){
+    var btn=this;
+    opts.onConfirm(btn,function(text,bad){
+      var m=document.getElementById("cfdMsg");
+      if(m){ m.textContent=text||""; m.className="pdfmsg"+(bad?" bad":""); }
+    });
+  };
+  openModal();
+}
 
 function renderFilterBtns(){
   var bar=document.getElementById("fbar"); if(!bar) return;

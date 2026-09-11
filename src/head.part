@@ -236,6 +236,13 @@ li{margin-bottom:6px}
   font-family:var(--serif); font-size:12px; padding:0; border:none; border-radius:50%; cursor:pointer;
   background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease}
 .blk:hover .blk-del,.blk-del:focus-visible{opacity:1; color:var(--bad)}
+/* Issue #73: auf Touch gibt es kein :hover - ohne das war der Löschen-Button
+   an einem Balken nie erreichbar. Nach Auswahl (Tippen auf den Balken, siehe
+   .blk.sel) wird er sichtbar, kein Bestätigungsdialog (siehe PR-Beschreibung
+   für die Abwägung: einzelne Balken zu löschen ist die häufigste, risikoarme
+   Editier-Aktion im Zeitplan - anders als die Reset-/Löschaktionen, die auf
+   ganze Klassen/Zeitpläne wirken). */
+.blk.sel .blk-del{opacity:1; color:var(--bad)}
 .blk-del:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
@@ -252,8 +259,11 @@ li{margin-bottom:6px}
 .rlabel b{display:flex; align-items:center; gap:6px}
 .rbtns{margin-left:auto; display:flex; align-items:center; gap:6px}
 .rdel{font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
-  border:1px solid transparent; border-radius:var(--r-sm); background:transparent; color:var(--muted); cursor:pointer; padding:0}
-.grow:hover .rdel:not(:disabled),.rdel:focus-visible{border-color:var(--line-strong); color:var(--bad)}
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); border-radius:var(--r-sm); background:var(--surface-2); color:var(--bad); cursor:pointer; padding:0}
+/* Issue #73: vorher nur auf :hover sichtbar (auf Touch nie) - jetzt wie bei
+   .cdel (#69) dauerhaft als eigener, erkennbarer Button sichtbar. */
+.rdel:hover:not(:disabled),.rdel:focus-visible{background:var(--surface); border-color:var(--bad)}
 .rdel:disabled{opacity:0; cursor:default}
 .grow:hover .rdel:disabled{opacity:.35}
 .rdel:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
@@ -762,7 +772,17 @@ td.pcell{font-size:13.5px; line-height:1.5}
     background:var(--bg); border-radius:var(--r-pill); padding:4px 10px 4px 8px}
   #meldtab td:nth-child(11) input{accent-color:var(--ac)}
   #meldtab td:nth-child(11):not(:empty)::before{content:"Finale"}
-  #meldtab td:nth-child(12){position:absolute; top:12px; right:12px}
+  /* Issue #73: Root Cause für die gemeldete Fehlposition gefunden und in
+     script-core.part behoben (XMARK_SVG war zum Zeitpunkt des ersten
+     renderMeld()-Aufrufs noch undefined -> Button enthielt den breiten Text
+     "undefined" statt eines 15px-Icons, was das alte position:absolute
+     verzerrte). Trotzdem bewusst kein position:absolute mehr: der Nutzer
+     wollte den Button unten rechts, nicht oben rechts. Eigene Zeile im
+     normalen Textfluss, rechtsbündig und unterhalb von Quali/Finale - kann
+     dadurch mit keinem anderen Element kollidieren, unabhängig von
+     Kartenhöhe. */
+  #meldtab td:nth-child(12){order:12; flex:1 1 100%; display:flex; justify-content:flex-end;
+    margin-top:4px; padding-top:8px; border-top:1px solid var(--line)}
   #meldtab tr.sum td:nth-child(8),#meldtab tr.sum td:nth-child(9){border-top:none; padding-top:0}
 
   .tblwrap:has(#paytab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}

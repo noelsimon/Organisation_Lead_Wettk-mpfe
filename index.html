@@ -259,6 +259,13 @@ li{margin-bottom:6px}
   font-family:var(--serif); font-size:12px; padding:0; border:none; border-radius:50%; cursor:pointer;
   background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease}
 .blk:hover .blk-del,.blk-del:focus-visible{opacity:1; color:var(--bad)}
+/* Issue #73: auf Touch gibt es kein :hover - ohne das war der Löschen-Button
+   an einem Balken nie erreichbar. Nach Auswahl (Tippen auf den Balken, siehe
+   .blk.sel) wird er sichtbar, kein Bestätigungsdialog (siehe PR-Beschreibung
+   für die Abwägung: einzelne Balken zu löschen ist die häufigste, risikoarme
+   Editier-Aktion im Zeitplan - anders als die Reset-/Löschaktionen, die auf
+   ganze Klassen/Zeitpläne wirken). */
+.blk.sel .blk-del{opacity:1; color:var(--bad)}
 .blk-del:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .editor{background:var(--surface); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .ed-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--line)}
@@ -275,8 +282,11 @@ li{margin-bottom:6px}
 .rlabel b{display:flex; align-items:center; gap:6px}
 .rbtns{margin-left:auto; display:flex; align-items:center; gap:6px}
 .rdel{font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
-  border:1px solid transparent; border-radius:var(--r-sm); background:transparent; color:var(--muted); cursor:pointer; padding:0}
-.grow:hover .rdel:not(:disabled),.rdel:focus-visible{border-color:var(--line-strong); color:var(--bad)}
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); border-radius:var(--r-sm); background:var(--surface-2); color:var(--bad); cursor:pointer; padding:0}
+/* Issue #73: vorher nur auf :hover sichtbar (auf Touch nie) - jetzt wie bei
+   .cdel (#69) dauerhaft als eigener, erkennbarer Button sichtbar. */
+.rdel:hover:not(:disabled),.rdel:focus-visible{background:var(--surface); border-color:var(--bad)}
 .rdel:disabled{opacity:0; cursor:default}
 .grow:hover .rdel:disabled{opacity:.35}
 .rdel:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
@@ -785,7 +795,17 @@ td.pcell{font-size:13.5px; line-height:1.5}
     background:var(--bg); border-radius:var(--r-pill); padding:4px 10px 4px 8px}
   #meldtab td:nth-child(11) input{accent-color:var(--ac)}
   #meldtab td:nth-child(11):not(:empty)::before{content:"Finale"}
-  #meldtab td:nth-child(12){position:absolute; top:12px; right:12px}
+  /* Issue #73: Root Cause für die gemeldete Fehlposition gefunden und in
+     script-core.part behoben (XMARK_SVG war zum Zeitpunkt des ersten
+     renderMeld()-Aufrufs noch undefined -> Button enthielt den breiten Text
+     "undefined" statt eines 15px-Icons, was das alte position:absolute
+     verzerrte). Trotzdem bewusst kein position:absolute mehr: der Nutzer
+     wollte den Button unten rechts, nicht oben rechts. Eigene Zeile im
+     normalen Textfluss, rechtsbündig und unterhalb von Quali/Finale - kann
+     dadurch mit keinem anderen Element kollidieren, unabhängig von
+     Kartenhöhe. */
+  #meldtab td:nth-child(12){order:12; flex:1 1 100%; display:flex; justify-content:flex-end;
+    margin-top:4px; padding-top:8px; border-top:1px solid var(--line)}
   #meldtab tr.sum td:nth-child(8),#meldtab tr.sum td:nth-child(9){border-top:none; padding-top:0}
 
   .tblwrap:has(#paytab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
@@ -1626,6 +1646,23 @@ var CLIMB=6, SNAP=5;
 var TEAMNAMES=["Wölfe","Falken","Luchse","Uhus","Fischotter","Dachse","Kraniche","Habichte","Biber","Reiher","Steinadler","Wanderfalken","Gämsen","Murmeltiere"];
 function fmt(t){var h=Math.floor(t/60),m=Math.round(t%60);return (h<10?"0":"")+h+":"+(m<10?"0":"")+m;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c];});}
+/* Icon-Konstanten hier statt in auth.part/aufgaben-chat.part (Issue #73:
+   Root-Cause-Fund für den vom Nutzer gemeldeten "×"-Button, der live oben
+   links statt oben rechts rendert): renderMeld() in plan-engine.part
+   erzeugt den Wertungsklassen-Löschbutton bereits beim ersten Aufruf aus
+   afterCfg() (personal.part, direkt beim Laden der Personal-Instanzen) -
+   das ist VOR dem bisherigen "var XMARK_SVG=..." in auth.part, das erst
+   viel später in der IIFE ausgeführt wird. Das ergab literal den Text
+   "undefined" statt des SVG-Icons im Button (deutlich breiter als 15px),
+   was zusammen mit dem alten position:absolute die gemeldete
+   Fehlpositionierung erklärt. Hier ganz am Anfang der IIFE definiert,
+   sind sie für jedes Modul ab dem ersten Render garantiert verfügbar. */
+var CHECK_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></svg>';
+var XMARK_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+var ROCKET_SVG='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg>';
+var LINK_SVG='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"/><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>';
+var RESTORE_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6M4.5 15a8 8 0 1 0 1.8-8.4L4 10"/></svg>';
+var TRASH_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M4 7h16M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>';
 var M=function(h,m){return h*60+m;};
 function parseTime(v){var p=(v||"").split(":");if(p.length<2)return null;var h=+p[0],m=+p[1];if(isNaN(h)||isNaN(m))return null;return h*60+m;}
 var GTXT={m:"männlich",w:"weiblich",mw:"m + w"};
@@ -1992,7 +2029,15 @@ Plan.prototype.render=function(){
   this.tracks={};
   Array.prototype.forEach.call(this.el.querySelectorAll(".track[data-route]"),function(t){self.tracks[t.getAttribute("data-route")]=t;});
   Array.prototype.forEach.call(this.el.querySelectorAll(".rdel"),function(btn){
-    btn.onclick=function(ev){ev.stopPropagation(); self.delRoute(btn.getAttribute("data-del"));};
+    btn.onclick=function(ev){
+      ev.stopPropagation();
+      var id=btn.getAttribute("data-del");
+      confirmDestructive({
+        title:"Route löschen",
+        message:'Route „'+esc(id)+'" aus dem '+(o.kind==="quali"?"Quali":"Finale")+'-Zeitplan wirklich löschen?',
+        onConfirm:function(){ self.delRoute(id); closeModal(); }
+      });
+    };
   });
   Array.prototype.forEach.call(this.el.querySelectorAll(".rdir"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleDir(btn.getAttribute("data-dir"));};
@@ -2426,28 +2471,20 @@ function renderMeld(){
 }
 /* Bestätigungs-Dialog vor dem Löschen (Issue #69: das × war auf dem Handy
    kaum sichtbar - kein :hover - und löschte bisher sofort und endgültig,
-   inklusive aller zugehörigen Quali-/Finale-Blöcke und -Gruppen). Gleiches
-   Muster wie beim Wettkampf-Löschen, siehe auth.part
-   competitionDeleteHtml()/openCompetitionDelete(). */
-function classDeleteHtml(c){
-  return '<h3>Wertungsklasse löschen</h3>'+
-    '<p class="hint" style="margin-top:-8px">Wertungsklasse „'+esc(c.name||c.id)+'" wirklich löschen? Das entfernt auch alle zugehörigen Blöcke und Gruppen im Quali- und Finale-Zeitplan.</p>'+
-    '<div class="cfgrow" style="margin-top:14px">'+
-      '<button class="fbtn" id="classDelConfirm" type="button">Endgültig löschen</button>'+
-      '<button class="fbtn" id="classDelCancel" type="button">Abbrechen</button>'+
-    '</div>';
-}
+   inklusive aller zugehörigen Quali-/Finale-Blöcke und -Gruppen). Nutzt den
+   gemeinsamen Helfer confirmDestructive() (personal.part, Issue #73). */
 function openClassDelete(id){
   if(CFG.classes.length<2) return;
   var c=CL(id); if(!c) return;
-  document.getElementById("modalBody").innerHTML=classDeleteHtml(c);
-  document.getElementById("classDelCancel").onclick=closeModal;
-  document.getElementById("classDelConfirm").onclick=function(){
-    CFG.classes=CFG.classes.filter(function(x){return x.id!==id;});
-    reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
-    closeModal();
-  };
-  openModal();
+  confirmDestructive({
+    title:"Wertungsklasse löschen",
+    message:'Wertungsklasse „'+esc(c.name||c.id)+'" wirklich löschen? Das entfernt auch alle zugehörigen Blöcke und Gruppen im Quali- und Finale-Zeitplan.',
+    onConfirm:function(){
+      CFG.classes=CFG.classes.filter(function(x){return x.id!==id;});
+      reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
+      closeModal();
+    }
+  });
 }
 function addClass(name,lm,lw,m,w,mode){
   name=String(name||"").trim(); if(!name) return false;
@@ -2724,12 +2761,30 @@ pf=new Plan({mount:"gf-inner", readout:"roF", editor:"edF", store:"kidscup-final
 pq.applyField(); pf.applyField(); pq.render(); pf.render();
 renderWin(); renderCats(); renderPeople();
 
-document.getElementById("resetQ").onclick=function(){pq.reset();};
-document.getElementById("resetF").onclick=function(){pf.reset();};
+document.getElementById("resetQ").onclick=function(){
+  confirmDestructive({
+    title:"Zeitplan zurücksetzen",
+    message:"Der komplette Quali-Zeitplan wird auf die Vorlage zurückgesetzt. Alle manuellen Änderungen an Routen und Blöcken in der Quali gehen dabei verloren.",
+    onConfirm:function(){ pq.reset(); closeModal(); }
+  });
+};
+document.getElementById("resetF").onclick=function(){
+  confirmDestructive({
+    title:"Zeitplan zurücksetzen",
+    message:"Der komplette Finale-Zeitplan wird auf die Vorlage zurückgesetzt. Alle manuellen Änderungen an Routen und Blöcken im Finale gehen dabei verloren.",
+    onConfirm:function(){ pf.reset(); closeModal(); }
+  });
+};
 document.getElementById("resetField").onclick=function(){
-  CFG.classes=clone(CFG0.classes); reindex(); saveCfg();
-  try{localStorage.removeItem("kidscup-quali-v9"); localStorage.removeItem("kidscup-finale-v9");}catch(e){}
-  location.reload();
+  confirmDestructive({
+    title:"Wertungsklassen zurücksetzen",
+    message:"Alle Wertungsklassen werden auf die Vorlage zurückgesetzt, inklusive des Quali- und Finale-Zeitplans. Das kann nicht rückgängig gemacht werden.",
+    onConfirm:function(){
+      CFG.classes=clone(CFG0.classes); reindex(); saveCfg();
+      try{localStorage.removeItem("kidscup-quali-v9"); localStorage.removeItem("kidscup-finale-v9");}catch(e){}
+      location.reload();
+    }
+  });
 };
 var addBox=document.getElementById("addQ");
 document.getElementById("addQtoggle").onclick=function(){addBox.hidden=!addBox.hidden; if(!addBox.hidden) fillAddRoute();};
@@ -2901,6 +2956,36 @@ document.getElementById("modalOverlay").onclick=function(ev){ if(ev.target===thi
 document.addEventListener("keydown",function(ev){
   if(ev.key==="Escape"&&document.getElementById("modalOverlay").classList.contains("open")) closeModal();
 });
+
+/* Gemeinsamer Bestätigungs-Dialog vor destruktiven Aktionen (Issue #69/#73):
+   ein Klick allein darf nirgends sofort löschen/zurücksetzen - erst nach
+   ausdrücklicher Bestätigung in diesem Modal. onConfirm(btn,say) bekommt den
+   Bestätigen-Button und eine say(text,bad)-Funktion für die Statuszeile
+   übergeben und schließt selbst per closeModal(), sobald die Aktion
+   abgeschlossen ist - synchron sofort, oder erst nach einer async-Operation
+   wie einem Supabase-Delete (Fehlerfall: Modal bleibt offen, Button wird
+   wieder aktiviert). Ersetzt die vormals doppelt vorhandenen
+   competitionDeleteHtml()/openCompetitionDelete()- und
+   classDeleteHtml()/openClassDelete()-Implementierungen. */
+function confirmDestructive(opts){
+  document.getElementById("modalBody").innerHTML=
+    '<h3>'+esc(opts.title)+'</h3>'+
+    '<p class="hint" style="margin-top:-8px">'+opts.message+'</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<button class="fbtn" id="cfdOk" type="button">'+esc(opts.confirmLabel||"Endgültig löschen")+'</button>'+
+      '<button class="fbtn" id="cfdCancel" type="button">Abbrechen</button>'+
+    '</div>'+
+    '<p class="pdfmsg" id="cfdMsg" role="status"></p>';
+  document.getElementById("cfdCancel").onclick=closeModal;
+  document.getElementById("cfdOk").onclick=function(){
+    var btn=this;
+    opts.onConfirm(btn,function(text,bad){
+      var m=document.getElementById("cfdMsg");
+      if(m){ m.textContent=text||""; m.className="pdfmsg"+(bad?" bad":""); }
+    });
+  };
+  openModal();
+}
 
 function renderFilterBtns(){
   var bar=document.getElementById("fbar"); if(!bar) return;
@@ -3179,10 +3264,16 @@ document.addEventListener("input",function(ev){
 });
 document.getElementById("txtToggle").onclick=function(){setEditing(!editing);};
 document.getElementById("txtReset").onclick=function(){
-  TXT={}; TXTBLOCKS={added:[],hidden:[]};
-  try{localStorage.removeItem(TXTKEY);}catch(e){}
-  try{localStorage.removeItem(TXTBLOCKKEY);}catch(e){}
-  location.reload();
+  confirmDestructive({
+    title:"Texte zurücksetzen",
+    message:"Alle bearbeiteten und hinzugefügten Texte werden auf die Vorlage zurückgesetzt. Das kann nicht rückgängig gemacht werden.",
+    onConfirm:function(){
+      TXT={}; TXTBLOCKS={added:[],hidden:[]};
+      try{localStorage.removeItem(TXTKEY);}catch(e){}
+      try{localStorage.removeItem(TXTBLOCKKEY);}catch(e){}
+      location.reload();
+    }
+  });
 };
 document.getElementById("txtRestoreToggle").onclick=function(){
   var box=document.getElementById("txtRestoreBox");
@@ -3262,10 +3353,6 @@ var SESSION=null, PROFILE=null, authTab="login", CURRENT_COMP=null, MYCOMPS=[];
 var CATLABEL={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
 var CATVIEW={orga:"alles", routenbau:"bau", sicherung:"teams", ergebnisdienst:"teams", buffet:"teams"};
 var STATUSLABEL={pending:"Ausstehend", approved:"Freigegeben", rejected:"Abgelehnt"};
-var CHECK_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></svg>';
-var XMARK_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-var ROCKET_SVG='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg>';
-var LINK_SVG='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"/><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>';
 
 function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; n.textContent=msg||""; n.className="pdfmsg"+(bad?" bad":""); }
 
@@ -3610,15 +3697,6 @@ function renderCompAdmin(){
   var dupSel=document.getElementById("ccDupFrom");
   if(dupSel) dupSel.innerHTML=ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join("");
 }
-function competitionDeleteHtml(c){
-  return '<h3>Wettkampf löschen</h3>'+
-    '<p class="hint" style="margin-top:-8px">Wettkampf „'+esc(c.name)+'" wirklich löschen? Das entfernt unwiderruflich Zeitplan, Personen, Chat, Aufgaben und Speicherstände dieses Wettkampfs.</p>'+
-    '<div class="cfgrow" style="margin-top:14px">'+
-      '<button class="fbtn" id="compDelConfirm" type="button">Endgültig löschen</button>'+
-      '<button class="fbtn" id="compDelCancel" type="button">Abbrechen</button>'+
-    '</div>'+
-    '<p class="pdfmsg" id="compDelMsg" role="status"></p>';
-}
 /* Fremdschlüssel auf competitions sind in supabase/schema.sql bereits
    "on delete cascade" (plan_state, competition_members, tasks, chat,
    payouts, attendance, people_contacts, ...) - keine weitere
@@ -3630,27 +3708,27 @@ function openCompetitionDelete(id){
     ccSay('„'+c.name+'" ist der Standard-Wettkampf (erreichbar ohne ?w=-Link) und lässt sich nicht löschen, solange kein anderer Wettkampf als Standard gesetzt ist.',true);
     return;
   }
-  document.getElementById("modalBody").innerHTML=competitionDeleteHtml(c);
-  function cdSay(msg,bad){ var m=document.getElementById("compDelMsg"); if(m){ m.textContent=msg||""; m.className="pdfmsg"+(bad?" bad":""); } }
-  document.getElementById("compDelCancel").onclick=closeModal;
-  document.getElementById("compDelConfirm").onclick=function(){
-    var btn=this; btn.disabled=true; cdSay("Lösche …");
-    sbClient.from("competitions").delete().eq("id",c.id).then(function(r){
-      if(r.error){ cdSay(r.error.message,true); btn.disabled=false; return; }
-      closeModal();
-      if(CURRENT_COMP&&CURRENT_COMP.id===c.id){
-        /* War der gerade angezeigte Wettkampf: ?w=<gelöschter-slug> zeigt
-           jetzt ins Leere. Link ohne ?w= neu laden - das lässt
-           resolveCompetition() ganz regulär auf den Standard-Wettkampf
-           auflösen, wie beim ersten Besuch ohne Link. */
-        var url=new URL(location.href); url.searchParams.delete("w");
-        location.href=url.pathname+(url.search||"")+url.hash;
-      } else {
-        loadAllCompetitions();
-      }
-    }).catch(function(err){ cdSay(String((err&&err.message)||err),true); btn.disabled=false; });
-  };
-  openModal();
+  confirmDestructive({
+    title:"Wettkampf löschen",
+    message:'Wettkampf „'+esc(c.name)+'" wirklich löschen? Das entfernt unwiderruflich Zeitplan, Personen, Chat, Aufgaben und Speicherstände dieses Wettkampfs.',
+    onConfirm:function(btn,say){
+      btn.disabled=true; say("Lösche …");
+      sbClient.from("competitions").delete().eq("id",c.id).then(function(r){
+        if(r.error){ say(r.error.message,true); btn.disabled=false; return; }
+        closeModal();
+        if(CURRENT_COMP&&CURRENT_COMP.id===c.id){
+          /* War der gerade angezeigte Wettkampf: ?w=<gelöschter-slug> zeigt
+             jetzt ins Leere. Link ohne ?w= neu laden - das lässt
+             resolveCompetition() ganz regulär auf den Standard-Wettkampf
+             auflösen, wie beim ersten Besuch ohne Link. */
+          var url=new URL(location.href); url.searchParams.delete("w");
+          location.href=url.pathname+(url.search||"")+url.hash;
+        } else {
+          loadAllCompetitions();
+        }
+      }).catch(function(err){ say(String((err&&err.message)||err),true); btn.disabled=false; });
+    }
+  });
 }
 function resetCompForm(){
   document.getElementById("ccName").value=""; document.getElementById("ccSlug").value="";
@@ -3931,8 +4009,6 @@ function avatarColor(name){
   return AVATAR_COLORS[h%AVATAR_COLORS.length];
 }
 var PHONE_SVG='<svg viewBox="0 0 24 24" width="14" height="14"><path d="M6.5 4h3l1.5 4-2 1.5a12 12 0 0 0 5.5 5.5l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 6.2 2 2 0 0 1 6.5 4Z"/></svg>';
-var RESTORE_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6M4.5 15a8 8 0 1 0 1.8-8.4L4 10"/></svg>';
-var TRASH_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M4 7h16M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>';
 function setMyAttendance(val){
   if(!sbClient||!PROFILE||!CURRENT_COMP) return;
   sbClient.from("competition_members").update({attendance:val||null, attendance_at:new Date().toISOString()})
