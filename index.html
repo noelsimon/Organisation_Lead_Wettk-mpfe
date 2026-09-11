@@ -480,6 +480,15 @@ body[data-view="sport"] main section:not([data-views~="sport"]){display:none}
 
 /* ---------- Login / Freigabe ---------- */
 body:not([data-auth="ok"]) main{display:none}
+/* Solange niemand angemeldet ist, soll NUR die Anmeldemaske zu sehen sein,
+   kein wettkampfspezifischer Header (Issue #88) - kein Ersatztext, einfach
+   weg. #authWrap wird dafür zur eigenständigen, zentrierten Karte statt im
+   breiten .wrap-Raster verloren zu wirken; #loginBox/#registerBox sind über
+   .addbox bereits als Karte gestaltet, hier nur der äußere Rahmen dazu. Im
+   angemeldeten Zustand ("ok") bleibt #authWrap die schmale userbar-Leiste
+   oberhalb von <main> wie bisher, daher die Beschränkung auf :not([data-auth="ok"]). */
+body:not([data-auth="ok"]) .masthead{display:none}
+body:not([data-auth="ok"]) #authWrap{max-width:460px; margin:56px auto; padding:0}
 #authWrap{padding:26px 0}
 #authWrap .note{margin:0 0 14px}
 
@@ -889,6 +898,10 @@ td.pcell{font-size:13.5px; line-height:1.5}
   .masthead .stat>span{color:var(--muted)}
   .masthead .stat-edit{color:var(--ink); border-bottom-color:var(--line-strong)}
   #authWrap{padding-top:58px}
+  /* Der Abstand oben kompensiert sonst die ins Nachbarelement ragenden
+     .masthead .stats (siehe oben) - ohne Header (Issue #88) unnötig, die
+     zentrierte Karte bringt ihren eigenen Abstand über margin mit. */
+  body:not([data-auth="ok"]) #authWrap{padding-top:0}
 }
 .stbar .grow2{flex:1 1 220px}
 .stbar input[type="text"]{width:100%; font-family:var(--serif); font-size:14px; padding:6px 8px; border-radius:var(--r-sm);
