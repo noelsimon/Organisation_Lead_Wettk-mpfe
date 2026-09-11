@@ -4226,7 +4226,7 @@ function renderTasks(){
   if(badge) badge.textContent=openN+" offen"+(newN?" · "+newN+" neu":"")+(TASKS.length?" · "+TASKS.length+" gesamt":"");
   var sdot=document.getElementById("taskSummaryDot"); if(sdot) sdot.hidden=!newN;
   var tdot=document.getElementById("tabDotAufgaben"); if(tdot) tdot.classList.toggle("on",!!newN);
-  var isOrga=!!(PROFILE&&PROFILE.category==="orga");
+  var isOrga=!!(PROFILE&&PROFILE.is_admin);
   var toolbar=document.getElementById("taskToolbar"); if(toolbar) toolbar.hidden=!isOrga;
 
   var filtered=TASKS.filter(function(t){
