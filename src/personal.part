@@ -363,6 +363,18 @@ document.getElementById("addClsGo").onclick=function(){
     saveCfg(); pf.render(); pf.save(); renderWin();
   };
 });
+/* Plus/Minus-Stepper für Besichtigung/ISO (Issue #82, Vorlage: stepperHtml()
+   in src/pdf-export.part) - die Buttons ändern nur den Wert des jeweiligen
+   Zahlenfelds und rufen dessen bestehenden onchange-Handler direkt auf, die
+   Sync-/Rundungslogik oben bleibt dadurch unverändert. */
+Array.prototype.forEach.call(document.querySelectorAll(".winstep-btn"),function(btn){
+  btn.onclick=function(){
+    var el=document.getElementById(this.getAttribute("data-t")); if(!el) return;
+    var delta=this.classList.contains("stepper-plus")?5:-5;
+    el.value=Math.max(0,Math.min(180,(parseInt(el.value,10)||0)+delta));
+    el.onchange();
+  };
+});
 document.getElementById("stHelferSoll").onchange=function(){
   CFG.helferSoll=Math.max(0,Math.min(999,parseInt(this.value,10)||0));
   saveCfg(); renderStats();
