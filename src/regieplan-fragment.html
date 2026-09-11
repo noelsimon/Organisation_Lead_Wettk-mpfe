@@ -3533,10 +3533,19 @@ function renderCompAdmin(){
   if(!ALLCOMPS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Wettkampf.</td></tr>';
   body.innerHTML=h;
   Array.prototype.forEach.call(body.querySelectorAll(".compcopy"),function(b){
+    /* revertTimer statt lokalem "old" (Issue #61): der Ruhezustand des
+       Buttons ist immer LINK_SVG - ein zweiter Klick innerhalb der 1,5s
+       darf also nie den zwischenzeitlich gesetzten Häkchen-Zustand als
+       "ursprünglich" einfangen und dauerhaft zurückschreiben. */
+    var revertTimer=null;
     b.onclick=function(){
-      var link=this.getAttribute("data-link"), btn=this, old=btn.innerHTML;
+      var link=this.getAttribute("data-link"), btn=this;
+      if(revertTimer){ clearTimeout(revertTimer); revertTimer=null; }
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(link):Promise.reject())
-        .then(function(){ btn.innerHTML=CHECK_SVG; setTimeout(function(){btn.innerHTML=old;},1500); })
+        .then(function(){
+          btn.innerHTML=CHECK_SVG;
+          revertTimer=setTimeout(function(){ btn.innerHTML=LINK_SVG; revertTimer=null; },1500);
+        })
         .catch(function(){ prompt("Link kopieren:",link); });
     };
   });
