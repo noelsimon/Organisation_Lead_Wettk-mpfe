@@ -614,8 +614,10 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .tsw input:checked+.tsw-track .tsw-thumb{transform:translateX(16px)}
 .tsw input:focus-visible+.tsw-track{outline:2px solid var(--ring); outline-offset:2px}
 .stepper{display:inline-flex; align-items:center; gap:8px; background:var(--bg); border-radius:var(--r-pill); padding:3px 3px 3px 12px}
-.stepper-val{font-family:var(--disp); font-weight:600; font-size:13.5px; min-width:52px; text-align:center; cursor:pointer; border-radius:var(--r-sm)}
-.stepper-val:hover,.stepper-val:focus-visible{background:var(--surface-2); outline:none}
+.stepper input.payamt{font-family:var(--disp); font-weight:600; font-size:13.5px; width:58px; text-align:center;
+  border:none; background:transparent; color:inherit; padding:4px 2px; border-radius:var(--r-sm); -moz-appearance:textfield}
+.stepper input.payamt::-webkit-outer-spin-button,.stepper input.payamt::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.stepper input.payamt:hover,.stepper input.payamt:focus-visible{background:var(--surface-2); outline:none}
 .stepper-btn{width:30px; height:30px; border-radius:50%; border:none; background:var(--surface); box-shadow:var(--shadow);
   color:var(--ink-2); font-size:16px; font-weight:700; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center}
 .stepper-btn:hover{color:var(--ink)}
@@ -4786,9 +4788,10 @@ function loadPayouts(){
 /* Toggle-Switch statt Checkbox, +/- Stepper statt Zahlenfeld (Issue #50,
    Design-Vorlage Auszahlung.dc.html) - Checkbox bleibt jeweils das echte
    Formularelement (Tastatur/Screenreader-tauglich), nur optisch als
-   Schalter maskiert; das Antippen des Betrags selbst öffnet weiterhin
-   eine Eingabe für krumme Beträge, die der Stepper nicht in 5-€-Schritten
-   erreicht. */
+   Schalter maskiert. Das Honorar-Feld selbst ist ein echtes
+   <input type="number"> zwischen den Stepper-Buttons (Issue #63): direkt
+   tipp-/tab-/screenreader-bar, kein blockierender prompt() mehr nötig für
+   Beträge, die der ±5-€-Stepper nicht trifft. */
 function toggleSwHtml(cls,id,checked,label){
   return '<label class="tsw"><input type="checkbox" class="'+cls+'" data-p="'+esc(id)+'"'+(checked?" checked":"")+' aria-label="'+esc(label)+'">'+
     '<span class="tsw-track"><span class="tsw-thumb"></span></span></label>';
@@ -4796,7 +4799,7 @@ function toggleSwHtml(cls,id,checked,label){
 function stepperHtml(id,amt){
   return '<div class="stepper">'+
     '<button type="button" class="stepper-btn stepper-minus" data-p="'+esc(id)+'" aria-label="Honorar verringern">−</button>'+
-    '<span class="stepper-val payamt" data-p="'+esc(id)+'" role="button" tabindex="0" title="Antippen für genauen Betrag">'+euro(amt)+'</span>'+
+    '<input type="number" inputmode="decimal" class="payamt" data-p="'+esc(id)+'" min="0" max="9999" step="0.5" value="'+amt+'" aria-label="Honorar in Euro">'+
     '<button type="button" class="stepper-btn stepper-plus" data-p="'+esc(id)+'" aria-label="Honorar erhöhen">+</button>'+
   '</div>';
 }
@@ -4823,7 +4826,7 @@ function renderPayTab(){
   function setAmount(id,v){
     v=Math.max(0,Math.min(9999,v));
     PAYOUTS[id]=PAYOUTS[id]||{drink:true}; PAYOUTS[id].amount=v;
-    var el=document.querySelector('.payamt[data-p="'+cssEsc(id)+'"]'); if(el) el.textContent=euro(v);
+    var el=document.querySelector('.payamt[data-p="'+cssEsc(id)+'"]'); if(el) el.value=v;
     recalcSum();
     savePayout(id,{amount:v});
   }
@@ -4841,14 +4844,11 @@ function renderPayTab(){
       setAmount(id,payAmount({id:id})+delta);
     };
   });
-  Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(el){
-    function askAmount(){
-      var id=el.getAttribute("data-p"), v=prompt("Honorar (€):",payAmount({id:id}));
-      if(v==null) return;
-      setAmount(id,parseFloat(String(v).replace(",","."))||0);
-    }
-    el.onclick=askAmount;
-    el.onkeydown=function(ev){ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); askAmount(); } };
+  Array.prototype.forEach.call(document.querySelectorAll(".payamt"),function(inp){
+    inp.onchange=function(){
+      var id=this.getAttribute("data-p"), v=Math.max(0,parseFloat(this.value)||0);
+      setAmount(id,v);
+    };
   });
   Array.prototype.forEach.call(document.querySelectorAll(".paydrink"),function(cb){
     cb.onchange=function(){
