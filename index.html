@@ -419,6 +419,14 @@ footer p{max-width:74ch; margin-bottom:8px}
   body[data-tabactive="team"]     main :is(section,details)[data-tab]:not([data-tab~="team"]),
   body[data-tabactive="mehr"]     main :is(section,details)[data-tab]:not([data-tab~="mehr"])
   { display:none }
+
+  /* .masthead/#userbar liegen vor <main> und .textbar ist ein data-tab-loses
+     <div> innerhalb <main> - keins der drei wird vom Mechanismus oben erfasst.
+     Sollen aber wie der übrige Inhalt nur auf "Start" sichtbar sein (#67). */
+  body[data-tabactive]:not([data-tabactive="start"]) .masthead,
+  body[data-tabactive]:not([data-tabactive="start"]) #userbar,
+  body[data-tabactive]:not([data-tabactive="start"]) .textbar
+  { display:none }
 }
 /* ---------- Startansicht ---------- */
 .startitem{padding:4px 0; font-size:13.5px; border-bottom:1px solid var(--line)}
@@ -2838,6 +2846,12 @@ var tabBtns=Array.prototype.slice.call(document.querySelectorAll(".tabnav [data-
 function setTab(t,skipScroll){
   document.body.setAttribute("data-tabactive",t);
   tabBtns.forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-tabbtn")===t?"true":"false");});
+  /* .textbar (mit dem "Texte bearbeiten"-Umschalter) ist auf dem Handy nur
+     auf "Start" sichtbar (#67) - beim Wechsel weg von Start wäre der
+     Umschalter sonst unerreichbar, solange der Editier-Modus noch an ist.
+     typeof-Check, weil setEditing()/editing erst in texte.part definiert
+     werden (spätere Datei in derselben IIFE, zur Aufrufzeit längst geladen). */
+  if(t!=="start"&&typeof editing!=="undefined"&&editing) setEditing(false);
   if(!skipScroll){
     var m=document.querySelector("main");
     if(m) window.scrollTo({top:Math.max(0,m.offsetTop-1),behavior:"smooth"});
