@@ -391,6 +391,20 @@ footer p{max-width:74ch; margin-bottom:8px}
 @media (max-width:760px){
   .sync-toast{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 }
+/* ---------- Auszahlungen: Fehler-Banner ----------
+   Bleibt anders als der flüchtige .pdfmsg-Text unter der Tabelle stehen, bis
+   ein Speichern/Laden wieder klappt oder er aktiv geschlossen wird - ein
+   DB-seitiges Problem (z.B. fehlende Migration, "relation does not exist")
+   soll so sofort auffallen statt sich als "speichert einfach nicht" zu
+   tarnen (Issue #77). */
+.payout-error-banner{position:fixed; right:20px; bottom:20px; z-index:70; max-width:360px;
+  background:var(--surface); border:1px solid var(--bad); border-radius:var(--r-md);
+  box-shadow:var(--shadow); padding:14px 16px}
+.payout-error-banner b{display:block; font-family:var(--disp); font-size:13px; font-weight:600; color:var(--bad); margin:0 0 4px}
+.payout-error-banner p{margin:0 0 10px; font-size:13px; color:var(--ink-2); font-family:var(--mono)}
+@media (max-width:760px){
+  .payout-error-banner{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
@@ -1585,6 +1599,12 @@ body.editing{caret-color:var(--ink)}
     <button type="button" class="fbtn" id="syncToastTake">Übernehmen</button>
     <button type="button" class="fbtn" id="syncToastKeep">Meine Version behalten</button>
   </div>
+</div>
+
+<div class="payout-error-banner" id="payoutErrorBanner" hidden role="alert">
+  <b>Auszahlungen: Speichern/Laden fehlgeschlagen</b>
+  <p id="payoutErrorMsg"></p>
+  <button type="button" class="fbtn" id="payoutErrorDismiss">Schließen</button>
 </div>
 
 <nav class="tabnav" id="tabNav" aria-label="Hauptnavigation">
@@ -4921,6 +4941,19 @@ function paySay(msg,bad){
   var el=document.getElementById("payMsg"); if(!el) return;
   el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
 }
+/* Zusätzlich zum knappen paySay()-Text ein dauerhaftes, auffälliges Banner
+   für Fehler beim Speichern/Laden der Auszahlungen (Issue #77): anders als
+   der Text unter der Tabelle bleibt es fix sichtbar und übersteht auch ein
+   Wegklicken/Wegscrollen, bis entweder ein Speichern/Laden wieder klappt
+   oder es aktiv geschlossen wird - ein DB-seitiges Problem (fehlende
+   Migration, "relation does not exist" o.ä.) soll damit sofort auffallen. */
+function payErrorBanner(msg){
+  var box=document.getElementById("payoutErrorBanner"); if(!box) return;
+  if(msg){ document.getElementById("payoutErrorMsg").textContent=msg; box.hidden=false; }
+  else box.hidden=true;
+}
+var payoutErrorDismissBtn=document.getElementById("payoutErrorDismiss");
+if(payoutErrorDismissBtn) payoutErrorDismissBtn.onclick=function(){ payErrorBanner(null); };
 function payAmount(p){ return PAYOUTS[p.id]&&PAYOUTS[p.id].amount!=null?PAYOUTS[p.id].amount:25; }
 function payDrink(p){ return !PAYOUTS[p.id]||PAYOUTS[p.id].drink!==false; }
 /* Opt-in statt Opt-out: eine Person steht nur auf der Auszahlungsliste,
@@ -4937,16 +4970,20 @@ function savePayout(id,fields){
     amount:PAYOUTS[id]?PAYOUTS[id].amount:25, drink_list:PAYOUTS[id]?PAYOUTS[id].drink!==false:true,
     on_list:PAYOUTS[id]?!!PAYOUTS[id].onList:false};
   for(var k in fields) payload[k]=fields[k];
-  sbClient.from("payouts").upsert(payload).then(function(r){ if(r.error) paySay("Speichern fehlgeschlagen: "+r.error.message,true); });
+  sbClient.from("payouts").upsert(payload).then(function(r){
+    if(r.error){ paySay("Speichern fehlgeschlagen: "+r.error.message,true); payErrorBanner("Speichern fehlgeschlagen: "+r.error.message); return; }
+    payErrorBanner(null);
+  });
 }
 function loadPayouts(){
   if(!sbClient||!PROFILE||!PROFILE.is_admin||!CURRENT_COMP) return;
   sbClient.from("payouts").select("person_id,amount,drink_list,on_list").eq("competition_id",CURRENT_COMP.id).then(function(r){
-    if(r.error){ paySay("Laden fehlgeschlagen: "+r.error.message,true); return; }
+    if(r.error){ paySay("Laden fehlgeschlagen: "+r.error.message,true); payErrorBanner("Laden fehlgeschlagen: "+r.error.message); return; }
+    payErrorBanner(null);
     PAYOUTS={};
     (r.data||[]).forEach(function(row){ PAYOUTS[row.person_id]={amount:Number(row.amount), drink:row.drink_list!==false, onList:row.on_list===true}; });
     renderPayTab();
-  }).catch(function(err){ paySay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); });
+  }).catch(function(err){ paySay("Laden fehlgeschlagen: "+((err&&err.message)||err),true); payErrorBanner("Laden fehlgeschlagen: "+((err&&err.message)||err)); });
 }
 /* Toggle-Switch statt Checkbox, +/- Stepper statt Zahlenfeld (Issue #50,
    Design-Vorlage Auszahlung.dc.html) - Checkbox bleibt jeweils das echte
