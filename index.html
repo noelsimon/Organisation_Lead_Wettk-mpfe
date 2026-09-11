@@ -2423,8 +2423,8 @@ function renderMeld(){
          '<option value="Vorstieg"'+(c.mode!=="TR"?" selected":"")+'>Vorstieg</option></select></td>'+
        '<td><select class="cin sel" data-c="'+c.id+'" data-k="color">'+pal+'</select></td>'+
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
-       '<td class="num"><input type="checkbox" class="cq" data-c="'+c.id+'"'+(classInPlan(pq,c.id)?" checked":"")+'></td>'+
-       '<td class="num"><input type="checkbox" class="cf" data-c="'+c.id+'"'+(classInPlan(pf,c.id)?" checked":"")+'></td>'+
+       '<td class="num">'+toggleSwHtml("cq",c.id,classInPlan(pq,c.id),"Quali: "+c.name)+'</td>'+
+       '<td class="num">'+toggleSwHtml("cf",c.id,classInPlan(pf,c.id),"Finale: "+c.name)+'</td>'+
        '<td><button class="rdel icon-btn bad cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>'+XMARK_SVG+'</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
@@ -2451,23 +2451,38 @@ function renderMeld(){
   /* Quali/Finale einzeln je Klasse: ruft addClass()/delClass() nur auf der
      jeweils betroffenen Plan-Instanz auf, nie auf beiden zusammen wie beim
      Löschen der ganzen Klasse. CFG.classes bleibt dabei unverändert - der
-     Klassen-Eintrag selbst (Name/Meldezahlen) geht nie verloren. */
-  function wireClassToggle(sel,plan,otherSel){
+     Klassen-Eintrag selbst (Name/Meldezahlen) geht nie verloren.
+     Entfernen ist trotzdem destruktiv (nimmt alle Blöcke/Gruppen dieser
+     Klasse aus dem jeweiligen Zeitplan) - darum wie überall sonst erst nach
+     Bestätigung über confirmDestructive() (Issue #81), Checkbox bleibt bis
+     dahin angehakt und springt bei Abbruch von selbst zurück. */
+  function wireClassToggle(sel,plan,otherSel,label){
     Array.prototype.forEach.call(document.querySelectorAll(sel),function(cb){
       cb.onchange=function(){
-        var id=this.getAttribute("data-c"), c=CL(id); if(!c) return;
+        var id=this.getAttribute("data-p"), c=CL(id); if(!c) return;
         if(!this.checked){
-          var other=document.querySelector(otherSel+'[data-c="'+id+'"]');
+          var other=document.querySelector(otherSel+'[data-p="'+id+'"]');
           if(other&&!other.checked){ this.checked=true; return; }
-          plan.delClass(id);
+          var box=this;
+          box.checked=true;
+          confirmDestructive({
+            title:"Klasse aus "+label+" entfernen",
+            message:'„'+esc(c.name||c.id)+'" aus dem '+label+'-Zeitplan entfernen? Das entfernt alle zugehörigen Blöcke und Gruppen dieser Klasse aus '+label+'.',
+            confirmLabel:"Entfernen",
+            onConfirm:function(){
+              plan.delClass(id);
+              box.checked=false;
+              closeModal();
+            }
+          });
         } else {
           plan.addClass(c);
         }
       };
     });
   }
-  wireClassToggle("#meldtab .cq",pq,"#meldtab .cf");
-  wireClassToggle("#meldtab .cf",pf,"#meldtab .cq");
+  wireClassToggle("#meldtab .cq",pq,"#meldtab .cf","Quali");
+  wireClassToggle("#meldtab .cf",pf,"#meldtab .cq","Finale");
 }
 /* Bestätigungs-Dialog vor dem Löschen (Issue #69: das × war auf dem Handy
    kaum sichtbar - kein :hover - und löschte bisher sofort und endgültig,
