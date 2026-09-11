@@ -637,10 +637,10 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .tsw input:checked+.tsw-track .tsw-thumb{transform:translateX(16px)}
 .tsw input:focus-visible+.tsw-track{outline:2px solid var(--ring); outline-offset:2px}
 .stepper{display:inline-flex; align-items:center; gap:8px; background:var(--bg); border-radius:var(--r-pill); padding:3px 3px 3px 12px}
-.stepper input.payamt{font-family:var(--disp); font-weight:600; font-size:13.5px; width:58px; text-align:center;
+.stepper input{font-family:var(--disp); font-weight:600; font-size:13.5px; width:58px; text-align:center;
   border:none; background:transparent; color:inherit; padding:4px 2px; border-radius:var(--r-sm); -moz-appearance:textfield}
-.stepper input.payamt::-webkit-outer-spin-button,.stepper input.payamt::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
-.stepper input.payamt:hover,.stepper input.payamt:focus-visible{background:var(--surface-2); outline:none}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.stepper input:hover,.stepper input:focus-visible{background:var(--surface-2); outline:none}
 .stepper-btn{width:30px; height:30px; border-radius:50%; border:none; background:var(--surface); box-shadow:var(--shadow);
   color:var(--ink-2); font-size:16px; font-weight:700; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center}
 .stepper-btn:hover{color:var(--ink)}
@@ -1180,8 +1180,16 @@ body.editing{caret-color:var(--ink)}
         <label>bis <input class="tin" id="winQe" type="time" step="300"></label>
         <label>Finale von <input class="tin" id="winFs" type="time" step="300"></label>
         <label>bis <input class="tin" id="winFe" type="time" step="300"></label>
-        <label>Besichtigung <input class="nin" id="winBes" type="number" min="0" max="180" step="5"> Min</label>
-        <label>ISO <input class="nin" id="winIso" type="number" min="0" max="180" step="5"> Min</label>
+        <label>Besichtigung <span class="stepper">
+          <button type="button" class="stepper-btn stepper-minus winstep-btn" data-t="winBes" aria-label="Besichtigung verringern">−</button>
+          <input class="nin" id="winBes" type="number" min="0" max="180" step="5" aria-label="Besichtigung in Minuten">
+          <button type="button" class="stepper-btn stepper-plus winstep-btn" data-t="winBes" aria-label="Besichtigung erhöhen">+</button>
+        </span> Min</label>
+        <label>ISO <span class="stepper">
+          <button type="button" class="stepper-btn stepper-minus winstep-btn" data-t="winIso" aria-label="ISO verringern">−</button>
+          <input class="nin" id="winIso" type="number" min="0" max="180" step="5" aria-label="ISO in Minuten">
+          <button type="button" class="stepper-btn stepper-plus winstep-btn" data-t="winIso" aria-label="ISO erhöhen">+</button>
+        </span> Min</label>
         <label><button class="fbtn" id="winReset" type="button">Zurücksetzen</button></label>
       </div>
       <p class="hint" style="margin:12px 0 0"><span class="mono" id="winOut"></span> · Die Zeitachsen beider Zeitpläne folgen diesen Werten; Besichtigung und ISO beginnen automatisch mit dem Finalfenster. Balken, die aus dem Fenster fallen würden, rücken an den Rand.</p>
@@ -1399,8 +1407,16 @@ body.editing{caret-color:var(--ink)}
 
     <div class="cfgbox">
       <div class="cfgrow">
-        <label>Besichtigung <input class="nin" id="finBesIn" type="number" min="0" max="180" step="5"> Min</label>
-        <label>ISO <input class="nin" id="finIsoIn" type="number" min="0" max="180" step="5"> Min</label>
+        <label>Besichtigung <span class="stepper">
+          <button type="button" class="stepper-btn stepper-minus winstep-btn" data-t="finBesIn" aria-label="Besichtigung verringern">−</button>
+          <input class="nin" id="finBesIn" type="number" min="0" max="180" step="5" aria-label="Besichtigung in Minuten">
+          <button type="button" class="stepper-btn stepper-plus winstep-btn" data-t="finBesIn" aria-label="Besichtigung erhöhen">+</button>
+        </span> Min</label>
+        <label>ISO <span class="stepper">
+          <button type="button" class="stepper-btn stepper-minus winstep-btn" data-t="finIsoIn" aria-label="ISO verringern">−</button>
+          <input class="nin" id="finIsoIn" type="number" min="0" max="180" step="5" aria-label="ISO in Minuten">
+          <button type="button" class="stepper-btn stepper-plus winstep-btn" data-t="finIsoIn" aria-label="ISO erhöhen">+</button>
+        </span> Min</label>
       </div>
       <p class="hint" style="margin:10px 0 0">Verschiebt den Start der Kletterblöcke – beide Zeitpläne (hier und in „Wertungsklassen und Meldezahlen") zeigen denselben Wert.</p>
     </div>
