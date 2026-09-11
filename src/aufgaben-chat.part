@@ -97,6 +97,8 @@ function avatarColor(name){
   return AVATAR_COLORS[h%AVATAR_COLORS.length];
 }
 var PHONE_SVG='<svg viewBox="0 0 24 24" width="14" height="14"><path d="M6.5 4h3l1.5 4-2 1.5a12 12 0 0 0 5.5 5.5l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 6.2 2 2 0 0 1 6.5 4Z"/></svg>';
+var RESTORE_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6M4.5 15a8 8 0 1 0 1.8-8.4L4 10"/></svg>';
+var TRASH_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M4 7h16M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>';
 function setMyAttendance(val){
   if(!sbClient||!PROFILE||!CURRENT_COMP) return;
   sbClient.from("competition_members").update({attendance:val||null, attendance_at:new Date().toISOString()})
@@ -715,6 +717,18 @@ function dstr(iso){
   return ("0"+d.getDate()).slice(-2)+"."+("0"+(d.getMonth()+1)).slice(-2)+"."+d.getFullYear()+
          ", "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
 }
+/* Kurzform für "wer war zuletzt hier" (Issue #51, Design-Vorlage
+   Staende.dc.html) - fällt für ältere Zeitpunkte auf dstr() zurück, damit
+   die Liste nicht ewig "vor 300 Std" anzeigt. */
+function relTime(iso){
+  var d=new Date(iso||Date.now()); if(isNaN(d)) return "—";
+  var diffMin=Math.round((Date.now()-d.getTime())/60000);
+  if(diffMin<1) return "gerade eben";
+  if(diffMin<60) return "vor "+diffMin+" Min";
+  var diffH=Math.round(diffMin/60);
+  if(diffH<24) return "vor "+diffH+" Std";
+  return dstr(iso);
+}
 function standSay(msg,bad){
   var el=document.getElementById("stMsg"); if(!el) return;
   el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
@@ -727,8 +741,8 @@ function renderStands(){
     h+='<tr><td><strong>'+esc(s.title||"ohne Titel")+'</strong>'+(s.note?'<br><span style="color:var(--muted);font-size:13px">'+esc(s.note)+'</span>':'')+'</td>'+
        '<td>'+esc(s.author||"—")+'</td><td class="tm">'+dstr(s.at)+'</td>'+
        '<td>'+(isAdmin
-         ?'<button class="fbtn stload" type="button" data-id="'+esc(s.id)+'">Laden</button> '+
-          '<button class="fbtn stdel" type="button" data-id="'+esc(s.id)+'">Löschen</button>'
+         ?'<button class="icon-btn ok stload" type="button" data-id="'+esc(s.id)+'" title="Laden" aria-label="Stand „'+esc(s.title||"ohne Titel")+'" laden">'+RESTORE_SVG+'</button>'+
+          '<button class="icon-btn bad stdel" type="button" data-id="'+esc(s.id)+'" title="Löschen" aria-label="Stand „'+esc(s.title||"ohne Titel")+'" löschen">'+TRASH_SVG+'</button>'
          :'<span style="color:var(--muted)">nur Admin</span>')+'</td></tr>';
   });
   if(!STANDS.length) h='<tr><td colspan="4" style="color:var(--muted)">Noch kein Stand gespeichert.</td></tr>';
@@ -753,7 +767,10 @@ function renderStands(){
     };
   });
   var st=document.getElementById("stState");
-  if(st) st.textContent=DBSTATE;
+  if(st){
+    st.textContent=DBSTATE;
+    st.className="sync-pill"+(DBSTATE.indexOf("geteilt")===0?" ok":(DBSTATE.indexOf("nicht verfügbar")===0||DBSTATE.indexOf("Verbindung unterbrochen")===0?" bad":""));
+  }
   var md=document.getElementById("standMode");
   if(md) md.innerHTML=DB
     ? 'Die Stände liegen im <strong>geteilten Speicher dieser Seite</strong>: Alle freigegebenen Personen sehen dieselbe Liste. Speichern kann das Orga-Team, Laden und Löschen nur ein Admin.'
@@ -764,9 +781,11 @@ function renderViewers(){
   if(!VIEWERS.length){ box.innerHTML='<div style="color:var(--muted)">Noch keine Aktivität erfasst.</div>'; return; }
   box.innerHTML=VIEWERS.slice().sort(function(a,b){return String(b.at||"").localeCompare(String(a.at||""));})
     .map(function(v){
-      return '<div><b>'+esc(v.name||"unbenannt")+'</b> <span class="tm">'+dstr(v.at)+'</span> '+
-             '<span style="color:var(--muted)">'+esc(v.last||"geöffnet")+
-             (v.pdf?' · PDF '+v.pdf+"×":"")+'</span></div>';
+      var sub=(v.last||"geöffnet")+(v.pdf?" · PDF "+v.pdf+"×":"");
+      return '<div class="viewer-row"><span class="tk-avatar" style="background:'+avatarColor(v.name||"?")+'">'+esc(initials(v.name||"?"))+'</span>'+
+             '<div class="viewer-info"><span class="viewer-name">'+esc(v.name||"unbenannt")+'</span>'+
+             '<span class="viewer-sub">'+esc(sub)+'</span></div>'+
+             '<span class="tm">'+relTime(v.at)+'</span></div>';
     }).join("");
 }
 function saveLocalStands(){try{localStorage.setItem("kidscup-stands",JSON.stringify(STANDS));}catch(e){}}
