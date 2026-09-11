@@ -630,7 +630,7 @@ function renderMeld(){
        '<td class="num">'+n+'</td><td class="num">'+min+'</td>'+
        '<td class="num"><input type="checkbox" class="cq" data-c="'+c.id+'"'+(classInPlan(pq,c.id)?" checked":"")+'></td>'+
        '<td class="num"><input type="checkbox" class="cf" data-c="'+c.id+'"'+(classInPlan(pf,c.id)?" checked":"")+'></td>'+
-       '<td><button class="rdel cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>×</button></td></tr>';
+       '<td><button class="rdel icon-btn bad cdel" type="button" data-c="'+c.id+'" title="Wertungsklasse löschen" aria-label="Wertungsklasse '+esc(c.name||c.id)+' löschen"'+(CFG.classes.length<2?" disabled":"")+'>'+XMARK_SVG+'</button></td></tr>';
   });
   h+='<tr class="sum"><td>Summe</td><td></td><td class="num">'+tot.m+'</td><td></td><td class="num">'+tot.w+'</td>'+
      '<td></td><td></td><td class="num">'+tot.n+'</td><td class="num">'+tot.min+'</td><td></td></tr>';
@@ -651,12 +651,7 @@ function renderMeld(){
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll("#meldtab .cdel"),function(btn){
-    btn.onclick=function(){
-      if(CFG.classes.length<2) return;
-      var id=this.getAttribute("data-c");
-      CFG.classes=CFG.classes.filter(function(x){return x.id!==id;});
-      reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
-    };
+    btn.onclick=function(){ openClassDelete(this.getAttribute("data-c")); };
   });
   /* Quali/Finale einzeln je Klasse: ruft addClass()/delClass() nur auf der
      jeweils betroffenen Plan-Instanz auf, nie auf beiden zusammen wie beim
@@ -678,6 +673,31 @@ function renderMeld(){
   }
   wireClassToggle("#meldtab .cq",pq,"#meldtab .cf");
   wireClassToggle("#meldtab .cf",pf,"#meldtab .cq");
+}
+/* Bestätigungs-Dialog vor dem Löschen (Issue #69: das × war auf dem Handy
+   kaum sichtbar - kein :hover - und löschte bisher sofort und endgültig,
+   inklusive aller zugehörigen Quali-/Finale-Blöcke und -Gruppen). Gleiches
+   Muster wie beim Wettkampf-Löschen, siehe auth.part
+   competitionDeleteHtml()/openCompetitionDelete(). */
+function classDeleteHtml(c){
+  return '<h3>Wertungsklasse löschen</h3>'+
+    '<p class="hint" style="margin-top:-8px">Wertungsklasse „'+esc(c.name||c.id)+'" wirklich löschen? Das entfernt auch alle zugehörigen Blöcke und Gruppen im Quali- und Finale-Zeitplan.</p>'+
+    '<div class="cfgrow" style="margin-top:14px">'+
+      '<button class="fbtn" id="classDelConfirm" type="button">Endgültig löschen</button>'+
+      '<button class="fbtn" id="classDelCancel" type="button">Abbrechen</button>'+
+    '</div>';
+}
+function openClassDelete(id){
+  if(CFG.classes.length<2) return;
+  var c=CL(id); if(!c) return;
+  document.getElementById("modalBody").innerHTML=classDeleteHtml(c);
+  document.getElementById("classDelCancel").onclick=closeModal;
+  document.getElementById("classDelConfirm").onclick=function(){
+    CFG.classes=CFG.classes.filter(function(x){return x.id!==id;});
+    reindex(); saveCfg(); pq.delClass(id); pf.delClass(id); afterCfg();
+    closeModal();
+  };
+  openModal();
 }
 function addClass(name,lm,lw,m,w,mode){
   name=String(name||"").trim(); if(!name) return false;
