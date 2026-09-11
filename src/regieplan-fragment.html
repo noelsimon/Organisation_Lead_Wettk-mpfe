@@ -797,8 +797,11 @@ td.pcell{font-size:13.5px; line-height:1.5}
   .tblwrap:has(#admintab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
   #admintab, #admintab thead, #admintab tbody, #admintab tr, #admintab td{display:block; width:100%; min-width:0}
   #admintab thead{display:none}
-  #admintab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow);
+  #admintab tr{background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--line-strong); border-radius:var(--r-lg); box-shadow:var(--shadow);
     padding:14px 16px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px}
+  #admintab tr[data-status="approved"]{border-left-color:var(--ok)}
+  #admintab tr[data-status="pending"]{border-left-color:var(--warn)}
+  #admintab tr[data-status="rejected"]{border-left-color:var(--bad)}
   #admintab td{border-bottom:none; padding:0}
   #admintab td:nth-child(1){order:1; flex:1 1 160px; min-width:0}
   #admintab td:nth-child(5){order:2; flex:0 0 auto}
