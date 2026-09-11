@@ -5,6 +5,11 @@ var sbClient = (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_K
 var SESSION=null, PROFILE=null, authTab="login", CURRENT_COMP=null, MYCOMPS=[];
 var CATLABEL={orga:"Orga-Team", sicherung:"Sicherung", ergebnisdienst:"Ergebnisdienst", routenbau:"Routenbau", buffet:"Buffet"};
 var CATVIEW={orga:"alles", routenbau:"bau", sicherung:"teams", ergebnisdienst:"teams", buffet:"teams"};
+var STATUSLABEL={pending:"Ausstehend", approved:"Freigegeben", rejected:"Abgelehnt"};
+var CHECK_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></svg>';
+var XMARK_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+var ROCKET_SVG='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg>';
+var LINK_SVG='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="10" height="10" rx="2"/><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>';
 
 function authSay(id,msg,bad){ var n=document.getElementById(id); if(!n) return; n.textContent=msg||""; n.className="pdfmsg"+(bad?" bad":""); }
 
@@ -228,7 +233,9 @@ function renderAdmin(){
   var h="";
   ADMINROWS.forEach(function(p){
     var have=(p.competition_members||[]).map(function(m){return m.competition_id;});
-    h+='<tr><td>'+esc(p.full_name)+(p.is_admin?' <span class="pill ok">Admin</span>':'')+'</td>'+
+    h+='<tr data-status="'+esc(p.status)+'"><td><div class="person-cell">'+
+       '<span class="tk-avatar" style="background:'+avatarColor(p.full_name)+'">'+esc(initials(p.full_name))+'</span>'+
+       '<span>'+esc(p.full_name)+(p.is_admin?' <span class="pill ok">Admin</span>':'')+'</span></div></td>'+
        '<td>'+esc(p.email)+'</td>'+
        '<td><select class="cin sel admcat" data-id="'+esc(p.id)+'">'+
          Object.keys(CATLABEL).map(function(c){return '<option value="'+c+'"'+(c===p.category?" selected":"")+'>'+CATLABEL[c]+'</option>';}).join("")+
@@ -236,11 +243,11 @@ function renderAdmin(){
        '<td><select class="cin sel admcomp" multiple size="'+Math.min(4,Math.max(2,ALLCOMPS.length||1))+'" data-id="'+esc(p.id)+'" style="min-width:150px">'+
          ALLCOMPS.map(function(c){return '<option value="'+esc(c.id)+'"'+(have.indexOf(c.id)>=0?" selected":"")+'>'+esc(c.name)+'</option>';}).join("")+
        '</select></td>'+
-       '<td><span class="pill '+(p.status==="approved"?"ok":(p.status==="rejected"?"bad":""))+'">'+esc(p.status)+'</span></td>'+
+       '<td><span class="pill '+(p.status==="approved"?"ok":(p.status==="rejected"?"bad":"warn"))+'">'+esc(STATUSLABEL[p.status]||p.status)+'</span></td>'+
        '<td class="tm">'+dstr(p.created_at)+'</td>'+
        '<td>'+
-         (p.status!=="approved"?'<button class="fbtn admapprove" type="button" data-id="'+esc(p.id)+'">Freigeben</button> ':'')+
-         (p.status!=="rejected"?'<button class="fbtn admreject" type="button" data-id="'+esc(p.id)+'">Ablehnen</button> ':'')+
+         (p.status!=="approved"?'<button class="icon-btn ok admapprove" type="button" data-id="'+esc(p.id)+'" title="Freigeben" aria-label="'+esc(p.full_name)+' freigeben">'+CHECK_SVG+'</button>':'')+
+         (p.status!=="rejected"?'<button class="icon-btn bad admreject" type="button" data-id="'+esc(p.id)+'" title="Ablehnen" aria-label="'+esc(p.full_name)+' ablehnen">'+XMARK_SVG+'</button>':'')+
          '<button class="fbtn admtoggle" type="button" data-id="'+esc(p.id)+'">'+(p.is_admin?"Admin entziehen":"Admin machen")+'</button>'+
        '</td></tr>';
   });
@@ -315,8 +322,10 @@ function renderCompAdmin(){
   var h="";
   ALLCOMPS.forEach(function(c){
     var link=competitionLink(c.slug);
-    h+='<tr><td>'+esc(c.name)+(c.is_default?' <span class="pill ok">Standard</span>':'')+'</td>'+
-       '<td><span class="mono" style="font-size:12px">'+esc(link)+'</span> <button class="fbtn compcopy" data-link="'+esc(link)+'" type="button">Kopieren</button></td>'+
+    h+='<tr><td><div class="person-cell"><span class="comp-icon">'+ROCKET_SVG+'</span>'+
+       '<div class="comp-info"><span class="comp-name">'+esc(c.name)+(c.is_default?' <span class="pill ok">Standard</span>':'')+'</span>'+
+       '<span class="comp-sub">'+esc(c.slug)+' · '+((c.competition_members||[]).length)+' Mitglieder</span></div></div></td>'+
+       '<td><span class="mono" style="font-size:12px">'+esc(link)+'</span> <button class="icon-btn compcopy" data-link="'+esc(link)+'" type="button" title="Link kopieren" aria-label="Link zu '+esc(c.name)+' kopieren">'+LINK_SVG+'</button></td>'+
        '<td class="num">'+((c.competition_members||[]).length)+'</td>'+
        '<td><button class="fbtn compdel" type="button" data-id="'+esc(c.id)+'"'+(c.is_default?' disabled title="Standard-Wettkampf lässt sich nicht löschen"':'')+'>Löschen</button></td></tr>';
   });
@@ -324,9 +333,9 @@ function renderCompAdmin(){
   body.innerHTML=h;
   Array.prototype.forEach.call(body.querySelectorAll(".compcopy"),function(b){
     b.onclick=function(){
-      var link=this.getAttribute("data-link"), btn=this, old=btn.textContent;
+      var link=this.getAttribute("data-link"), btn=this, old=btn.innerHTML;
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(link):Promise.reject())
-        .then(function(){ btn.textContent="Kopiert!"; setTimeout(function(){btn.textContent=old;},1500); })
+        .then(function(){ btn.innerHTML=CHECK_SVG; setTimeout(function(){btn.innerHTML=old;},1500); })
         .catch(function(){ prompt("Link kopieren:",link); });
     };
   });
