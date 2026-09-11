@@ -396,6 +396,14 @@ footer p{max-width:74ch; margin-bottom:8px}
   body[data-tabactive="team"]     main :is(section,details)[data-tab]:not([data-tab~="team"]),
   body[data-tabactive="mehr"]     main :is(section,details)[data-tab]:not([data-tab~="mehr"])
   { display:none }
+
+  /* .masthead/#userbar liegen vor <main> und .textbar ist ein data-tab-loses
+     <div> innerhalb <main> - keins der drei wird vom Mechanismus oben erfasst.
+     Sollen aber wie der übrige Inhalt nur auf "Start" sichtbar sein (#67). */
+  body[data-tabactive]:not([data-tabactive="start"]) .masthead,
+  body[data-tabactive]:not([data-tabactive="start"]) #userbar,
+  body[data-tabactive]:not([data-tabactive="start"]) .textbar
+  { display:none }
 }
 /* ---------- Startansicht ---------- */
 .startitem{padding:4px 0; font-size:13.5px; border-bottom:1px solid var(--line)}

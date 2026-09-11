@@ -384,6 +384,12 @@ var tabBtns=Array.prototype.slice.call(document.querySelectorAll(".tabnav [data-
 function setTab(t,skipScroll){
   document.body.setAttribute("data-tabactive",t);
   tabBtns.forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-tabbtn")===t?"true":"false");});
+  /* .textbar (mit dem "Texte bearbeiten"-Umschalter) ist auf dem Handy nur
+     auf "Start" sichtbar (#67) - beim Wechsel weg von Start wäre der
+     Umschalter sonst unerreichbar, solange der Editier-Modus noch an ist.
+     typeof-Check, weil setEditing()/editing erst in texte.part definiert
+     werden (spätere Datei in derselben IIFE, zur Aufrufzeit längst geladen). */
+  if(t!=="start"&&typeof editing!=="undefined"&&editing) setEditing(false);
   if(!skipScroll){
     var m=document.querySelector("main");
     if(m) window.scrollTo({top:Math.max(0,m.offsetTop-1),behavior:"smooth"});
