@@ -581,6 +581,11 @@ td.pcell{font-size:13.5px; line-height:1.5}
 .icon-btn.bad{color:var(--bad)}
 .icon-btn.bad:hover{background:var(--surface-2)}
 .icon-btn:focus-visible{outline:2px solid var(--ring); outline-offset:2px}
+.comp-icon{width:38px; height:38px; border-radius:10px; background:var(--brand-tint); color:var(--brand);
+  display:flex; align-items:center; justify-content:center; flex:0 0 auto}
+.comp-info{display:flex; flex-direction:column; min-width:0}
+.comp-name{font-size:14px; font-weight:600}
+.comp-sub{font-size:11.5px; color:var(--muted)}
 .stbar{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin:0 0 14px}
 .ub-avatar{width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid var(--line-strong)}
 .ub-avatar.big{width:56px; height:56px}
@@ -765,6 +770,37 @@ td.pcell{font-size:13.5px; line-height:1.5}
   #paytab td:nth-child(4)::before{content:"Honorar"}
   #paytab td:nth-child(5)::before{content:"Getränkeliste"}
   #payPdfBtn,#drinkPdfBtn{width:100%; border-radius:var(--r-pill); padding:14px; font-size:14px}
+
+  .tblwrap:has(#comptab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #comptab, #comptab thead, #comptab tbody, #comptab tr, #comptab td{display:block; width:100%; min-width:0}
+  #comptab thead{display:none}
+  #comptab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow);
+    padding:13px 14px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px}
+  #comptab td{border-bottom:none; padding:0}
+  #comptab td:nth-child(1){flex:1 1 100%; order:1}
+  #comptab td:nth-child(2){order:2; flex:1 1 100%; padding-top:8px; border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:8px}
+  #comptab td:nth-child(2) .mono{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; flex:1; min-width:0}
+  #comptab td:nth-child(3){display:none}
+  #comptab td:nth-child(4){order:3; flex:0 0 auto; margin-left:auto}
+  #compCreateToggle{background:none; border:none; color:var(--brand); text-transform:none; font-weight:600; padding:6px 0}
+
+  .tblwrap:has(#admintab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
+  #admintab, #admintab thead, #admintab tbody, #admintab tr, #admintab td{display:block; width:100%; min-width:0}
+  #admintab thead{display:none}
+  #admintab tr{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow);
+    padding:14px 16px; margin:0 0 10px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px}
+  #admintab td{border-bottom:none; padding:0}
+  #admintab td:nth-child(1){order:1; flex:1 1 160px; min-width:0}
+  #admintab td:nth-child(5){order:2; flex:0 0 auto}
+  #admintab td:nth-child(2){order:3; flex:0 1 auto; min-width:0; font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  #admintab td:nth-child(6){order:3; flex:0 0 auto; font-size:11.5px; color:var(--muted)}
+  #admintab td:nth-child(6)::before{content:"· "}
+  #admintab td:nth-child(3){order:4; flex:1 1 100%; margin-top:2px; padding-top:8px; border-top:1px solid var(--line)}
+  #admintab td:nth-child(3) select{width:100%; background:var(--bg); border:none; border-radius:var(--r-sm); padding:9px 12px; font-size:12.5px}
+  #admintab td:nth-child(4){order:5; flex:1 1 100%}
+  #admintab td:nth-child(4) select{width:100%}
+  #admintab td:nth-child(7){order:6; flex:1 1 100%; display:flex; align-items:center; gap:8px; margin-top:2px; flex-wrap:wrap}
 }
 @media (max-width:760px){
   .masthead{padding-bottom:0}
