@@ -70,12 +70,20 @@ function loadAssigneeOptions(compId){
 
 /* ---- Anwesenheit & Kontakt ---- */
 var ATTENDANCE=[];
-var ATTLABEL={da:"Vor Ort", unterwegs:"Auf dem Weg", abwesend:"Fällt aus"};
+/* "unterwegs" bleibt hier als Eintrag stehen, obwohl nicht mehr wählbar
+   (Issue #71: auf zwei Optionen reduziert) - sonst würden evtl.
+   vorhandene Altdaten (jemand stand noch auf "unterwegs") an anderer
+   Stelle als "undefined" angezeigt. Keine Migration nötig: die
+   Check-Constraint in der DB erlaubt den Wert weiterhin, er ist nur
+   nicht mehr neu auswählbar; wer noch darauf steht, wechselt beim
+   nächsten eigenen Setzen automatisch auf da/abwesend. */
+var ATTLABEL={da:"Am WK-Tag da", unterwegs:"Auf dem Weg", abwesend:"Fällt aus"};
 var ATTPILLCLASS={da:"ok", unterwegs:"warn", abwesend:"bad"};
+var ATTSELECTABLE=["da","abwesend"];
 function attPillClass(att){return ATTPILLCLASS[att]||"";}
 function attendanceToggleHtml(current){
   return '<div class="attToggle" role="group" aria-label="Anwesenheitsstatus">'+
-    Object.keys(ATTLABEL).map(function(k){
+    ATTSELECTABLE.map(function(k){
       return '<button type="button" class="attBtn" data-att="'+k+'" aria-pressed="'+(current===k?"true":"false")+'">'+ATTLABEL[k]+'</button>';
     }).join("")+
   '</div>';
@@ -126,8 +134,7 @@ var attCatFilter=null;
 function renderAttSummary(){
   var el=document.getElementById("attSummary"); if(!el) return;
   var da=ATTENDANCE.filter(function(m){return m.attendance==="da";}).length;
-  var unterwegs=ATTENDANCE.filter(function(m){return m.attendance==="unterwegs";}).length;
-  el.textContent=ATTENDANCE.length?(da+" vor Ort · "+unterwegs+" auf dem Weg · "+ATTENDANCE.length+" gesamt"):"";
+  el.textContent=ATTENDANCE.length?(da+" am WK-Tag da · "+ATTENDANCE.length+" gesamt"):"";
 }
 function renderAttFilters(){
   var box=document.getElementById("attFilters"); if(!box) return;
