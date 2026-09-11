@@ -382,6 +382,20 @@ footer p{max-width:74ch; margin-bottom:8px}
 @media (max-width:760px){
   .sync-toast{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
 }
+/* ---------- Auszahlungen: Fehler-Banner ----------
+   Bleibt anders als der flüchtige .pdfmsg-Text unter der Tabelle stehen, bis
+   ein Speichern/Laden wieder klappt oder er aktiv geschlossen wird - ein
+   DB-seitiges Problem (z.B. fehlende Migration, "relation does not exist")
+   soll so sofort auffallen statt sich als "speichert einfach nicht" zu
+   tarnen (Issue #77). */
+.payout-error-banner{position:fixed; right:20px; bottom:20px; z-index:70; max-width:360px;
+  background:var(--surface); border:1px solid var(--bad); border-radius:var(--r-md);
+  box-shadow:var(--shadow); padding:14px 16px}
+.payout-error-banner b{display:block; font-family:var(--disp); font-size:13px; font-weight:600; color:var(--bad); margin:0 0 4px}
+.payout-error-banner p{margin:0 0 10px; font-size:13px; color:var(--ink-2); font-family:var(--mono)}
+@media (max-width:760px){
+  .payout-error-banner{left:12px; right:12px; max-width:none; bottom:calc(90px + env(safe-area-inset-bottom,0px))}
+}
 /* ---------- Bottom-Tab-Navigation (Handy) ---------- */
 .tabnav{display:none}
 @media (max-width:760px){
@@ -1570,6 +1584,12 @@ body.editing{caret-color:var(--ink)}
     <button type="button" class="fbtn" id="syncToastTake">Übernehmen</button>
     <button type="button" class="fbtn" id="syncToastKeep">Meine Version behalten</button>
   </div>
+</div>
+
+<div class="payout-error-banner" id="payoutErrorBanner" hidden role="alert">
+  <b>Auszahlungen: Speichern/Laden fehlgeschlagen</b>
+  <p id="payoutErrorMsg"></p>
+  <button type="button" class="fbtn" id="payoutErrorDismiss">Schließen</button>
 </div>
 
 <nav class="tabnav" id="tabNav" aria-label="Hauptnavigation">
