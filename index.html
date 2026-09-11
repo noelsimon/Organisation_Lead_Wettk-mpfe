@@ -748,7 +748,11 @@ td.pcell{font-size:13.5px; line-height:1.5}
   #cattab td:nth-child(2)::before{content:"Ist: "}
   #cattab td:nth-child(3){order:3; width:auto; display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted)}
   #cattab td:nth-child(3)::before{content:"Soll: "}
-  #cattab td:nth-child(4){position:absolute; top:10px; right:10px}
+  /* wie #meldtab td:nth-child(12) (Issue #74/#85): kein position:absolute
+     mehr - eigene Zeile im normalen Flow am Kartenende, rechtsbündig, damit
+     der Löschen-Button nicht mit dem Karteninhalt überlappen kann. */
+  #cattab td:nth-child(4){order:4; flex:1 1 100%; display:flex; justify-content:flex-end;
+    margin-top:4px; padding-top:8px; border-top:1px solid var(--line)}
 
   .tblwrap:has(#peotab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
   #peotab, #peotab thead, #peotab tbody, #peotab tr, #peotab td{display:block; width:100%; min-width:0}
@@ -769,7 +773,11 @@ td.pcell{font-size:13.5px; line-height:1.5}
   #peotab td.email-col{order:5; flex:1 1 100%}
   #peotab td.email-col .cin{width:100%}
   #peotab td.email-col:not(:empty)::before{content:"E-Mail: "; font-size:11.5px; color:var(--muted); display:block; margin-bottom:2px}
-  #peotab td:nth-child(6){position:absolute; top:10px; right:10px}
+  /* wie #meldtab td:nth-child(12) (Issue #74/#85): kein position:absolute
+     mehr - eigene Zeile im normalen Flow am Kartenende, rechtsbündig, damit
+     der Löschen-Button nicht mit dem Karteninhalt überlappen kann. */
+  #peotab td:nth-child(6){order:6; flex:1 1 100%; display:flex; justify-content:flex-end;
+    margin-top:4px; padding-top:8px; border-top:1px solid var(--line)}
   #addPeoGo{width:100%; border-radius:var(--r-pill); padding:14px; font-size:14px}
 
   .tblwrap:has(#meldtab){overflow-x:auto; border:none; box-shadow:none; background:none; margin-bottom:8px}
@@ -2639,12 +2647,23 @@ function renderCats(){
       saveCfg();
     };
   });
+  /* Issue #85: einzige verbliebene Löschstelle ohne confirmDestructive()
+     (liegt hier in personal.part statt plan-engine.part, darum bei
+     #73/#74/#81 durchgerutscht) - analog zu openClassDelete(). */
   Array.prototype.forEach.call(document.querySelectorAll(".katdel"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-k");
-      CFG.cats=CFG.cats.filter(function(x){return x.id!==id;});
-      CFG.people.forEach(function(p){if(p.cat===id) p.cat="";});
-      saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+      var k=CFG.cats.filter(function(x){return x.id===id;})[0]; if(!k) return;
+      confirmDestructive({
+        title:"Kategorie löschen",
+        message:'Kategorie „'+esc(k.name||k.id)+'" wirklich löschen? Personen in dieser Kategorie werden dabei auf „ohne Kategorie" gesetzt.',
+        onConfirm:function(){
+          CFG.cats=CFG.cats.filter(function(x){return x.id!==id;});
+          CFG.people.forEach(function(p){if(p.cat===id) p.cat="";});
+          saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+          closeModal();
+        }
+      });
     };
   });
   var s=document.getElementById("newPcat");
@@ -2695,11 +2714,22 @@ function renderPeople(){
       CONTACTS[id]=v; saveContact(id,v);
     };
   });
+  /* Issue #85: einzige verbliebene Löschstelle ohne confirmDestructive()
+     (liegt hier in personal.part statt plan-engine.part, darum bei
+     #73/#74/#81 durchgerutscht) - analog zu openClassDelete(). */
   Array.prototype.forEach.call(document.querySelectorAll(".pdel"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-p");
-      CFG.people=CFG.people.filter(function(x){return x.id!==id;});
-      saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+      var p=CFG.people.filter(function(x){return x.id===id;})[0]; if(!p) return;
+      confirmDestructive({
+        title:"Person entfernen",
+        message:'„'+esc(p.name||"Diese Person")+'" wirklich aus der Personenliste entfernen?',
+        onConfirm:function(){
+          CFG.people=CFG.people.filter(function(x){return x.id!==id;});
+          saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+          closeModal();
+        }
+      });
     };
   });
   var box=document.getElementById("nolist");
