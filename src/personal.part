@@ -63,12 +63,23 @@ function renderCats(){
       saveCfg();
     };
   });
+  /* Issue #85: einzige verbliebene Löschstelle ohne confirmDestructive()
+     (liegt hier in personal.part statt plan-engine.part, darum bei
+     #73/#74/#81 durchgerutscht) - analog zu openClassDelete(). */
   Array.prototype.forEach.call(document.querySelectorAll(".katdel"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-k");
-      CFG.cats=CFG.cats.filter(function(x){return x.id!==id;});
-      CFG.people.forEach(function(p){if(p.cat===id) p.cat="";});
-      saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+      var k=CFG.cats.filter(function(x){return x.id===id;})[0]; if(!k) return;
+      confirmDestructive({
+        title:"Kategorie löschen",
+        message:'Kategorie „'+esc(k.name||k.id)+'" wirklich löschen? Personen in dieser Kategorie werden dabei auf „ohne Kategorie" gesetzt.',
+        onConfirm:function(){
+          CFG.cats=CFG.cats.filter(function(x){return x.id!==id;});
+          CFG.people.forEach(function(p){if(p.cat===id) p.cat="";});
+          saveCfg(); renderCats(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+          closeModal();
+        }
+      });
     };
   });
   var s=document.getElementById("newPcat");
@@ -119,11 +130,22 @@ function renderPeople(){
       CONTACTS[id]=v; saveContact(id,v);
     };
   });
+  /* Issue #85: einzige verbliebene Löschstelle ohne confirmDestructive()
+     (liegt hier in personal.part statt plan-engine.part, darum bei
+     #73/#74/#81 durchgerutscht) - analog zu openClassDelete(). */
   Array.prototype.forEach.call(document.querySelectorAll(".pdel"),function(b){
     b.onclick=function(){
       var id=this.getAttribute("data-p");
-      CFG.people=CFG.people.filter(function(x){return x.id!==id;});
-      saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+      var p=CFG.people.filter(function(x){return x.id===id;})[0]; if(!p) return;
+      confirmDestructive({
+        title:"Person entfernen",
+        message:'„'+esc(p.name||"Diese Person")+'" wirklich aus der Personenliste entfernen?',
+        onConfirm:function(){
+          CFG.people=CFG.people.filter(function(x){return x.id!==id;});
+          saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+          closeModal();
+        }
+      });
     };
   });
   var box=document.getElementById("nolist");
