@@ -196,7 +196,7 @@ function renderFinalTab(){
                   .sort(function(a,b){return a.s-b.s;})[0];
       h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
          '<td class="num">'+n+'</td><td class="num">'+(n>=20?10:6)+'</td><td class="num">'+q+'</td>'+
-         '<td>'+(blk?'<strong class="mono">'+esc(blk.r)+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
+         '<td>'+(blk?'<strong class="mono">'+esc(routeNum(pf.row(blk.r)))+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
          '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
          '<td class="num">'+(blk&&rteam[blk.r]?rteam[blk.r]:'—')+'</td>'+
          (gi===0?'<td rowspan="2" style="vertical-align:middle"><span class="pill '+(mode==="parallel"?"ok":"")+'">'+mode+'</span></td>':'')+
@@ -223,7 +223,7 @@ function renderRoutePlan(plan,list,targetId){
     var lo=uses.length?Math.min.apply(null,uses.map(function(b){return b.s;})):null;
     var hi=uses.length?Math.max.apply(null,uses.map(function(b){return b.e;})):null;
     h+='<details class="route" data-ac="'+esc(ACOF[r.cls]||"c7")+'" data-id="'+esc(r.id)+'"'+(wasOpen[r.id]?" open":"")+'>'+
-       '<summary class="route-summary"><b>'+esc(r.id)+'</b> <span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></summary>'+
+       '<summary class="route-summary"><b>'+esc(routeNum(r))+'</b> <span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></summary>'+
        '<div class="route-body">'+
          '<span class="tag'+(r.allow==="w"?" w":"")+'">'+esc(allowTxt(r))+'</span>'+
          '<div class="route-meta"><span>'+starts+' Starts</span><span>'+mins+' Min</span>'+
