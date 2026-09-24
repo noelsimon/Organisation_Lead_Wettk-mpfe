@@ -495,17 +495,31 @@ Plan.prototype.editor=function(){
 };
 
 /* ================= Teams ================= */
+/* Pro Route lückensensitiv zu Segmenten zusammenfassen (Issue #92): eine
+   Route galt hier bisher von ihrem ersten Blockstart bis zu ihrem letzten
+   Blockende als durchgehend belegt (min(s)/max(e) über alle Blöcke),
+   selbst wenn dazwischen eine echte Pause ohne Kletterbetrieb liegt. Das
+   ließ die Route mit mehr anderen Routen "überlappen" als tatsächlich
+   gleichzeitig geklettert wird, wodurch der nachfolgende Greedy-Algorithmus
+   mehr Teams erzeugte als das echte Maximum gleichzeitig aktiver Routen
+   (Plan.prototype.recalc()s maxR, das dieselbe b.s<=t<b.e-Definition von
+   "aktiv" verwendet). Blöcke je Route jetzt nach Start sortiert zu einem
+   Segment mergen, solange der nächste Block ohne Lücke anschließt
+   (next.s<=segment.e); sonst beginnt ein neues Segment auf derselben
+   Route - danach entspricht die Team-Anzahl wieder exakt maxR. */
 function teams(plan,list){
-  var occ={};
-  list.forEach(function(b){
-    var o=occ[b.r];
-    if(!o) occ[b.r]={s:b.s,e:b.e,items:[b]};
-    else {o.s=Math.min(o.s,b.s);o.e=Math.max(o.e,b.e);o.items.push(b);}
+  var byRoute={};
+  list.forEach(function(b){ (byRoute[b.r]=byRoute[b.r]||[]).push(b); });
+  var items=[];
+  Object.keys(byRoute).forEach(function(r){
+    var row=plan.row(r); if(!row) return;
+    var seg=null;
+    byRoute[r].slice().sort(function(a,b){return a.s-b.s;}).forEach(function(b){
+      if(seg&&b.s<=seg.e){ seg.e=Math.max(seg.e,b.e); seg.items.push(b); }
+      else { seg={r:r,row:row,s:b.s,e:b.e,items:[b]}; items.push(seg); }
+    });
   });
-  var items=plan.rows.filter(function(r){return occ[r.id];}).map(function(r){
-    var o=occ[r.id]; o.items.sort(function(a,b){return a.s-b.s;});
-    return {r:r.id,row:r,s:o.s,e:o.e,items:o.items};
-  }).sort(function(a,b){return a.s-b.s||a.e-b.e;});
+  items.sort(function(a,b){return a.s-b.s||a.e-b.e;});
   var T=[];
   items.forEach(function(it){
     var pick=null;
