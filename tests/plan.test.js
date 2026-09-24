@@ -67,6 +67,56 @@ describe("Plan-Engine: Routenwechsel (addRoute/delRoute)", () => {
   });
 });
 
+describe("Plan-Engine: frei vergebbare Routennummer im Zeitplan (Issue #92 Teil B)", () => {
+  it("zeigt ohne gesetzte Nummer automatisch die Ziffern aus der internen Routen-ID", () => {
+    const plan = makePlan({
+      rows: [{ id: "T7", cls: "U9", allow: "mw", mode: "TR" }],
+      groups: [{ id: "g1", cls: "U9", gender: "m", n: 2 }],
+      blocks: [],
+    });
+    expect(plan.el.querySelector(".rnum").value).toBe("7");
+  });
+
+  it("übernimmt eine frei vergebene Nummer und zeigt sie nach dem Re-Render", () => {
+    const plan = makePlan({
+      rows: [{ id: "T7", cls: "U9", allow: "mw", mode: "TR" }],
+      groups: [{ id: "g1", cls: "U9", gender: "m", n: 2 }],
+      blocks: [],
+    });
+    const input = plan.el.querySelector(".rnum");
+    input.value = "14";
+    input.dispatchEvent(new window.Event("change"));
+    expect(plan.rows[0].num).toBe(14);
+    expect(plan.el.querySelector(".rnum").value).toBe("14");
+  });
+
+  it("lässt r.id als internen Schlüssel für Blöcke unangetastet, auch nach einer Nummernänderung", () => {
+    const plan = makePlan({
+      rows: [{ id: "T7", cls: "U9", allow: "mw", mode: "TR" }],
+      groups: [{ id: "g1", cls: "U9", gender: "m", n: 2 }],
+      blocks: [{ id: "b1", gid: "g1", r: "T7", s: 600 }],
+    });
+    const input = plan.el.querySelector(".rnum");
+    input.value = "99";
+    input.dispatchEvent(new window.Event("change"));
+    expect(plan.blocks[0].r).toBe("T7");
+    expect(plan.rows[0].id).toBe("T7");
+  });
+
+  it("fällt bei geleertem Eingabefeld wieder auf die Ziffern aus der ID zurück", () => {
+    const plan = makePlan({
+      rows: [{ id: "T7", cls: "U9", allow: "mw", mode: "TR", num: 14 }],
+      groups: [{ id: "g1", cls: "U9", gender: "m", n: 2 }],
+      blocks: [],
+    });
+    const input = plan.el.querySelector(".rnum");
+    input.value = "";
+    input.dispatchEvent(new window.Event("change"));
+    expect(plan.rows[0].num).toBeNull();
+    expect(plan.el.querySelector(".rnum").value).toBe("7");
+  });
+});
+
 describe("Plan-Engine: gleichzeitig belegte Routen (Doppelbelegung)", () => {
   it("markiert zwei zeitlich überlappende Blöcke auf derselben Route als clash", () => {
     const plan = makePlan({

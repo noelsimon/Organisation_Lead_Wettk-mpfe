@@ -5,6 +5,19 @@ var CLIMB=6, SNAP=5;
 var TEAMNAMES=["Wölfe","Falken","Luchse","Uhus","Fischotter","Dachse","Kraniche","Habichte","Biber","Reiher","Steinadler","Wanderfalken","Gämsen","Murmeltiere"];
 function fmt(t){var h=Math.floor(t/60),m=Math.round(t%60);return (h<10?"0":"")+h+":"+(m<10?"0":"")+m;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c];});}
+/* Anzeige-Routennummer statt der internen Routen-ID (Issue #92 Teil B):
+   r.id bleibt überall unverändert der interne Schlüssel (blocks[].r,
+   CFG.routeNotes, data-route, rteam[...]) - r.num ist ein rein additives,
+   frei vergebbares Anzeigefeld, das der Nutzer im Zeitplan editieren kann.
+   Ohne num (alte/unveränderte Routen) fällt die Anzeige automatisch auf
+   die Ziffern aus r.id zurück - identisches Verhalten wie vor diesem
+   Feature, bis jemand die Nummer aktiv ändert. */
+function routeNum(r){
+  if(!r) return "";
+  if(r.num!=null&&r.num!=="") return r.num;
+  var digits=String(r.id).replace(/\D/g,"");
+  return digits||r.id;
+}
 /* Icon-Konstanten hier statt in auth.part/aufgaben-chat.part (Issue #73:
    Root-Cause-Fund für den vom Nutzer gemeldeten "×"-Button, der live oben
    links statt oben rechts rendert): renderMeld() in plan-engine.part

@@ -225,7 +225,8 @@ Plan.prototype.render=function(){
   h+='</div></div>';
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
-    h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+esc(r.id)+
+    h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+
+       '<input class="rnum" type="number" min="0" max="999" inputmode="numeric" data-route="'+r.id+'" value="'+esc(routeNum(r))+'" aria-label="Anzeige-Nummer für '+esc(self.desc(r))+'">'+
        '<span class="rbtns">'+
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
@@ -258,6 +259,21 @@ Plan.prototype.render=function(){
   Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
   });
+  /* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B): r.id bleibt
+     unverändert der interne Schlüssel (blocks[].r, CFG.routeNotes,
+     data-route, rteam[...]), r.num ist rein additiv und steuert nur die
+     Anzeige (routeNum()). onchange statt oninput, damit ein voller
+     render() (nötig, weil die Nummer an vielen Stellen angezeigt wird)
+     nicht bei jedem Tastendruck das Eingabefeld unter dem Cursor ersetzt. */
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rnum"),function(inp){
+    inp.onchange=function(ev){
+      ev.stopPropagation();
+      var r=self.row(this.getAttribute("data-route")); if(!r) return;
+      var v=parseInt(this.value,10);
+      r.num=(isFinite(v)&&v>=0)?v:null;
+      self.render(); self.save();
+    };
+  });
   this.nodes={};
   if(o.fixedGen) o.fixed=o.fixedGen(this);
   (o.fixed||[]).forEach(function(f){
@@ -279,7 +295,7 @@ Plan.prototype.mount=function(b){
   var d=document.createElement("div");
   d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
   d.setAttribute("tabindex","0"); d.setAttribute("role","button");
-  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(b.r)+' löschen">×</button>';
+  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(routeNum(this.row(b.r)))+' löschen">×</button>';
   t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
 };
 Plan.prototype.position=function(){
@@ -295,11 +311,11 @@ Plan.prototype.position=function(){
       var n=g.n+self.g(tail.gid).n, lab=CLn(g.cls)+" männlich + weiblich · abwechselnd";
       d.querySelector("b").textContent=lab;
       d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(endS)+" · "+n+" TN";
-      d.title=b.r+" · "+lab+" · "+fmt(b.s)+"–"+fmt(endS)+" · "+n+" Kletternde";
+      d.title=routeNum(self.row(b.r))+" · "+lab+" · "+fmt(b.s)+"–"+fmt(endS)+" · "+n+" Kletternde";
     } else {
       d.querySelector("b").textContent=self.label(g);
       d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" TN";
-      d.title=b.r+" · "+self.label(g)+" · "+fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" Kletternde";
+      d.title=routeNum(self.row(b.r))+" · "+self.label(g)+" · "+fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" Kletternde";
     }
     d.classList.toggle("merged", !!tail);
     d.classList.toggle("sel", self.sel===b.id);
@@ -450,8 +466,8 @@ Plan.prototype.laufkarte=function(list){
     if(bs.length<2) return;
     var pt=self.pauseTxt(g,bs);
     h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
-       '<td class="tm">'+bs[0].r+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
-       '<td class="tm">'+bs[1].r+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
+       '<td class="tm">'+esc(routeNum(self.row(bs[0].r)))+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
+       '<td class="tm">'+esc(routeNum(self.row(bs[1].r)))+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
        '<td class="num"><span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span></td></tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
@@ -462,10 +478,10 @@ Plan.prototype.editor=function(){
   if(!b){box.hidden=true; box.innerHTML=""; return;}
   var g=this.g(b.gid), self=this, parts=this.parts(g);
   var opts=this.rows.map(function(r){
-    return '<option value="'+r.id+'"'+(r.id===b.r?" selected":"")+'>'+r.id+' – '+esc(self.desc(r))+'</option>';}).join("");
+    return '<option value="'+r.id+'"'+(r.id===b.r?" selected":"")+'>'+esc(routeNum(r))+' – '+esc(self.desc(r))+'</option>';}).join("");
   box.hidden=false;
   box.innerHTML=
-   '<div class="ed-head" data-ac="'+ACOF[g.cls]+'"><b>'+esc(this.label(g))+'</b> <span>'+g.n+' TN · '+b.r+' · '+fmt(b.s)+'–'+fmt(b.s+this.dur(b))+'</span>'+
+   '<div class="ed-head" data-ac="'+ACOF[g.cls]+'"><b>'+esc(this.label(g))+'</b> <span>'+g.n+' TN · '+esc(routeNum(this.row(b.r)))+' · '+fmt(b.s)+'–'+fmt(b.s+this.dur(b))+'</span>'+
    '<button class="fbtn ed-close" type="button">Auswahl aufheben</button></div>'+
    '<div class="ed-grid">'+
      '<label>Route <select class="ed-route">'+opts+'</select></label>'+
@@ -531,7 +547,7 @@ function renderTeams(plan,list){
       h+='<tr data-ac="'+ACOF[st.row.cls]+'"'+(i===0?' class="tstart"':'')+'>'+
          '<td>'+(i===0?'<strong>Team '+t.idx+'</strong> · '+esc(TEAMNAMES[(t.idx-1)%TEAMNAMES.length]):'')+'</td>'+
          '<td class="tm">'+fmt(st.s)+'–'+fmt(st.e)+'</td>'+
-         '<td><span class="ac">'+esc(st.r)+'</span> <span style="color:var(--muted)">'+esc(plan.desc(st.row))+'</span></td>'+
+         '<td><span class="ac">'+esc(routeNum(st.row))+'</span> <span style="color:var(--muted)">'+esc(plan.desc(st.row))+'</span></td>'+
          '<td>'+esc(who)+'</td>'+
          (i===0?'<td rowspan="'+t.stations.length+'" style="vertical-align:top" class="pcell">'+teamPeopleHtml(t.idx)+'</td>':'')+
          '<td class="num">'+(i===0?(np?np+" / "+CFG.teamPers:CFG.teamPers):"")+'</td></tr>';
@@ -578,7 +594,7 @@ function renderFlow(plan,list){
       var x=X(b.s), bw=Math.max(6,X(b.e)-X(b.s));
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="'+bw.toFixed(1)+'" height="26" rx="3" fill="var('+(w?"--w-bg":"--m-bg")+')" stroke="var('+(w?"--w-br":"--m-br")+')"/>';
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="3" height="26" fill="var(--ac)"/>';
-      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(b.r)+'</text>';
+      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(routeNum(plan.row(b.r)))+'</text>';
       if(bw>108) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
       if(k===1){
         var pt=plan.pauseTxt(g,L.bs), xa=X(L.bs[0].e)+3, xb=x-4;

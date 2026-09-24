@@ -34,6 +34,21 @@ describe("parseTime (HH:MM -> Minuten seit Mitternacht)", () => {
   });
 });
 
+describe("routeNum (Issue #92 Teil B: frei vergebbare Routennummer)", () => {
+  it("fällt ohne num auf die Ziffern aus r.id zurück (Bestandsdaten unverändert)", () => {
+    expect(T.routeNum({ id: "Q7" })).toBe("7");
+    expect(T.routeNum({ id: "F12" })).toBe("12");
+  });
+  it("nutzt num, sobald gesetzt - auch 0 und nicht-fortlaufende Werte", () => {
+    expect(T.routeNum({ id: "Q7", num: 14 })).toBe(14);
+    expect(T.routeNum({ id: "Q1", num: 0 })).toBe(0);
+  });
+  it("ignoriert num, wenn es explizit gelöscht wurde (null/leer), und fällt zurück", () => {
+    expect(T.routeNum({ id: "Q3", num: null })).toBe("3");
+    expect(T.routeNum({ id: "Q3", num: "" })).toBe("3");
+  });
+});
+
 describe("quota (Finalquote je Wertungsgruppe)", () => {
   it("0 Gemeldete -> 0 Plätze", () => {
     expect(T.quota(0)).toBe(0);

@@ -266,6 +266,14 @@ li{margin-bottom:6px}
 .ed-grid select:focus-visible,.ed-grid input:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .readout .flag.warn{border-color:var(--warn); color:var(--warn)}
 .rlabel b{display:flex; align-items:center; gap:6px}
+/* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B) - kompakt statt
+   der breiteren .nin, damit sie neben den rbtns in die schmale .rlabel-Spalte
+   passt; Farbe wie das Label selbst (--ac). */
+.rnum{width:34px; font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums; text-align:center;
+  padding:2px 3px; border-radius:var(--r-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ac); -moz-appearance:textfield}
+.rnum::-webkit-outer-spin-button,.rnum::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.rnum:hover{border-color:var(--ink-2)}
+.rnum:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .rbtns{margin-left:auto; display:flex; align-items:center; gap:6px}
 .rdel{font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
   display:inline-flex; align-items:center; justify-content:center;
@@ -1698,6 +1706,19 @@ var CLIMB=6, SNAP=5;
 var TEAMNAMES=["Wölfe","Falken","Luchse","Uhus","Fischotter","Dachse","Kraniche","Habichte","Biber","Reiher","Steinadler","Wanderfalken","Gämsen","Murmeltiere"];
 function fmt(t){var h=Math.floor(t/60),m=Math.round(t%60);return (h<10?"0":"")+h+":"+(m<10?"0":"")+m;}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c];});}
+/* Anzeige-Routennummer statt der internen Routen-ID (Issue #92 Teil B):
+   r.id bleibt überall unverändert der interne Schlüssel (blocks[].r,
+   CFG.routeNotes, data-route, rteam[...]) - r.num ist ein rein additives,
+   frei vergebbares Anzeigefeld, das der Nutzer im Zeitplan editieren kann.
+   Ohne num (alte/unveränderte Routen) fällt die Anzeige automatisch auf
+   die Ziffern aus r.id zurück - identisches Verhalten wie vor diesem
+   Feature, bis jemand die Nummer aktiv ändert. */
+function routeNum(r){
+  if(!r) return "";
+  if(r.num!=null&&r.num!=="") return r.num;
+  var digits=String(r.id).replace(/\D/g,"");
+  return digits||r.id;
+}
 /* Icon-Konstanten hier statt in auth.part/aufgaben-chat.part (Issue #73:
    Root-Cause-Fund für den vom Nutzer gemeldeten "×"-Button, der live oben
    links statt oben rechts rendert): renderMeld() in plan-engine.part
@@ -2064,7 +2085,8 @@ Plan.prototype.render=function(){
   h+='</div></div>';
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
-    h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+esc(r.id)+
+    h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+
+       '<input class="rnum" type="number" min="0" max="999" inputmode="numeric" data-route="'+r.id+'" value="'+esc(routeNum(r))+'" aria-label="Anzeige-Nummer für '+esc(self.desc(r))+'">'+
        '<span class="rbtns">'+
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
@@ -2097,6 +2119,21 @@ Plan.prototype.render=function(){
   Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
   });
+  /* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B): r.id bleibt
+     unverändert der interne Schlüssel (blocks[].r, CFG.routeNotes,
+     data-route, rteam[...]), r.num ist rein additiv und steuert nur die
+     Anzeige (routeNum()). onchange statt oninput, damit ein voller
+     render() (nötig, weil die Nummer an vielen Stellen angezeigt wird)
+     nicht bei jedem Tastendruck das Eingabefeld unter dem Cursor ersetzt. */
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rnum"),function(inp){
+    inp.onchange=function(ev){
+      ev.stopPropagation();
+      var r=self.row(this.getAttribute("data-route")); if(!r) return;
+      var v=parseInt(this.value,10);
+      r.num=(isFinite(v)&&v>=0)?v:null;
+      self.render(); self.save();
+    };
+  });
   this.nodes={};
   if(o.fixedGen) o.fixed=o.fixedGen(this);
   (o.fixed||[]).forEach(function(f){
@@ -2118,7 +2155,7 @@ Plan.prototype.mount=function(b){
   var d=document.createElement("div");
   d.className="blk"; d.setAttribute("data-ac",ACOF[g.cls]); d.setAttribute("data-g",g.gender==="w"?"w":"m");
   d.setAttribute("tabindex","0"); d.setAttribute("role","button");
-  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(b.r)+' löschen">×</button>';
+  d.innerHTML='<b></b><span></span><button class="blk-del" type="button" aria-label="'+esc(this.label(g))+' auf '+esc(routeNum(this.row(b.r)))+' löschen">×</button>';
   t.appendChild(d); this.nodes[b.id]=d; this.bind(d,b);
 };
 Plan.prototype.position=function(){
@@ -2134,11 +2171,11 @@ Plan.prototype.position=function(){
       var n=g.n+self.g(tail.gid).n, lab=CLn(g.cls)+" männlich + weiblich · abwechselnd";
       d.querySelector("b").textContent=lab;
       d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(endS)+" · "+n+" TN";
-      d.title=b.r+" · "+lab+" · "+fmt(b.s)+"–"+fmt(endS)+" · "+n+" Kletternde";
+      d.title=routeNum(self.row(b.r))+" · "+lab+" · "+fmt(b.s)+"–"+fmt(endS)+" · "+n+" Kletternde";
     } else {
       d.querySelector("b").textContent=self.label(g);
       d.querySelector("span").textContent=fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" TN";
-      d.title=b.r+" · "+self.label(g)+" · "+fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" Kletternde";
+      d.title=routeNum(self.row(b.r))+" · "+self.label(g)+" · "+fmt(b.s)+"–"+fmt(b.s+dur)+" · "+g.n+" Kletternde";
     }
     d.classList.toggle("merged", !!tail);
     d.classList.toggle("sel", self.sel===b.id);
@@ -2289,8 +2326,8 @@ Plan.prototype.laufkarte=function(list){
     if(bs.length<2) return;
     var pt=self.pauseTxt(g,bs);
     h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
-       '<td class="tm">'+bs[0].r+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
-       '<td class="tm">'+bs[1].r+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
+       '<td class="tm">'+esc(routeNum(self.row(bs[0].r)))+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
+       '<td class="tm">'+esc(routeNum(self.row(bs[1].r)))+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
        '<td class="num"><span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span></td></tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
@@ -2301,10 +2338,10 @@ Plan.prototype.editor=function(){
   if(!b){box.hidden=true; box.innerHTML=""; return;}
   var g=this.g(b.gid), self=this, parts=this.parts(g);
   var opts=this.rows.map(function(r){
-    return '<option value="'+r.id+'"'+(r.id===b.r?" selected":"")+'>'+r.id+' – '+esc(self.desc(r))+'</option>';}).join("");
+    return '<option value="'+r.id+'"'+(r.id===b.r?" selected":"")+'>'+esc(routeNum(r))+' – '+esc(self.desc(r))+'</option>';}).join("");
   box.hidden=false;
   box.innerHTML=
-   '<div class="ed-head" data-ac="'+ACOF[g.cls]+'"><b>'+esc(this.label(g))+'</b> <span>'+g.n+' TN · '+b.r+' · '+fmt(b.s)+'–'+fmt(b.s+this.dur(b))+'</span>'+
+   '<div class="ed-head" data-ac="'+ACOF[g.cls]+'"><b>'+esc(this.label(g))+'</b> <span>'+g.n+' TN · '+esc(routeNum(this.row(b.r)))+' · '+fmt(b.s)+'–'+fmt(b.s+this.dur(b))+'</span>'+
    '<button class="fbtn ed-close" type="button">Auswahl aufheben</button></div>'+
    '<div class="ed-grid">'+
      '<label>Route <select class="ed-route">'+opts+'</select></label>'+
@@ -2370,7 +2407,7 @@ function renderTeams(plan,list){
       h+='<tr data-ac="'+ACOF[st.row.cls]+'"'+(i===0?' class="tstart"':'')+'>'+
          '<td>'+(i===0?'<strong>Team '+t.idx+'</strong> · '+esc(TEAMNAMES[(t.idx-1)%TEAMNAMES.length]):'')+'</td>'+
          '<td class="tm">'+fmt(st.s)+'–'+fmt(st.e)+'</td>'+
-         '<td><span class="ac">'+esc(st.r)+'</span> <span style="color:var(--muted)">'+esc(plan.desc(st.row))+'</span></td>'+
+         '<td><span class="ac">'+esc(routeNum(st.row))+'</span> <span style="color:var(--muted)">'+esc(plan.desc(st.row))+'</span></td>'+
          '<td>'+esc(who)+'</td>'+
          (i===0?'<td rowspan="'+t.stations.length+'" style="vertical-align:top" class="pcell">'+teamPeopleHtml(t.idx)+'</td>':'')+
          '<td class="num">'+(i===0?(np?np+" / "+CFG.teamPers:CFG.teamPers):"")+'</td></tr>';
@@ -2417,7 +2454,7 @@ function renderFlow(plan,list){
       var x=X(b.s), bw=Math.max(6,X(b.e)-X(b.s));
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="'+bw.toFixed(1)+'" height="26" rx="3" fill="var('+(w?"--w-bg":"--m-bg")+')" stroke="var('+(w?"--w-br":"--m-br")+')"/>';
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="3" height="26" fill="var(--ac)"/>';
-      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(b.r)+'</text>';
+      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(routeNum(plan.row(b.r)))+'</text>';
       if(bw>108) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
       if(k===1){
         var pt=plan.pauseTxt(g,L.bs), xa=X(L.bs[0].e)+3, xb=x-4;
@@ -2782,7 +2819,7 @@ function renderFinalTab(){
                   .sort(function(a,b){return a.s-b.s;})[0];
       h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
          '<td class="num">'+n+'</td><td class="num">'+(n>=20?10:6)+'</td><td class="num">'+q+'</td>'+
-         '<td>'+(blk?'<strong class="mono">'+esc(blk.r)+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
+         '<td>'+(blk?'<strong class="mono">'+esc(routeNum(pf.row(blk.r)))+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
          '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
          '<td class="num">'+(blk&&rteam[blk.r]?rteam[blk.r]:'—')+'</td>'+
          (gi===0?'<td rowspan="2" style="vertical-align:middle"><span class="pill '+(mode==="parallel"?"ok":"")+'">'+mode+'</span></td>':'')+
@@ -2809,7 +2846,7 @@ function renderRoutePlan(plan,list,targetId){
     var lo=uses.length?Math.min.apply(null,uses.map(function(b){return b.s;})):null;
     var hi=uses.length?Math.max.apply(null,uses.map(function(b){return b.e;})):null;
     h+='<details class="route" data-ac="'+esc(ACOF[r.cls]||"c7")+'" data-id="'+esc(r.id)+'"'+(wasOpen[r.id]?" open":"")+'>'+
-       '<summary class="route-summary"><b>'+esc(r.id)+'</b> <span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></summary>'+
+       '<summary class="route-summary"><b>'+esc(routeNum(r))+'</b> <span class="route-who">'+esc(CLn(r.cls))+' · '+esc(r.mode)+'</span></summary>'+
        '<div class="route-body">'+
          '<span class="tag'+(r.allow==="w"?" w":"")+'">'+esc(allowTxt(r))+'</span>'+
          '<div class="route-meta"><span>'+starts+' Starts</span><span>'+mins+' Min</span>'+
@@ -5465,7 +5502,7 @@ function buildPDF(){
       var mi=bs.reduce(function(a,b){return a+(b.e-b.s);},0);
       var s0=bs.length?Math.min.apply(null,bs.map(function(b){return b.s;})):null;
       var e0=bs.length?Math.max.apply(null,bs.map(function(b){return b.e;})):null;
-      return {c:[r.id,CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
+      return {c:[routeNum(r),CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
                  s0==null?"—":fmt(s0)+"-"+fmt(e0)],col:[PC(r.cls).ac]};
     });
   }
@@ -5485,7 +5522,7 @@ function buildPDF(){
     var bs=ql.filter(function(b){return b.gid===g.id;}).sort(function(a,b){return a.s-b.s;});
     if(bs.length<2) return;
     var pt=pq.pauseTxt(g,bs);
-    lk.push({c:[pq.label(g),g.n,bs[0].r+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),bs[1].r+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),pt.txt],
+    lk.push({c:[pq.label(g),g.n,routeNum(pq.row(bs[0].r))+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),routeNum(pq.row(bs[1].r))+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),pt.txt],
              col:[PC(g.cls).ac,null,null,null,pt.ok?[24,96,69]:[142,47,41]]});
   });
   table(ML,y,[{t:"Startgruppe",w:44},{t:"TN",w:12,r:true},{t:"Route 1",w:44},{t:"Route 2",w:44},{t:"Pause",w:20,r:true}],lk,{rh:5.4,fs:7.5});
@@ -5499,7 +5536,7 @@ function buildPDF(){
     ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name);});
     var pl=Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ")||"—";
     t.stations.forEach(function(st,i){
-      trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),st.r+"  "+pq.desc(st.row),
+      trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),routeNum(st.row)+"  "+pq.desc(st.row),
         st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"-"+fmt(x.e)+")";}).join(", "),
         i===0?pl:"", i===0?(ps.length?ps.length+" / "+CFG.teamPers:CFG.teamPers):""],
         col:[null,null,PC(st.row.cls).ac]});
@@ -5532,7 +5569,7 @@ function buildPDF(){
     ["m","w"].forEach(function(gd,gi){
       var n=+cc[gd]||0, qq=quota(n);
       var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
-      frows.push({c:[CLn(c)+" "+gl(c,gd),n,(n>=20?10:6),qq,blk?blk.r:"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
+      frows.push({c:[CLn(c)+" "+gl(c,gd),n,(n>=20?10:6),qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
                      blk&&rteam[blk.r]?rteam[blk.r]:"—",gi===0?mode:""],
                   col:[PC(c).ac]});
     });
@@ -5702,7 +5739,7 @@ if(typeof IntersectionObserver!=="undefined"){
    window.__TEST_EXPORTS__ undefiniert. */
 if(typeof window!=="undefined"&&window.__TEST__){
   window.__TEST_EXPORTS__={fmt:fmt, parseTime:parseTime, quota:quota, ffix:ffix, Plan:Plan,
-    CFG:CFG, CLIMB:CLIMB, CLn:CLn, gl:gl, allowTxt:allowTxt, esc:esc, reindex:reindex};
+    CFG:CFG, CLIMB:CLIMB, CLn:CLn, gl:gl, allowTxt:allowTxt, esc:esc, reindex:reindex, routeNum:routeNum};
 }
 
 })();

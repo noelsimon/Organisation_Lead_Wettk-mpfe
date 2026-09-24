@@ -257,6 +257,14 @@ li{margin-bottom:6px}
 .ed-grid select:focus-visible,.ed-grid input:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .readout .flag.warn{border-color:var(--warn); color:var(--warn)}
 .rlabel b{display:flex; align-items:center; gap:6px}
+/* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B) - kompakt statt
+   der breiteren .nin, damit sie neben den rbtns in die schmale .rlabel-Spalte
+   passt; Farbe wie das Label selbst (--ac). */
+.rnum{width:34px; font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums; text-align:center;
+  padding:2px 3px; border-radius:var(--r-sm); border:1px solid var(--line-strong); background:var(--surface); color:var(--ac); -moz-appearance:textfield}
+.rnum::-webkit-outer-spin-button,.rnum::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
+.rnum:hover{border-color:var(--ink-2)}
+.rnum:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .rbtns{margin-left:auto; display:flex; align-items:center; gap:6px}
 .rdel{font-family:var(--serif); font-size:15px; line-height:1; width:20px; height:20px;
   display:inline-flex; align-items:center; justify-content:center;
