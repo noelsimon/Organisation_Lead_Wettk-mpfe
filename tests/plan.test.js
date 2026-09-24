@@ -189,6 +189,58 @@ describe("Plan-Engine: Personalbedarf (maximal gleichzeitig belegte Routen)", ()
   });
 });
 
+describe("Plan-Engine: Routen-Teams (Lückenerkennung, Issue #92)", () => {
+  it("braucht kein zusätzliches Team, wenn eine Route nur mit einer echten Pause dazwischen zweimal belegt ist", () => {
+    const plan = makePlan({
+      rows: [
+        { id: "T1", cls: "U9", allow: "m", mode: "TR" },
+        { id: "T2", cls: "U9", allow: "m", mode: "TR" },
+        { id: "T3", cls: "U9", allow: "m", mode: "TR" },
+      ],
+      groups: [
+        { id: "g1", cls: "U9", gender: "m", n: 2 },
+        { id: "g2", cls: "U9", gender: "m", n: 2 },
+        { id: "g3", cls: "U9", gender: "m", n: 2 },
+        { id: "g4", cls: "U9", gender: "m", n: 2 },
+      ],
+      // T1: 600-612, dann eine echte Pause ohne Kletterbetrieb, dann
+      // 650-662. T2 (620-632) und T3 (636-648) laufen währenddessen, aber
+      // nie gleichzeitig miteinander oder mit T1 - zu jedem Zeitpunkt ist
+      // höchstens eine Route aktiv, ein einziges Team reicht also aus.
+      blocks: [
+        { id: "b1", gid: "g1", r: "T1", s: 600 },
+        { id: "b2", gid: "g2", r: "T2", s: 620 },
+        { id: "b3", gid: "g3", r: "T3", s: 636 },
+        { id: "b4", gid: "g4", r: "T1", s: 650 },
+      ],
+    });
+    plan.recalc();
+    expect(plan.stat.maxR).toBe(1);
+    expect(T.teams(plan, plan.stat.list)).toHaveLength(1);
+  });
+
+  it("braucht weiterhin so viele Teams wie tatsächlich gleichzeitig aktive Routen (maxR)", () => {
+    const plan = makePlan({
+      rows: [
+        { id: "T1", cls: "U9", allow: "m", mode: "TR" },
+        { id: "T2", cls: "U9", allow: "m", mode: "TR" },
+      ],
+      groups: [
+        { id: "g1", cls: "U9", gender: "m", n: 2 },
+        { id: "g2", cls: "U9", gender: "m", n: 2 },
+      ],
+      // T1 600-612, T2 605-617 -> überlappen sich echt, brauchen 2 Teams.
+      blocks: [
+        { id: "b1", gid: "g1", r: "T1", s: 600 },
+        { id: "b2", gid: "g2", r: "T2", s: 605 },
+      ],
+    });
+    plan.recalc();
+    expect(plan.stat.maxR).toBe(2);
+    expect(T.teams(plan, plan.stat.list)).toHaveLength(2);
+  });
+});
+
 describe("Plan-Engine: Pausen je Startgruppe (pauseRange/pauseTxt)", () => {
   it("liefert einen einzelnen Wert, wenn beide Routen dieselbe Startreihenfolge haben", () => {
     const plan = makePlan({
