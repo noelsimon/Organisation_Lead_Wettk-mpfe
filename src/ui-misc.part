@@ -75,7 +75,7 @@ if(typeof IntersectionObserver!=="undefined"){
    window.__TEST_EXPORTS__ undefiniert. */
 if(typeof window!=="undefined"&&window.__TEST__){
   window.__TEST_EXPORTS__={fmt:fmt, parseTime:parseTime, quota:quota, ffix:ffix, Plan:Plan,
-    CFG:CFG, CLIMB:CLIMB, CLn:CLn, gl:gl, allowTxt:allowTxt, esc:esc, reindex:reindex};
+    CFG:CFG, CLIMB:CLIMB, CLn:CLn, gl:gl, allowTxt:allowTxt, esc:esc, reindex:reindex, teams:teams};
 }
 
 })();
