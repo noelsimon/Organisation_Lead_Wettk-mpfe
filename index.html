@@ -5402,15 +5402,27 @@ function buildPDF(){
   }
   function table(x,y,cols,rows,opt){
     opt=opt||{}; var rh=opt.rh||6, fs=opt.fs||8;
-    doc.setFontSize(fs-1); doc.setFont("helvetica","bold");
-    doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
     var tw=cols.reduce(function(a,c){return a+c.w;},0);
-    doc.rect(x,y,tw,rh,"F");
-    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    var cx=x; cols.forEach(function(c){ doc.text(String(c.t),c.r?cx+c.w-1.5:cx+1.5,y+rh-2,{align:c.r?"right":"left"}); cx+=c.w; });
-    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-    var yy=y+rh, lh=fs*1.15*0.3528;
-    doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+    /* Seitenumbruch (Issue #92-Folge "Helferliste"): ohne diese Prüfung lief
+       eine Tabelle, die nicht mehr auf die Seite passt, bisher einfach über
+       den unteren Rand hinaus, statt auf einer neuen Seite fortzusetzen -
+       fiel bei den bisherigen (kurzen) Tabellen nicht auf, reicht aber für
+       die potenziell lange Helferliste nicht mehr. Kopfzeile wird bei jedem
+       Seitenwechsel über headerRow() erneut gezeichnet, wie schon in
+       simplePdfKit()s table() (siehe oben). Ändert am Layout der
+       bestehenden Tabellen nichts, solange sie weiterhin auf eine Seite
+       passen (unverändertes Verhalten). */
+    function headerRow(yy){
+      doc.setFontSize(fs-1); doc.setFont("helvetica","bold");
+      doc.setFillColor(PDFCOL.soft[0],PDFCOL.soft[1],PDFCOL.soft[2]);
+      doc.rect(x,yy,tw,rh,"F");
+      doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
+      var cx=x; cols.forEach(function(c){ doc.text(String(c.t),c.r?cx+c.w-1.5:cx+1.5,yy+rh-2,{align:c.r?"right":"left"}); cx+=c.w; });
+      doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      doc.setFont("helvetica","normal"); doc.setFontSize(fs);
+      return yy+rh;
+    }
+    var yy=headerRow(y), lh=fs*1.15*0.3528;
     rows.forEach(function(r){
       if(r.bold) doc.setFont("helvetica","bold"); else doc.setFont("helvetica","normal");
       var wrapped=cols.map(function(c,i){
@@ -5419,6 +5431,10 @@ function buildPDF(){
       });
       var nl=wrapped.reduce(function(a,L){return Math.max(a,L.length);},1);
       var hh=Math.max(rh, 2.1+nl*lh);
+      if(yy+hh>PH-18){
+        var ny=head(opt.title||"",opt.sub||"");
+        yy=headerRow(ny);
+      }
       if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,hh,"F"); }
       var top=yy+(hh-nl*lh)/2+lh*0.78, cx2=x;
       cols.forEach(function(c,i){
@@ -5656,6 +5672,23 @@ function buildPDF(){
       }
     });
   });
+  foot();
+
+  /* --- Seite 6: Personal - Helferliste ---
+     Bewusst KEINE E-Mail-Spalte: #pdfbtn ist nicht admin-gated (jede
+     freigegebene Person mit Sicht auf den Plan kann das PDF ziehen),
+     während E-Mails in der Live-Ansicht (renderPeople(), isAdmin-Flag)
+     bewusst nur Admins sehen - eine E-Mail-Spalte hier würde diese
+     Datenschutz-Grenze über die PDF-Hintertür unterlaufen. */
+  y=head("Personal – Helferliste",CFG.people.length+" Personen erfasst · "+
+    CFG.people.filter(function(p){return !p.team;}).length+" ohne Team-Zuordnung");
+  var peoRows=CFG.people.slice().sort(function(a,b){
+    return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
+  }).map(function(p){
+    return {c:[p.name,catName(p.cat),p.team?teamName(p.team):"—",p.note||"—"]};
+  });
+  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"Notiz",w:148}],peoRows,
+    {fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
   foot();
 
   return doc;
