@@ -5448,7 +5448,7 @@ function buildPDF(){
     rows.forEach(function(r,i){
       var yy=y+6+i*rh, C=PC(r.cls);
       doc.setFont("helvetica","bold"); doc.setFontSize(7);
-      doc.setTextColor(C.ac[0],C.ac[1],C.ac[2]); doc.text(r.id,x,yy+rh-2.4);
+      doc.setTextColor(C.ac[0],C.ac[1],C.ac[2]); doc.text(String(routeNum(r)),x,yy+rh-2.4);
       doc.setFont("helvetica","normal"); doc.setFontSize(5.6);
       doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
       doc.text(plan.desc(r),x+9,yy+rh-2.4,{maxWidth:labw-10});
@@ -5636,7 +5636,7 @@ function buildPDF(){
       doc.setFillColor(C.ac[0],C.ac[1],C.ac[2]); doc.rect(bx,mid-4,.7,8,"F");
       if(bw>16){
         doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setFontSize(6);
-        doc.text(b.r,bx+1.4,mid-.6,{maxWidth:bw-2});
+        doc.text(String(routeNum(pq.row(b.r))),bx+1.4,mid-.6,{maxWidth:bw-2});
         doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setFontSize(5);
         doc.text(fmt(b.s)+"-"+fmt(b.e),bx+1.4,mid+2.8,{maxWidth:bw-2});
       }
