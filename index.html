@@ -5515,7 +5515,11 @@ function buildPDF(){
   mrows.push({bold:true,fill:PDFCOL.soft,c:["Summe",
     CFG.classes.reduce(function(a,c){return a+(+c.m||0);},0),
     CFG.classes.reduce(function(a,c){return a+(+c.w||0);},0),totalAth(),ql.reduce(function(a,b){return a+(b.e-b.s);},0)]});
-  var ey=table(ML,y,[{t:"Klasse",w:22},{t:"Gruppe 1",w:26,r:true},{t:"Gruppe 2",w:26,r:true},{t:"gesamt",w:18,r:true},{t:"Kletter-Min",w:24,r:true}],mrows,{fs:7.5});
+  /* Gesamtbreite bewusst unter 112mm (= Startspalte von "Tagesablauf" daneben,
+     ML+112) gehalten, sonst überlappt die rechtsbündige "Kletter-Min"-Spalte
+     mit der "Zeit"-Spalte von Tagesablauf (Fix für gemeldete Überlappung:
+     116mm bei den alten Breiten liefen 4mm in Tagesablauf hinein). */
+  var ey=table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Tagesablauf",ML+112,y);
   var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
     return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
