@@ -557,15 +557,22 @@ function buildPDF(){
     "je Team: Sicherung + Ergebnisdienst",
     CFG.people.filter(function(p){return p.team;}).length+" Personen zugeteilt",LASTQ.T.length*CFG.teamPers]});
   var ty=table(ML,y,[{t:"Team",w:36},{t:"Zeit",w:22},{t:"Route",w:50},{t:"Wer klettert",w:78},
-                     {t:"Personen",w:62},{t:"Pers.",w:25,r:true}],trows,{rh:5.6,fs:7.5});
+                     {t:"Personen",w:62},{t:"Pers.",w:25,r:true}],trows,{rh:5.2,fs:7.5});
   var frei=CFG.people.filter(function(p){return !p.team;});
   if(frei.length){
-    ty+=7;
+    ty+=4;
     doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Ohne Team-Zuordnung",ML,ty); ty+=2;
     var byc={};
     frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+    /* title/sub ergänzt (Fix für Issue #92-Folge "blanke Seiten"): ohne sie
+       rief ein Seitenumbruch mitten in dieser kleinen Tabelle head("","")
+       auf - komplett titellose Seite. rh/der ty-Abstand oben zusätzlich
+       etwas enger gefasst, damit der Umbruch bei üblichen Wettkampfgrößen
+       gar nicht erst nötig wird (bleibt trotzdem als Sicherheitsnetz für
+       größere Wettkämpfe bestehen). */
     table(ML,ty,[{t:"Kategorie",w:44},{t:"Personen",w:180}],
-      Object.keys(byc).map(function(k){return {c:[k,byc[k].join(", ")]};}),{rh:5.4,fs:7.5});
+      Object.keys(byc).map(function(k){return {c:[k,byc[k].join(", ")]};}),
+      {rh:5.2,fs:7.5,title:"Team-Zeitplan",sub:"Fortsetzung"});
   }
   foot();
 
@@ -648,8 +655,15 @@ function buildPDF(){
   }).map(function(p){
     return {c:[p.name,catName(p.cat),p.team?teamName(p.team):"—",p.note||"—"]};
   });
+  /* rh knapp über dem bei fs:7.5 ohnehin nötigen Minimum (2.1+1 Zeile ≈
+     5.1mm) gesetzt statt des generischen Default (6mm) - passt bei
+     üblichen Wettkampfgrößen (~20-35 Helfer*innen) spürbar mehr Zeilen auf
+     eine Seite, ohne Notizen abzuschneiden (Zeilenumbruch bei langen
+     Notizen bleibt über splitTextToSize erhalten, rh wirkt nur als
+     Mindesthöhe für einzeilige Zeilen). Seitenumbruch mit korrektem
+     title/sub bleibt als Sicherheitsnetz für größere Wettkämpfe bestehen. */
   table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"Notiz",w:148}],peoRows,
-    {fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
+    {rh:5.2,fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
   foot();
 
   return doc;
