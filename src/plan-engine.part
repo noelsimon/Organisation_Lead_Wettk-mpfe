@@ -114,7 +114,7 @@ Plan.prototype.addClass=function(c){
     blk(gm,rm,t0); blk(gm,r1,Math.min(this.o.end-dm,t0+offM));
     blk(gw,r2,t0); blk(gw,rm,Math.min(this.o.end-dw,t0+offW));
   }else{
-    t0=this.o.start+(CFG.win.bes||25)+(CFG.win.iso||20);
+    t0=this.o.start+finalFixedDur();
     var ra=row("w"), rb=row("m");
     var ga=grp("w",quota(c.w)), gb=grp("m",quota(c.m));
     blk(ga,ra,t0); blk(gb,rb,t0);
@@ -225,9 +225,15 @@ Plan.prototype.render=function(){
   h+='</div></div>';
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
+    var rc=CL(r.cls), rlm=(rc&&rc.lm)||"männlich", rlw=(rc&&rc.lw)||"weiblich";
     h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+
        '<input class="rnum" type="number" min="0" max="999" inputmode="numeric" data-route="'+r.id+'" value="'+esc(routeNum(r))+'" aria-label="Anzeige-Nummer für '+esc(self.desc(r))+'">'+
        '<span class="rbtns">'+
+       '<select class="rallow" data-allow="'+r.id+'" title="Geschlecht dieser Route nachträglich ändern" aria-label="Geschlecht für '+esc(self.desc(r))+'">'+
+         '<option value="mw"'+(r.allow==="mw"?" selected":"")+'>gemischt</option>'+
+         '<option value="m"'+(r.allow==="m"?" selected":"")+'>nur '+esc(rlm)+'</option>'+
+         '<option value="w"'+(r.allow==="w"?" selected":"")+'>nur '+esc(rlw)+'</option>'+
+       '</select>'+
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
@@ -258,6 +264,21 @@ Plan.prototype.render=function(){
   });
   Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
+  });
+  /* Geschlecht einer Route nachträglich ändern (gemischt <-> nur männlich/
+     nur weiblich), auch wenn schon Blöcke darauf liegen: r.allow steuert
+     nur die Anzeige/den Warnhinweis (siehe recalc()), keine Blöcke oder
+     Gruppen werden dabei verschoben oder gelöscht. Verlässt eine Route
+     "gemischt", ergibt der abwechselnde-Start-Schalter (↔ m/w) keinen Sinn
+     mehr und wird mit zurückgesetzt. */
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rallow"),function(sel){
+    sel.onchange=function(ev){
+      ev.stopPropagation();
+      var r=self.row(this.getAttribute("data-allow")); if(!r) return;
+      r.allow=this.value;
+      if(r.allow!=="mw") r.altStart=false;
+      self.render(); self.save();
+    };
   });
   /* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B): r.id bleibt
      unverändert der interne Schlüssel (blocks[].r, CFG.routeNotes,
@@ -457,18 +478,41 @@ Plan.prototype.recalc=function(){
   if(o.laufkarte) this.laufkarte(list);
   if(o.onchange) o.onchange(this,list);
 };
-Plan.prototype.laufkarte=function(list){
-  var self=this,by={},h="";
+/* Daten für die Laufkarte, gemeinsam genutzt von der On-Screen-Tabelle
+   unten und der PDF-Seite "Laufkarte der Startgruppen" (pdf-export.part),
+   damit beide nie auseinanderlaufen. Bisher waren hier genau zwei Runden
+   je Startgruppe hartkodiert (bs[0]/bs[1]) - eine dritte, manuell über
+   "+ Balken" hinzugefügte Runde (z. B. ein drittes U9-Quali-Team) fiel
+   dadurch kommentarlos unter den Tisch. slots enthält jetzt alle Runden
+   der Gruppe, sortiert nach Startzeit; die Anzeige (Spalten "Route N" /
+   "Startzeiten") zeigt bis zu drei davon. */
+Plan.prototype.laufkarteRows=function(list){
+  var self=this,by={},rows=[];
   list.forEach(function(b){by[b.id]=b;});
   this.groups.forEach(function(g){
     var bs=self.blocks.filter(function(b){return b.gid===g.id;}).map(function(b){return by[b.id];})
-            .sort(function(a,b){return a.s-b.s;});
+            .filter(Boolean).sort(function(a,b){return a.s-b.s;});
     if(bs.length<2) return;
-    var pt=self.pauseTxt(g,bs);
-    h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[0].r)))+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[1].r)))+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
-       '<td class="num"><span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span></td></tr>';
+    rows.push({g:g, label:self.label(g), n:g.n,
+      slots:bs.map(function(b){return {route:self.row(b.r), s:b.s, e:b.e};}),
+      /* Pausen-Kennzahl bezieht sich (wie pauseRange()) auf genau zwei
+         Runden - bei mehr als zwei Runden (3. Route) gibt es keinen
+         einzelnen "die" Pause-Wert mehr, darum dann kein Flag statt eines
+         irreführenden einzelnen Werts. */
+      pause:bs.length===2?self.pauseTxt(g,bs):null});
+  });
+  return rows;
+};
+Plan.prototype.laufkarte=function(list){
+  var self=this,h="";
+  this.laufkarteRows(list).forEach(function(row){
+    var pt=row.pause;
+    h+='<tr data-ac="'+ACOF[row.g.cls]+'"><td><span class="ac">'+esc(row.label)+'</span></td><td class="num">'+row.n+'</td>';
+    for(var i=0;i<3;i++){
+      var sl=row.slots[i];
+      h+='<td>'+(sl?esc(routeNum(sl.route)):"")+'</td><td class="tm">'+(sl?fmt(sl.s)+'–'+fmt(sl.e):"")+'</td>';
+    }
+    h+='<td class="num">'+(pt?'<span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span>':'—')+'</td></tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
 };
@@ -588,28 +632,33 @@ function flowLanes(plan,list){
   return lanes;
 }
 function renderFlow(plan,list){
-  var W=980, LAB=168, PAD=16, X0=LAB, X1=W-PAD, LANE=48, TOP=32;
+  var W=980, LAB=168, PAD=16, X0=LAB, X1=W-PAD, LANE=50, TOP=32;
   var t0=plan.o.start, t1=plan.o.end, span=t1-t0;
   var X=function(t){return X0+((t-t0)/span)*(X1-X0);};
   var lanes=flowLanes(plan,list);
   var H=TOP+lanes.length*LANE+14;
-  var s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Wege der Startgruppen durch die Qualifikation">';
+  /* width="100%" statt fester Pixelbreite (Issue: Diagramm sollte beim
+     Ausdrucken/Aushängen die volle Seitenbreite nutzen statt der festen
+     980px) - das viewBox bestimmt weiterhin das Koordinatensystem und
+     damit das Seitenverhältnis, nur die tatsächliche Darstellungsgröße
+     folgt jetzt der verfügbaren Breite des Containers (.flowwrap). */
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Wege der Startgruppen durch die Qualifikation">';
   s+='<defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="currentColor"/></marker></defs>';
   for(var t=Math.ceil(t0/30)*30;t<=t1;t+=30){
     s+='<line x1="'+X(t).toFixed(1)+'" y1="'+(TOP-10)+'" x2="'+X(t).toFixed(1)+'" y2="'+(H-8)+'" stroke="var(--line)" stroke-width="1"/>';
-    s+='<text x="'+X(t).toFixed(1)+'" y="'+(TOP-16)+'" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">'+fmt(t)+'</text>';
+    s+='<text x="'+X(t).toFixed(1)+'" y="'+(TOP-16)+'" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">'+fmt(t)+'</text>';
   }
   lanes.forEach(function(L,i){
     var y=TOP+i*LANE, mid=y+26, g=L.g, w=g.gender==="w";
     s+='<g data-ac="'+ACOF[g.cls]+'" color="var(--ac)">';
-    s+='<text x="8" y="'+(mid+4)+'" font-family="var(--disp)" font-size="13" font-weight="500" fill="var(--ac)">'+esc(L.label)+'</text>';
+    s+='<text x="8" y="'+(mid+4)+'" font-family="var(--disp)" font-size="14" font-weight="600" fill="var(--ac)">'+esc(L.label)+'</text>';
     s+='<text x="'+(LAB-14)+'" y="'+(mid+4)+'" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--muted)">'+g.n+' TN</text>';
     L.bs.forEach(function(b,k){
       var x=X(b.s), bw=Math.max(6,X(b.e)-X(b.s));
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="'+bw.toFixed(1)+'" height="26" rx="3" fill="var('+(w?"--w-bg":"--m-bg")+')" stroke="var('+(w?"--w-br":"--m-br")+')"/>';
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="3" height="26" fill="var(--ac)"/>';
-      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(routeNum(plan.row(b.r)))+'</text>';
-      if(bw>108) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
+      if(bw>68) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12.5" font-weight="500" fill="var(--ink)">Route '+esc(routeNum(plan.row(b.r)))+'</text>';
+      if(bw>112) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
       if(k===1){
         var pt=plan.pauseTxt(g,L.bs), xa=X(L.bs[0].e)+3, xb=x-4;
         if(xb>xa+76){
@@ -629,18 +678,6 @@ function renderFlow(plan,list){
 }
 
 /* ================= Meldezahlen-Tabelle, Kennzahlen, Finalquoten ================= */
-function classMode(plan,list,cls){
-  var bs=list.filter(function(b){return b.cls===cls;});
-  var gids={}; bs.forEach(function(b){gids[b.gid]=1;});
-  if(Object.keys(gids).length<2) return "einzeln";
-  var over=false, sep=false;
-  for(var i=0;i<bs.length;i++) for(var j=i+1;j<bs.length;j++){
-    if(bs[i].gid===bs[j].gid) continue;
-    if(bs[i].s<bs[j].e&&bs[j].s<bs[i].e) over=true; else sep=true;
-  }
-  if(over&&sep) return "teils parallel";
-  return over?"parallel":"nacheinander";
-}
 function afterCfg(replan){
   reindex(); saveCfg();
   if(replan!==false){ pq.applyField(); pf.applyField(); }
@@ -756,6 +793,39 @@ function addClass(name,lm,lw,m,w,mode){
   pq.addClass(c); pf.addClass(c);
   afterCfg(); return true;
 }
+/* ================= Wettkampf-Angaben (Titel/Ort/Datum fürs PDF) ================= */
+function renderMeta(){
+  function set(id,v){var el=document.getElementById(id); if(el&&document.activeElement!==el) el.value=v||"";}
+  set("metaTitle",CFG.meta.title); set("metaSub",CFG.meta.sub);
+  set("metaLocation",CFG.meta.location); set("metaDate",CFG.meta.date);
+  var eb=document.getElementById("mastheadEyebrow");
+  if(eb) eb.textContent=[CFG.meta.title,CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · ");
+}
+
+/* Reihenfolge Besichtigung/ISO + frei beschriftbare Zusatzblöcke vor dem
+   Finale-Klettern (siehe ffix()/finalFixedPhases() in script-core.part). */
+function renderFinOrder(){
+  var out=document.getElementById("finOrderOut"); if(!out) return;
+  out.textContent=CFG.win.order==="ib"?"Aktuell: erst ISO, dann Besichtigung":"Aktuell: erst Besichtigung, dann ISO";
+}
+function renderFinExtra(){
+  var body=document.querySelector("#finExtraTab tbody"); if(!body) return;
+  var h="";
+  (CFG.win.extra||[]).forEach(function(ex,i){
+    h+='<tr><td>'+esc(ex.label||"Zusatz")+'</td><td class="num">'+(+ex.dur||0)+'</td>'+
+       '<td><button class="rdel finExtraDel" type="button" data-i="'+i+'" title="Zusatzblock entfernen" aria-label="'+esc(ex.label||"Zusatzblock")+' entfernen">×</button></td></tr>';
+  });
+  if(!(CFG.win.extra||[]).length) h='<tr><td colspan="3" style="color:var(--muted)">Noch kein Zusatzblock.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(body.querySelectorAll(".finExtraDel"),function(btn){
+    btn.onclick=function(){
+      var i=parseInt(this.getAttribute("data-i"),10);
+      CFG.win.extra.splice(i,1);
+      saveCfg(); pf.render(); pf.save(); renderFinExtra();
+    };
+  });
+}
+
 /* ================= Zeitfenster ================= */
 function renderWin(){
   function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}
@@ -765,7 +835,7 @@ function renderWin(){
   ["winIso","finIsoIn"].forEach(function(id){var el=document.getElementById(id); if(el) el.value=CFG.win.iso;});
   var out=document.getElementById("winOut");
   if(out) out.textContent="Quali "+fmt(CFG.win.qs)+"–"+fmt(CFG.win.qe)+" · Finale "+fmt(CFG.win.fs)+"–"+fmt(CFG.win.fe)+
-    " · erster Finalzug "+fmt(CFG.win.fs+(+CFG.win.bes||0)+(+CFG.win.iso||0));
+    " · erster Finalzug "+fmt(CFG.win.fs+finalFixedDur());
 }
 function applyWin(){
   if(CFG.win.qe<=CFG.win.qs) CFG.win.qe=CFG.win.qs+60;

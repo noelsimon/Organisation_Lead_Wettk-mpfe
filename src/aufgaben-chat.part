@@ -697,7 +697,7 @@ function snapshot(){
 }
 function applySnapshot(s){
   if(!s||!s.cfg||!s.q||!s.f) return false;
-  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
+  CFG=s.cfg; cfgDefaults(CFG);
   reindex(); saveCfg();
   TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
   TXTBLOCKS=s.textblocks||{added:[],hidden:[]}; try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
@@ -706,7 +706,7 @@ function applySnapshot(s){
   pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
   pf.o.start=CFG.win.fs; pf.o.end=CFG.win.fe; pf.o.step=autoStep(CFG.win.fe-CFG.win.fs);
   pq.render(); pf.render(); pq.save(); pf.save();
-  renderWin(); renderCats(); renderPeople(); renderStats();
+  renderWin(); renderMeta(); renderFinOrder(); renderFinExtra(); renderCats(); renderPeople(); renderStats();
   document.querySelectorAll("[data-ed]").forEach(function(el){
     var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
   });

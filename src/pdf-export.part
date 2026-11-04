@@ -357,7 +357,7 @@ function buildPDF(){
   function foot(){
     doc.setFont("helvetica","normal"); doc.setFontSize(7);
     doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text("4. Offener Sächsischer Kidscup 2026 · Quacke Zittau · 26.09.2026",ML,PH-6);
+    doc.text([CFG.meta.title,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,PH-6);
     doc.text("Seite "+page,PW-MR,PH-6,{align:"right"});
     doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
   }
@@ -399,6 +399,17 @@ function buildPDF(){
       if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,hh,"F"); }
       var top=yy+(hh-nl*lh)/2+lh*0.78, cx2=x;
       cols.forEach(function(c,i){
+        /* Ankreuzkästchen statt Text (Issue: Helferliste "T-Shirt"-Spalte) -
+           zeichnet ein kleines leeres Quadrat statt r.c[i] zu drucken, zum
+           Abhaken von Hand auf der ausgedruckten Liste. Rein additiv: ohne
+           col.box läuft die Spalte wie bisher als Textspalte. */
+        if(c.box){
+          var bs=Math.min(3.6,hh-2,rh-2), bx=cx2+(c.w-bs)/2, by=yy+(hh-bs)/2;
+          doc.setDrawColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setLineWidth(.25);
+          doc.rect(bx,by,bs,bs);
+          doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]);
+          cx2+=c.w; return;
+        }
         if(r.col&&r.col[i]) doc.setTextColor(r.col[i][0],r.col[i][1],r.col[i][2]);
         doc.text(wrapped[i],c.r?cx2+c.w-1.5:cx2+1.5,top,{align:c.r?"right":"left"});
         doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
@@ -465,25 +476,10 @@ function buildPDF(){
   var q=pq.stat, f=pf.stat, ql=q.list, fl=f.list;
 
   /* --- Seite 1 --- */
-  var y=head("Regieplan Kids Cup – 4. Offener Sächsischer Kidscup 2026","Planstand "+ds);
+  var y=head("Regieplan Kids Cup – "+CFG.meta.title,"Planstand "+ds);
   doc.setFontSize(8); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-  doc.text("Lead, U9–U15 · Kletterhalle Quacke Zittau · Samstag, 26.09.2026",ML,y); y+=7;
+  doc.text([CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,y); y+=9;
   doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  var kpis=[["Athlet*innen",totalAth()],["Routen",pq.rows.length+pf.rows.length],
-            ["Kletterminuten",ql.reduce(function(a,b){return a+(b.e-b.s);},0)],
-            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*CFG.teamPers],
-            ["Quali-Ende",fmt(q.end)],["Finale-Ende",fmt(f.end)]];
-  var kw=CW/kpis.length;
-  kpis.forEach(function(k,i){
-    doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.2);
-    doc.rect(ML+i*kw,y,kw,14);
-    doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text(String(k[1]),ML+i*kw+3,y+7.5);
-    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
-    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text(String(k[0]).toUpperCase(),ML+i*kw+3,y+11.8);
-    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  });
-  y+=20;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Meldezahlen",ML,y); y+=2;
   var mrows=CFG.classes.map(function(c){
     var min=ql.filter(function(b){return b.cls===c.id;}).reduce(function(a,b){return a+(b.e-b.s);},0);
@@ -496,56 +492,38 @@ function buildPDF(){
      ML+112) gehalten, sonst überlappt die rechtsbündige "Kletter-Min"-Spalte
      mit der "Zeit"-Spalte von Tagesablauf (Fix für gemeldete Überlappung:
      116mm bei den alten Breiten liefen 4mm in Tagesablauf hinein). */
-  var ey=table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
+  table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Tagesablauf",ML+112,y);
   var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
     return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
                st.querySelector("div span").textContent.trim()]};
   });
-  var ey2=table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
-  var y3=Math.max(ey,ey2)+9;
-  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  doc.text("Routenübersicht",ML,y3); y3+=2;
-  function routeRows(plan,list){
-    return plan.rows.map(function(r){
-      var bs=list.filter(function(b){return b.r===r.id;});
-      var st=bs.reduce(function(a,b){return a+b.n;},0);
-      var mi=bs.reduce(function(a,b){return a+(b.e-b.s);},0);
-      var s0=bs.length?Math.min.apply(null,bs.map(function(b){return b.s;})):null;
-      var e0=bs.length?Math.max.apply(null,bs.map(function(b){return b.e;})):null;
-      return {c:[routeNum(r),CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
-                 s0==null?"—":fmt(s0)+"-"+fmt(e0)],col:[PC(r.cls).ac]};
-    });
-  }
-  var rr=routeRows(pq,ql).concat(routeRows(pf,fl));
-  var half=Math.ceil(rr.length/2), RC=[{t:"Route",w:14},{t:"Klasse",w:16},{t:"Typ",w:26},{t:"Sicherung",w:20},
-       {t:"Starts",w:15,r:true},{t:"Min",w:13,r:true},{t:"Zeitfenster",w:26}];
-  table(ML,y3,RC,rr.slice(0,half),{rh:5.2,fs:7});
-  table(ML+140,y3,RC,rr.slice(half),{rh:5.2,fs:7});
+  table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
   foot();
 
   /* --- Seite 2: Quali --- */
   y=head("Qualifikation – Zeitplan","Ende "+fmt(q.end)+" · max. "+q.maxR+" Routen gleichzeitig · "+(q.maxR*CFG.teamPers)+" Personen");
   y=gantt(ML,y,CW,110,pq,ql,44)+6;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Laufkarte der Startgruppen",ML,y); y+=2;
-  var lk=[];
-  pq.groups.forEach(function(g){
-    var bs=ql.filter(function(b){return b.gid===g.id;}).sort(function(a,b){return a.s-b.s;});
-    if(bs.length<2) return;
-    var pt=pq.pauseTxt(g,bs);
-    lk.push({c:[pq.label(g),g.n,routeNum(pq.row(bs[0].r))+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),routeNum(pq.row(bs[1].r))+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),pt.txt],
-             col:[PC(g.cls).ac,null,null,null,pt.ok?[24,96,69]:[142,47,41]]});
+  var lk=pq.laufkarteRows(ql).map(function(row){
+    var c=[row.label,row.n];
+    for(var i=0;i<3;i++){
+      var sl=row.slots[i];
+      c.push(sl?routeNum(sl.route):"—"); c.push(sl?fmt(sl.s)+"-"+fmt(sl.e):"");
+    }
+    c.push(row.pause?row.pause.txt:"—");
+    return {c:c, col:[PC(row.g.cls).ac,null,null,null,null,null,null,null,row.pause?(row.pause.ok?[24,96,69]:[142,47,41]):null]};
   });
-  table(ML,y,[{t:"Startgruppe",w:44},{t:"TN",w:12,r:true},{t:"Route 1",w:44},{t:"Route 2",w:44},{t:"Pause",w:20,r:true}],lk,{rh:5.4,fs:7.5});
+  table(ML,y,[{t:"Startgruppe",w:40},{t:"TN",w:11,r:true},
+    {t:"Route 1",w:14},{t:"Startzeiten",w:30},{t:"Route 2",w:14},{t:"Startzeiten",w:30},{t:"Route 3",w:14},{t:"Startzeiten",w:30},
+    {t:"Pause",w:19,r:true}],lk,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 3: Teams --- */
   y=head("Team-Zeitplan","Ein Routen-Team = Sicherung + Ergebnisdienst = "+CFG.teamPers+" Personen");
   var trows=[];
   LASTQ.T.forEach(function(t){
-    var ps=peopleOfTeam(t.idx), by={};
-    ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name);});
-    var pl=Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ")||"—";
+    var ps=peopleOfTeam(t.idx), pl=teamPeopleText(t.idx);
     t.stations.forEach(function(st,i){
       trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),routeNum(st.row)+"  "+pq.desc(st.row),
         st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"-"+fmt(x.e)+")";}).join(", "),
@@ -561,9 +539,9 @@ function buildPDF(){
   var frei=CFG.people.filter(function(p){return !p.team;});
   if(frei.length){
     ty+=4;
-    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Ohne Team-Zuordnung",ML,ty); ty+=2;
+    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Weitere Teammitglieder",ML,ty); ty+=2;
     var byc={};
-    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(personLabel(p));});
     /* title/sub ergänzt (Fix für Issue #92-Folge "blanke Seiten"): ohne sie
        rief ein Seitenumbruch mitten in dieser kleinen Tabelle head("","")
        auf - komplett titellose Seite. rh/der ty-Abstand oben zusätzlich
@@ -576,6 +554,43 @@ function buildPDF(){
   }
   foot();
 
+  /* --- Seite 3b: Klemmbrett-Karten je Team (zusätzlich zur Tabelle oben -
+     zum Ausschneiden und je Team aufs Klemmbrett zu legen, damit jedes Team
+     auf einen Blick sieht, wer dabei ist und wann/wo es dran ist). */
+  if(LASTQ.T.length){
+    var kbPerRow=3, kbPerCol=2, kbGap=5, kbCardW=(CW-kbGap*(kbPerRow-1))/kbPerRow, kbY0,kbCardH;
+    LASTQ.T.forEach(function(t,i){
+      var pos=i%(kbPerRow*kbPerCol);
+      if(pos===0){
+        kbY0=head("Klemmbrett-Karten","Zum Ausschneiden · eine Karte je Team · Team-Zeitplan s. vorherige Seite");
+        kbCardH=(PH-18-kbY0-kbGap*(kbPerCol-1))/kbPerCol;
+      }
+      var kcol=pos%kbPerRow, krow=Math.floor(pos/kbPerRow);
+      var cx=ML+kcol*(kbCardW+kbGap), cy=kbY0+krow*(kbCardH+kbGap), ac=PC(t.cls).ac;
+      if(doc.setLineDashPattern) doc.setLineDashPattern([1.2,1],0);
+      doc.setDrawColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setLineWidth(.2);
+      doc.rect(cx,cy,kbCardW,kbCardH,"D");
+      if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
+      doc.setFillColor(ac[0],ac[1],ac[2]); doc.rect(cx,cy,kbCardW,7.5,"F");
+      doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      doc.text(teamName(t.idx),cx+3,cy+5.2);
+      doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      var ky=cy+11.5;
+      doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Besetzung",cx+3,ky); ky+=3.6;
+      doc.setFont("helvetica","normal"); doc.setFontSize(7);
+      var kpl=doc.splitTextToSize(teamPeopleText(t.idx),kbCardW-6);
+      doc.text(kpl,cx+3,ky); ky+=kpl.length*2.9+3.5;
+      doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Einsätze",cx+3,ky); ky+=1.5;
+      var ksrows=t.stations.map(function(st){
+        return {c:[fmt(st.s)+"-"+fmt(st.e), routeNum(st.row),
+          st.items.map(function(x){return x.lab;}).join(", ")]};
+      });
+      table(cx+3,ky,[{t:"Zeit",w:(kbCardW-6)*.3},{t:"Rt.",w:(kbCardW-6)*.15},{t:"Wer klettert",w:(kbCardW-6)*.55}],
+        ksrows,{rh:4.4,fs:6.6});
+    });
+    foot();
+  }
+
   /* --- Seite 4: Finale --- */
   y=head("Finale","Ende "+fmt(f.end)+" · max. "+f.maxR+" Routen gleichzeitig");
   y=gantt(ML,y,CW,66,pf,fl,44)+6;
@@ -583,21 +598,22 @@ function buildPDF(){
   var frows=[], Tf=teams(pf,fl), rteam={};
   Tf.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
   CFG.classes.forEach(function(cc){
-    var c=cc.id, mode=classMode(pf,fl,c);
-    ["m","w"].forEach(function(gd,gi){
+    var c=cc.id;
+    ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, qq=quota(n);
       var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
-      frows.push({c:[CLn(c)+" "+gl(c,gd),n,(n>=20?10:6),qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
-                     blk&&rteam[blk.r]?rteam[blk.r]:"—",gi===0?mode:""],
+      var tidx=blk&&rteam[blk.r];
+      frows.push({c:[CLn(c)+" "+gl(c,gd),n,qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
+                     tidx?teamName(tidx)+" · "+teamPeopleText(tidx):"—"],
                   col:[PC(c).ac]});
     });
   });
   var sumG=0,sumF=0;
   CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
-  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,"—",sumF,pf.rows.length+" Routen","—",Tf.length,
-    Tf.length*CFG.teamPers+" Personen"]});
-  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},{t:"im Finale",w:20,r:true},
-              {t:"Route",w:20},{t:"Zeit",w:28},{t:"Team",w:16,r:true},{t:"Ablauf",w:34}],frows,{rh:5.4,fs:7.5});
+  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,sumF,pf.rows.length+" Routen","—",
+    Tf.length+" Routen-Teams · "+Tf.length*CFG.teamPers+" Personen"]});
+  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},
+              {t:"Route",w:16},{t:"Zeit",w:26},{t:"Team und Teammitglieder",w:CW-112}],frows,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 5: Wege --- */
@@ -624,7 +640,7 @@ function buildPDF(){
       doc.setFillColor(C.ac[0],C.ac[1],C.ac[2]); doc.rect(bx,mid-4,.7,8,"F");
       if(bw>16){
         doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setFontSize(6);
-        doc.text(String(routeNum(pq.row(b.r))),bx+1.4,mid-.6,{maxWidth:bw-2});
+        doc.text((bw>26?"Route ":"")+String(routeNum(pq.row(b.r))),bx+1.4,mid-.6,{maxWidth:bw-2});
         doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setFontSize(5);
         doc.text(fmt(b.s)+"-"+fmt(b.e),bx+1.4,mid+2.8,{maxWidth:bw-2});
       }
@@ -649,7 +665,7 @@ function buildPDF(){
      bewusst nur Admins sehen - eine E-Mail-Spalte hier würde diese
      Datenschutz-Grenze über die PDF-Hintertür unterlaufen. */
   y=head("Personal – Helferliste",CFG.people.length+" Personen erfasst · "+
-    CFG.people.filter(function(p){return !p.team;}).length+" ohne Team-Zuordnung");
+    CFG.people.filter(function(p){return !p.team;}).length+" weitere Teammitglieder");
   var peoRows=CFG.people.slice().sort(function(a,b){
     return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
   }).map(function(p){
@@ -662,7 +678,7 @@ function buildPDF(){
      Notizen bleibt über splitTextToSize erhalten, rh wirkt nur als
      Mindesthöhe für einzeilige Zeilen). Seitenumbruch mit korrektem
      title/sub bleibt als Sicherheitsnetz für größere Wettkämpfe bestehen. */
-  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"Notiz",w:148}],peoRows,
+  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"T-Shirt",w:18,box:true},{t:"Notiz",w:130}],peoRows,
     {rh:5.2,fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
   foot();
 

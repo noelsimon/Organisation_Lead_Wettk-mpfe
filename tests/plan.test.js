@@ -272,3 +272,49 @@ describe("Plan-Engine: Pausen je Startgruppe (pauseRange/pauseTxt)", () => {
     expect(pt.ok).toBe(false); // 118 liegt außerhalb des 45-65-Korridors
   });
 });
+
+describe("Plan-Engine: Laufkarte (laufkarteRows) - auch mit drei Runden je Startgruppe", () => {
+  it("zeigt zwei Runden wie bisher, inklusive Pause", () => {
+    const plan = makePlan({
+      rows: [{ id: "T1", cls: "U9", allow: "mw", mode: "TR" }, { id: "T2", cls: "U9", allow: "mw", mode: "TR" }],
+      groups: [{ id: "g1", cls: "U9", gender: "m", n: 4 }],
+      blocks: [{ id: "b1", gid: "g1", r: "T1", s: 600 }, { id: "b2", gid: "g1", r: "T2", s: 700 }],
+    });
+    const rows = plan.laufkarteRows(plan.stat.list);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].slots).toHaveLength(2);
+    expect(rows[0].slots.map((s) => s.route.id)).toEqual(["T1", "T2"]);
+    expect(rows[0].pause).not.toBeNull();
+  });
+
+  it("verliert die dritte, manuell hinzugefügte Runde nicht mehr (Bug: Route 3 fehlte bei der U9)", () => {
+    const plan = makePlan({
+      rows: [
+        { id: "T1", cls: "U9", allow: "mw", mode: "TR" },
+        { id: "T2", cls: "U9", allow: "mw", mode: "TR" },
+        { id: "T3", cls: "U9", allow: "mw", mode: "TR" },
+      ],
+      groups: [{ id: "g1", cls: "U9", gender: "m", n: 4 }],
+      blocks: [
+        { id: "b1", gid: "g1", r: "T1", s: 600 },
+        { id: "b2", gid: "g1", r: "T2", s: 700 },
+        { id: "b3", gid: "g1", r: "T3", s: 800 },
+      ],
+    });
+    const rows = plan.laufkarteRows(plan.stat.list);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].slots).toHaveLength(3);
+    expect(rows[0].slots.map((s) => s.route.id)).toEqual(["T1", "T2", "T3"]);
+    // Bei mehr als zwei Runden gibt es keinen einzelnen Pause-Wert mehr
+    expect(rows[0].pause).toBeNull();
+  });
+
+  it("lässt eine Startgruppe mit nur einer Runde aus, genau wie bisher", () => {
+    const plan = makePlan({
+      rows: [{ id: "T1", cls: "U9", allow: "mw", mode: "TR" }],
+      groups: [{ id: "g1", cls: "U9", gender: "m", n: 4 }],
+      blocks: [{ id: "b1", gid: "g1", r: "T1", s: 600 }],
+    });
+    expect(plan.laufkarteRows(plan.stat.list)).toEqual([]);
+  });
+});

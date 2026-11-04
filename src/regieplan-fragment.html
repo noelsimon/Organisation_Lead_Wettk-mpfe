@@ -289,6 +289,15 @@ li{margin-bottom:6px}
 .rdir:hover,.ralt:hover{background:var(--sunken)}
 .ralt[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#fff}
 .rdir:focus-visible,.ralt:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+/* Geschlecht einer Route nachträglich ändern (gemischt/nur m/nur w) - gleiche
+   Bauart wie .rdir/.ralt, nur als <select> statt Button. */
+.rallow{font-family:var(--mono); font-size:10px; font-weight:600; line-height:1; padding:3px 18px 3px 7px; white-space:nowrap;
+  border-radius:var(--r-pill); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2); cursor:pointer;
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='9' height='9'%3E%3Cpath d='M5 9l7 7 7-7' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 6px center}
+.rallow:hover{background-color:var(--sunken)}
+.rallow:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .flowwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow); padding:8px 0 4px}
 .flowwrap svg{display:block; min-width:980px}
@@ -939,7 +948,7 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.rallow,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
   #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel,.sync-toast{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
@@ -982,7 +991,7 @@ body.editing{caret-color:var(--ink)}
 <header class="masthead">
   <div class="wrap">
     <div class="masthead-top">
-      <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
+      <p class="eyebrow" id="mastheadEyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
       <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten" aria-label="Profil bearbeiten">
         <img id="mastheadAvatarImg" alt="" hidden>
         <span id="mastheadAvatarInitial"></span>
@@ -1216,6 +1225,19 @@ body.editing{caret-color:var(--ink)}
       <p class="hint" style="margin:12px 0 0">Eine neue Klasse bekommt automatisch drei Qualirouten (gemischt, Gruppe 1, Gruppe 2) mit einem Karussell in derselben Logik wie U13 und U15, dazu zwei Finalrouten. Danach lässt sich alles wie gewohnt verschieben, teilen oder wieder löschen.</p>
     </div>
 
+    <h3>Wettkampf-Angaben</h3>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Titel <input class="cin" id="metaTitle" size="36" placeholder="z. B. 5. Offener Sächsischer Kidscup 2027"></label>
+        <label>Unterzeile <input class="cin" id="metaSub" size="16" placeholder="z. B. Lead, U9–U15"></label>
+      </div>
+      <div class="cfgrow">
+        <label>Ort <input class="cin" id="metaLocation" size="28" placeholder="z. B. Kletterhalle Quacke Zittau"></label>
+        <label>Datum <input class="cin" id="metaDate" size="20" placeholder="z. B. Samstag, 26.09.2026"></label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Steht oben auf der Seite und auf jeder PDF-Seite als Titel bzw. Kopf-/Fußzeile – je Wettkampf einzeln, über „Wettkämpfe verwalten" im Profilmenü wählbar. Datum als Freitext, damit z. B. „Samstag, 26.09.2026" genauso geht wie nur „26.09.2026".</p>
+    </div>
+
     <h3>Zeitfenster des Wettkampfs</h3>
     <div class="cfgbox">
       <div class="cfgrow">
@@ -1318,14 +1340,14 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lk">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Route 2</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
     <h3>Wege der Startgruppen</h3>
     <p class="lede">Wer geht wann von welcher Route auf welche: dieselben Daten wie oben, nur andersherum sortiert – eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
     <div class="flowwrap" id="flow"></div>
-    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
+    <p class="hint" style="margin-top:12px">Passt sich der Breite des Bildschirms an – zum Aushängen auch gut druckbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
 
     <div id="routenplan">
       <h3>Routenplan</h3>
@@ -1402,7 +1424,7 @@ body.editing{caret-color:var(--ink)}
     <div class="scroller peo-catstats" id="peoCatStats"></div>
     <div class="att-filters" id="peoCatChips" role="group" aria-label="Personen nach Kategorie filtern"></div>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -1417,7 +1439,7 @@ body.editing{caret-color:var(--ink)}
     </div>
     <p class="pdfmsg" id="peoMsg" role="status"></p>
 
-    <h4>Ohne Team-Zuordnung</h4>
+    <h4>Weitere Teammitglieder</h4>
     <div id="nolist" style="margin:0 0 22px"></div>
 
     <div class="cards g3">
@@ -1462,6 +1484,21 @@ body.editing{caret-color:var(--ink)}
         </span> Min</label>
       </div>
       <p class="hint" style="margin:10px 0 0">Verschiebt den Start der Kletterblöcke – beide Zeitpläne (hier und in „Wertungsklassen und Meldezahlen") zeigen denselben Wert.</p>
+      <div class="cfgrow" style="margin-top:12px">
+        <label><button class="fbtn" id="finOrderSwap" type="button">⇄ Reihenfolge tauschen</button></label>
+        <span class="mono" id="finOrderOut" style="color:var(--muted)"></span>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Standardmäßig läuft erst die Besichtigung, danach ISO. Der Schalter tauscht die Reihenfolge für alle Finalrouten gleichzeitig.</p>
+      <div class="tblwrap" style="max-width:520px; margin-top:12px"><table id="finExtraTab">
+        <thead><tr><th>Zusatzblock vor dem Klettern</th><th class="num">Min</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="cfgrow">
+        <label>Neuer Zusatzblock <input class="cin" id="finExtraName" placeholder="z. B. Fotos" size="18"></label>
+        <label>Minuten <input class="nin" id="finExtraMin" type="number" min="1" max="180" value="10"></label>
+        <label><button class="fbtn" id="finExtraAdd" type="button">Hinzufügen</button></label>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Eigene, frei beschriftbare Blöcke (z. B. „Fotos", „Aufwärmen") vor dem ersten Kletterzug jeder Finalroute – erscheinen transparent/gestrichelt im Zeitplan wie Besichtigung und ISO, in der Reihenfolge dieser Liste.</p>
     </div>
 
     <div class="toolbar">
@@ -1498,20 +1535,20 @@ body.editing{caret-color:var(--ink)}
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
     <p class="gantt-hint">← Route fixiert · nach rechts wischen für spätere Zeiten →</p>
-    <p class="hint">Besichtigung und ISO sind als Block fixiert; ihre Dauer stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
+    <p class="hint">Besichtigung, ISO und eigene Zusatzblöcke sind als Block fixiert; Dauer, Reihenfolge und zusätzliche Blöcke stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lkf">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Route 2</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
     <h3>Finalquoten</h3>
     <div class="tblwrap"><table id="finaltab">
-      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th class="num">im Finale</th><th>Route</th><th>Zeit</th><th class="num">Team</th><th>Ablauf</th></tr></thead>
+      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th>Route</th><th>Zeit</th><th>Team und Teammitglieder</th></tr></thead>
       <tbody></tbody>
     </table></div>
-    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. <strong>Team und Teammitglieder</strong> zeigt das Routen-Team, das diese Finalroute betreut, mit den zugeteilten Personen. Verschiebst du oben einen Balken, ändert sich die Tabelle mit.</p>
 
     <h3>Routenplan</h3>
     <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
@@ -1756,13 +1793,21 @@ var clone=function(x){return JSON.parse(JSON.stringify(x));};
 
 /* ================= Konfiguration: Wertungsklassen, Zeitfenster, Personal ================= */
 var CFG0={
+  /* Freie Angaben fürs PDF und die Kopfzeile (Issue: PDF zeigte bei jedem
+     Wettkampf hartkodiert "4. Offener Sächsischer Kidscup 2026 · Quacke
+     Zittau · 26.09.2026", unabhängig vom tatsächlich gewählten Wettkampf) -
+     liegt bewusst in CFG statt in der competitions-Tabelle, damit es über
+     dieselbe pushState("cfg",…)-Synchronisierung läuft wie alles andere
+     und ohne neue Migration auskommt. */
+  meta:{title:"4. Offener Sächsischer Kidscup 2026", sub:"Lead, U9–U15",
+        location:"Kletterhalle Quacke Zittau", date:"Samstag, 26.09.2026"},
   classes:[
     {id:"U9",  name:"U9",  color:0, lm:"männlich", lw:"weiblich", m:4, w:6,  mode:"TR"},
     {id:"U11", name:"U11", color:1, lm:"männlich", lw:"weiblich", m:7, w:13, mode:"TR"},
     {id:"U13", name:"U13", color:2, lm:"männlich", lw:"weiblich", m:8, w:16, mode:"TR"},
     {id:"U15", name:"U15", color:3, lm:"männlich", lw:"weiblich", m:5, w:8,  mode:"Vorstieg"}
   ],
-  win:{qs:M(10,15), qe:M(13,45), fs:M(13,30), fe:M(15,45), bes:25, iso:20},
+  win:{qs:M(10,15), qe:M(13,45), fs:M(13,30), fe:M(15,45), bes:25, iso:20, order:"bi", extra:[]},
   cats:[{id:"k1",name:"Sicherung"},{id:"k2",name:"Ergebnisdienst"},{id:"k3",name:"Routenbau"},
         {id:"k4",name:"Orga-Team"},{id:"k5",name:"Buffet"}],
   people:[],
@@ -1772,6 +1817,21 @@ var CFG0={
   seq:100
 };
 var CFG=clone(CFG0);
+/* Fehlende Felder an bestehendem CFG ergänzen (Bestandsdaten ohne meta/
+   win.order/win.extra, z. B. aus localStorage oder einem älteren
+   Supabase-Stand) - rein additiv, nie Vorhandenes überschreiben. Gemeinsam
+   genutzt von der localStorage-Migration unten und applySnapshot()
+   (aufgaben-chat.part), damit beide Lade-Pfade dieselben Defaults ziehen. */
+function cfgDefaults(c){
+  c.win=c.win||clone(CFG0.win); c.cats=c.cats||clone(CFG0.cats);
+  c.people=c.people||[]; c.seq=c.seq||100; c.helferSoll=c.helferSoll||0; c.teamPers=c.teamPers||3; c.routeNotes=c.routeNotes||{};
+  ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(c.win[k]==null) c.win[k]=CFG0.win[k]; });
+  c.win.order=(c.win.order==="ib")?"ib":"bi";
+  c.win.extra=c.win.extra||[];
+  c.meta=c.meta||{};
+  Object.keys(CFG0.meta).forEach(function(k){ if(c.meta[k]==null) c.meta[k]=CFG0.meta[k]; });
+  return c;
+}
 var CLASSES=[], ACOF={}, FIELD={}, LABS={}, CNAME={};
 function reindex(){
   CLASSES=[]; ACOF={}; FIELD={}; LABS={}; CNAME={};
@@ -1789,11 +1849,8 @@ function gl(id,g){return (LABS[id]&&LABS[id][g])||GTXT[g]||g;}
 function newId(p){return p+(++CFG.seq);}
 function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG));}catch(e){} pushState("cfg",CFG);}
 try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
-  if(_c&&_c.classes&&_c.classes.length){
-    CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
-    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
-    ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(CFG.win[k]==null) CFG.win[k]=CFG0.win[k]; });
-  }}catch(e){}
+  if(_c&&_c.classes&&_c.classes.length){ CFG=_c; cfgDefaults(CFG); }
+  }catch(e){}
 reindex();
 function quota(n){ if(n<=0) return 0; return Math.min(n, n>=20?10:6); }
 function totalAth(){var t=0;CFG.classes.forEach(function(c){t+=(+c.m||0)+(+c.w||0);});return t;}
@@ -1849,11 +1906,31 @@ var FBLOCKS=[
  {id:"c5",gid:"h5",r:"F5",s:M(14,15)}, {id:"c6",gid:"h6",r:"F6",s:M(14,15)},
  {id:"c7",gid:"h7",r:"F7",s:M(14,53)}
 ];
+/* Reihenfolge Besichtigung/ISO vertauschbar (CFG.win.order) plus beliebig
+   viele frei benannte Zusatzblöcke (CFG.win.extra, z. B. "Fotos" oder
+   "Aufwärmen") vor dem ersten Kletterblock jeder Finalroute - in dieser
+   Reihenfolge direkt aneinander. Ohne CFG.win.order/.extra (siehe
+   cfgDefaults()) verhält es sich exakt wie vorher: Besichtigung, dann ISO,
+   keine Zusatzblöcke. */
+function finalFixedPhases(){
+  var phases=(CFG.win.order==="ib")
+    ? [{kind:"iso",lab:"ISO",dur:+CFG.win.iso||0},{kind:"bes",lab:"Besichtigung",dur:+CFG.win.bes||0}]
+    : [{kind:"bes",lab:"Besichtigung",dur:+CFG.win.bes||0},{kind:"iso",lab:"ISO",dur:+CFG.win.iso||0}];
+  (CFG.win.extra||[]).forEach(function(ex){
+    phases.push({kind:"extra",id:ex.id,lab:ex.label||"Zusatz",dur:+ex.dur||0,extra:true});
+  });
+  return phases;
+}
+function finalFixedDur(){
+  return finalFixedPhases().reduce(function(a,p){return a+(p.dur>0?p.dur:0);},0);
+}
 function ffix(plan){
-  var out=[], s=plan.o.start, b=+CFG.win.bes||0, i=+CFG.win.iso||0;
+  var out=[], s0=plan.o.start, phases=finalFixedPhases();
   plan.rows.forEach(function(row){
-    if(b>0) out.push({r:row.id, cls:row.cls, dur:b, s:s, lab:"Besichtigung"});
-    if(i>0) out.push({r:row.id, cls:row.cls, dur:i, s:s+b, lab:"ISO"});
+    var t=s0;
+    phases.forEach(function(p){
+      if(p.dur>0){ out.push({r:row.id, cls:row.cls, dur:p.dur, s:t, lab:p.lab, extra:!!p.extra}); t+=p.dur; }
+    });
   });
   return out;
 }
@@ -1974,7 +2051,7 @@ Plan.prototype.addClass=function(c){
     blk(gm,rm,t0); blk(gm,r1,Math.min(this.o.end-dm,t0+offM));
     blk(gw,r2,t0); blk(gw,rm,Math.min(this.o.end-dw,t0+offW));
   }else{
-    t0=this.o.start+(CFG.win.bes||25)+(CFG.win.iso||20);
+    t0=this.o.start+finalFixedDur();
     var ra=row("w"), rb=row("m");
     var ga=grp("w",quota(c.w)), gb=grp("m",quota(c.m));
     blk(ga,ra,t0); blk(gb,rb,t0);
@@ -2085,9 +2162,15 @@ Plan.prototype.render=function(){
   h+='</div></div>';
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
+    var rc=CL(r.cls), rlm=(rc&&rc.lm)||"männlich", rlw=(rc&&rc.lw)||"weiblich";
     h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+
        '<input class="rnum" type="number" min="0" max="999" inputmode="numeric" data-route="'+r.id+'" value="'+esc(routeNum(r))+'" aria-label="Anzeige-Nummer für '+esc(self.desc(r))+'">'+
        '<span class="rbtns">'+
+       '<select class="rallow" data-allow="'+r.id+'" title="Geschlecht dieser Route nachträglich ändern" aria-label="Geschlecht für '+esc(self.desc(r))+'">'+
+         '<option value="mw"'+(r.allow==="mw"?" selected":"")+'>gemischt</option>'+
+         '<option value="m"'+(r.allow==="m"?" selected":"")+'>nur '+esc(rlm)+'</option>'+
+         '<option value="w"'+(r.allow==="w"?" selected":"")+'>nur '+esc(rlw)+'</option>'+
+       '</select>'+
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
@@ -2118,6 +2201,21 @@ Plan.prototype.render=function(){
   });
   Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
+  });
+  /* Geschlecht einer Route nachträglich ändern (gemischt <-> nur männlich/
+     nur weiblich), auch wenn schon Blöcke darauf liegen: r.allow steuert
+     nur die Anzeige/den Warnhinweis (siehe recalc()), keine Blöcke oder
+     Gruppen werden dabei verschoben oder gelöscht. Verlässt eine Route
+     "gemischt", ergibt der abwechselnde-Start-Schalter (↔ m/w) keinen Sinn
+     mehr und wird mit zurückgesetzt. */
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rallow"),function(sel){
+    sel.onchange=function(ev){
+      ev.stopPropagation();
+      var r=self.row(this.getAttribute("data-allow")); if(!r) return;
+      r.allow=this.value;
+      if(r.allow!=="mw") r.altStart=false;
+      self.render(); self.save();
+    };
   });
   /* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B): r.id bleibt
      unverändert der interne Schlüssel (blocks[].r, CFG.routeNotes,
@@ -2317,18 +2415,41 @@ Plan.prototype.recalc=function(){
   if(o.laufkarte) this.laufkarte(list);
   if(o.onchange) o.onchange(this,list);
 };
-Plan.prototype.laufkarte=function(list){
-  var self=this,by={},h="";
+/* Daten für die Laufkarte, gemeinsam genutzt von der On-Screen-Tabelle
+   unten und der PDF-Seite "Laufkarte der Startgruppen" (pdf-export.part),
+   damit beide nie auseinanderlaufen. Bisher waren hier genau zwei Runden
+   je Startgruppe hartkodiert (bs[0]/bs[1]) - eine dritte, manuell über
+   "+ Balken" hinzugefügte Runde (z. B. ein drittes U9-Quali-Team) fiel
+   dadurch kommentarlos unter den Tisch. slots enthält jetzt alle Runden
+   der Gruppe, sortiert nach Startzeit; die Anzeige (Spalten "Route N" /
+   "Startzeiten") zeigt bis zu drei davon. */
+Plan.prototype.laufkarteRows=function(list){
+  var self=this,by={},rows=[];
   list.forEach(function(b){by[b.id]=b;});
   this.groups.forEach(function(g){
     var bs=self.blocks.filter(function(b){return b.gid===g.id;}).map(function(b){return by[b.id];})
-            .sort(function(a,b){return a.s-b.s;});
+            .filter(Boolean).sort(function(a,b){return a.s-b.s;});
     if(bs.length<2) return;
-    var pt=self.pauseTxt(g,bs);
-    h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[0].r)))+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[1].r)))+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
-       '<td class="num"><span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span></td></tr>';
+    rows.push({g:g, label:self.label(g), n:g.n,
+      slots:bs.map(function(b){return {route:self.row(b.r), s:b.s, e:b.e};}),
+      /* Pausen-Kennzahl bezieht sich (wie pauseRange()) auf genau zwei
+         Runden - bei mehr als zwei Runden (3. Route) gibt es keinen
+         einzelnen "die" Pause-Wert mehr, darum dann kein Flag statt eines
+         irreführenden einzelnen Werts. */
+      pause:bs.length===2?self.pauseTxt(g,bs):null});
+  });
+  return rows;
+};
+Plan.prototype.laufkarte=function(list){
+  var self=this,h="";
+  this.laufkarteRows(list).forEach(function(row){
+    var pt=row.pause;
+    h+='<tr data-ac="'+ACOF[row.g.cls]+'"><td><span class="ac">'+esc(row.label)+'</span></td><td class="num">'+row.n+'</td>';
+    for(var i=0;i<3;i++){
+      var sl=row.slots[i];
+      h+='<td>'+(sl?esc(routeNum(sl.route)):"")+'</td><td class="tm">'+(sl?fmt(sl.s)+'–'+fmt(sl.e):"")+'</td>';
+    }
+    h+='<td class="num">'+(pt?'<span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span>':'—')+'</td></tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
 };
@@ -2448,28 +2569,33 @@ function flowLanes(plan,list){
   return lanes;
 }
 function renderFlow(plan,list){
-  var W=980, LAB=168, PAD=16, X0=LAB, X1=W-PAD, LANE=48, TOP=32;
+  var W=980, LAB=168, PAD=16, X0=LAB, X1=W-PAD, LANE=50, TOP=32;
   var t0=plan.o.start, t1=plan.o.end, span=t1-t0;
   var X=function(t){return X0+((t-t0)/span)*(X1-X0);};
   var lanes=flowLanes(plan,list);
   var H=TOP+lanes.length*LANE+14;
-  var s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Wege der Startgruppen durch die Qualifikation">';
+  /* width="100%" statt fester Pixelbreite (Issue: Diagramm sollte beim
+     Ausdrucken/Aushängen die volle Seitenbreite nutzen statt der festen
+     980px) - das viewBox bestimmt weiterhin das Koordinatensystem und
+     damit das Seitenverhältnis, nur die tatsächliche Darstellungsgröße
+     folgt jetzt der verfügbaren Breite des Containers (.flowwrap). */
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Wege der Startgruppen durch die Qualifikation">';
   s+='<defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="currentColor"/></marker></defs>';
   for(var t=Math.ceil(t0/30)*30;t<=t1;t+=30){
     s+='<line x1="'+X(t).toFixed(1)+'" y1="'+(TOP-10)+'" x2="'+X(t).toFixed(1)+'" y2="'+(H-8)+'" stroke="var(--line)" stroke-width="1"/>';
-    s+='<text x="'+X(t).toFixed(1)+'" y="'+(TOP-16)+'" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">'+fmt(t)+'</text>';
+    s+='<text x="'+X(t).toFixed(1)+'" y="'+(TOP-16)+'" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">'+fmt(t)+'</text>';
   }
   lanes.forEach(function(L,i){
     var y=TOP+i*LANE, mid=y+26, g=L.g, w=g.gender==="w";
     s+='<g data-ac="'+ACOF[g.cls]+'" color="var(--ac)">';
-    s+='<text x="8" y="'+(mid+4)+'" font-family="var(--disp)" font-size="13" font-weight="500" fill="var(--ac)">'+esc(L.label)+'</text>';
+    s+='<text x="8" y="'+(mid+4)+'" font-family="var(--disp)" font-size="14" font-weight="600" fill="var(--ac)">'+esc(L.label)+'</text>';
     s+='<text x="'+(LAB-14)+'" y="'+(mid+4)+'" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--muted)">'+g.n+' TN</text>';
     L.bs.forEach(function(b,k){
       var x=X(b.s), bw=Math.max(6,X(b.e)-X(b.s));
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="'+bw.toFixed(1)+'" height="26" rx="3" fill="var('+(w?"--w-bg":"--m-bg")+')" stroke="var('+(w?"--w-br":"--m-br")+')"/>';
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="3" height="26" fill="var(--ac)"/>';
-      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(routeNum(plan.row(b.r)))+'</text>';
-      if(bw>108) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
+      if(bw>68) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12.5" font-weight="500" fill="var(--ink)">Route '+esc(routeNum(plan.row(b.r)))+'</text>';
+      if(bw>112) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
       if(k===1){
         var pt=plan.pauseTxt(g,L.bs), xa=X(L.bs[0].e)+3, xb=x-4;
         if(xb>xa+76){
@@ -2489,18 +2615,6 @@ function renderFlow(plan,list){
 }
 
 /* ================= Meldezahlen-Tabelle, Kennzahlen, Finalquoten ================= */
-function classMode(plan,list,cls){
-  var bs=list.filter(function(b){return b.cls===cls;});
-  var gids={}; bs.forEach(function(b){gids[b.gid]=1;});
-  if(Object.keys(gids).length<2) return "einzeln";
-  var over=false, sep=false;
-  for(var i=0;i<bs.length;i++) for(var j=i+1;j<bs.length;j++){
-    if(bs[i].gid===bs[j].gid) continue;
-    if(bs[i].s<bs[j].e&&bs[j].s<bs[i].e) over=true; else sep=true;
-  }
-  if(over&&sep) return "teils parallel";
-  return over?"parallel":"nacheinander";
-}
 function afterCfg(replan){
   reindex(); saveCfg();
   if(replan!==false){ pq.applyField(); pf.applyField(); }
@@ -2616,6 +2730,39 @@ function addClass(name,lm,lw,m,w,mode){
   pq.addClass(c); pf.addClass(c);
   afterCfg(); return true;
 }
+/* ================= Wettkampf-Angaben (Titel/Ort/Datum fürs PDF) ================= */
+function renderMeta(){
+  function set(id,v){var el=document.getElementById(id); if(el&&document.activeElement!==el) el.value=v||"";}
+  set("metaTitle",CFG.meta.title); set("metaSub",CFG.meta.sub);
+  set("metaLocation",CFG.meta.location); set("metaDate",CFG.meta.date);
+  var eb=document.getElementById("mastheadEyebrow");
+  if(eb) eb.textContent=[CFG.meta.title,CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · ");
+}
+
+/* Reihenfolge Besichtigung/ISO + frei beschriftbare Zusatzblöcke vor dem
+   Finale-Klettern (siehe ffix()/finalFixedPhases() in script-core.part). */
+function renderFinOrder(){
+  var out=document.getElementById("finOrderOut"); if(!out) return;
+  out.textContent=CFG.win.order==="ib"?"Aktuell: erst ISO, dann Besichtigung":"Aktuell: erst Besichtigung, dann ISO";
+}
+function renderFinExtra(){
+  var body=document.querySelector("#finExtraTab tbody"); if(!body) return;
+  var h="";
+  (CFG.win.extra||[]).forEach(function(ex,i){
+    h+='<tr><td>'+esc(ex.label||"Zusatz")+'</td><td class="num">'+(+ex.dur||0)+'</td>'+
+       '<td><button class="rdel finExtraDel" type="button" data-i="'+i+'" title="Zusatzblock entfernen" aria-label="'+esc(ex.label||"Zusatzblock")+' entfernen">×</button></td></tr>';
+  });
+  if(!(CFG.win.extra||[]).length) h='<tr><td colspan="3" style="color:var(--muted)">Noch kein Zusatzblock.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(body.querySelectorAll(".finExtraDel"),function(btn){
+    btn.onclick=function(){
+      var i=parseInt(this.getAttribute("data-i"),10);
+      CFG.win.extra.splice(i,1);
+      saveCfg(); pf.render(); pf.save(); renderFinExtra();
+    };
+  });
+}
+
 /* ================= Zeitfenster ================= */
 function renderWin(){
   function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}
@@ -2625,7 +2772,7 @@ function renderWin(){
   ["winIso","finIsoIn"].forEach(function(id){var el=document.getElementById(id); if(el) el.value=CFG.win.iso;});
   var out=document.getElementById("winOut");
   if(out) out.textContent="Quali "+fmt(CFG.win.qs)+"–"+fmt(CFG.win.qe)+" · Finale "+fmt(CFG.win.fs)+"–"+fmt(CFG.win.fe)+
-    " · erster Finalzug "+fmt(CFG.win.fs+(+CFG.win.bes||0)+(+CFG.win.iso||0));
+    " · erster Finalzug "+fmt(CFG.win.fs+finalFixedDur());
 }
 function applyWin(){
   if(CFG.win.qe<=CFG.win.qs) CFG.win.qe=CFG.win.qs+60;
@@ -2722,6 +2869,15 @@ function renderCats(){
   var s=document.getElementById("newPcat");
   if(s) s.innerHTML=CFG.cats.map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>';}).join("");
 }
+/* Qualifizierungsstand je Person (erleichtert die Einsatzplanung: wer darf
+   wo als Sicherung/Schiri eingesetzt werden) - rein informativ, steuert
+   nichts automatisch. "" = keine Angabe, bestehende Personen ohne dieses
+   Feld zeigen das unverändert so an. */
+var QUALOPTS=[["","— keine Angabe —"],["TR","Top Rope"],["VS","Vorstieg"],["beide","Top Rope + Vorstieg"]];
+function qualOptsHtml(sel){
+  return QUALOPTS.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===(sel||"")?" selected":"")+'>'+esc(o[1])+'</option>';}).join("");
+}
+function qualLabel(q){ for(var i=0;i<QUALOPTS.length;i++) if(QUALOPTS[i][0]===q) return QUALOPTS[i][1]; return ""; }
 function renderPeople(){
   var table=document.getElementById("peotab"), body=document.querySelector("#peotab tbody"); if(!body) return;
   var isAdmin=!!(PROFILE&&PROFILE.is_admin);
@@ -2738,11 +2894,13 @@ function renderPeople(){
        '<input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></div></td>'+
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
+       '<td class="num">'+toggleSwHtml("pspringer",p.id,!!p.springer,"Springer: "+p.name)+'</td>'+
+       '<td><select class="cin sel pqual" data-p="'+p.id+'">'+qualOptsHtml(p.qual)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!list.length) h='<tr><td colspan="6" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
+  if(!list.length) h='<tr><td colspan="8" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
@@ -2760,7 +2918,15 @@ function renderPeople(){
   upd(".pnm",function(p,v){p.name=v.trim()||p.name;});
   upd(".pcat",function(p,v){p.cat=v;});
   upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
+  upd(".pqual",function(p,v){p.qual=v;});
   upd(".pnote",function(p,v){p.note=v;});
+  Array.prototype.forEach.call(document.querySelectorAll(".pspringer"),function(cb){
+    cb.onchange=function(){
+      var id=this.getAttribute("data-p"), on=this.checked;
+      for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) CFG.people[i].springer=on;
+      saveCfg(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
   Array.prototype.forEach.call(document.querySelectorAll(".pemail"),function(el){
     el.onchange=function(){
       var id=this.getAttribute("data-p"), v=this.value.trim();
@@ -2789,7 +2955,7 @@ function renderPeople(){
   if(box){
     var free={};
     CFG.people.filter(function(p){return !p.team;}).forEach(function(p){
-      var k=catName(p.cat); (free[k]=free[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));
+      var k=catName(p.cat); (free[k]=free[k]||[]).push(personLabel(p));
     });
     var ks=Object.keys(free);
     box.innerHTML=ks.length
@@ -2800,12 +2966,25 @@ function renderPeople(){
 function peopleOfTeam(idx){
   return CFG.people.filter(function(p){return +p.team===idx;});
 }
+/* Gemeinsame Beschriftung für Team-Zeitplan (on-screen + PDF), Finalquoten
+   und die Klemmbrett-Karten: Name, dahinter "Springer" statt Kernbesetzung
+   markiert (zum Auswechseln vorgesehen), dahinter die Notiz. */
+function personLabel(p){ return p.name+(p.springer?" · Springer":"")+(p.note?" ("+p.note+")":""); }
 function teamPeopleHtml(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return '<span style="color:var(--muted)">—</span>';
   var by={};
-  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
   return Object.keys(by).map(function(k){
     return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
+}
+/* Textform derselben Zuordnung für den PDF-Export (Team-Zeitplan,
+   Finalquoten, Klemmbrett-Karten) - kein HTML, sonst identische Gruppierung
+   nach Kategorie wie teamPeopleHtml(). */
+function teamPeopleText(idx){
+  var ps=peopleOfTeam(idx); if(!ps.length) return "—";
+  var by={};
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
+  return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ");
 }
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};
@@ -2826,22 +3005,22 @@ function renderFinalTab(){
   T.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
   var h="", sumG=0, sumF=0;
   CFG.classes.forEach(function(cc){
-    var c=cc.id, mode=classMode(pf,list,c);
-    ["m","w"].forEach(function(gd,gi){
+    var c=cc.id;
+    ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, q=quota(n); sumG+=n; sumF+=q;
       var blk=list.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");})
                   .sort(function(a,b){return a.s-b.s;})[0];
+      var tidx=blk&&rteam[blk.r];
       h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
-         '<td class="num">'+n+'</td><td class="num">'+(n>=20?10:6)+'</td><td class="num">'+q+'</td>'+
+         '<td class="num">'+n+'</td><td class="num">'+q+'</td>'+
          '<td>'+(blk?'<strong class="mono">'+esc(routeNum(pf.row(blk.r)))+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
          '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
-         '<td class="num">'+(blk&&rteam[blk.r]?rteam[blk.r]:'—')+'</td>'+
-         (gi===0?'<td rowspan="2" style="vertical-align:middle"><span class="pill '+(mode==="parallel"?"ok":"")+'">'+mode+'</span></td>':'')+
+         '<td>'+(tidx?'<strong>'+teamName(tidx)+'</strong> · '+esc(teamPeopleText(tidx)):'<span style="color:var(--muted)">—</span>')+'</td>'+
          '</tr>';
     });
   });
-  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">—</td><td class="num">'+sumF+'</td>'+
-     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td class="num">'+T.length+'</td><td>'+T.length*CFG.teamPers+' Personen</td></tr>';
+  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">'+sumF+'</td>'+
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td>'+T.length+' Routen-Teams · '+T.length*CFG.teamPers+' Personen</td></tr>';
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 
@@ -3041,6 +3220,32 @@ document.getElementById("stHelferSoll").onchange=function(){
 document.getElementById("winReset").onclick=function(){
   CFG.win=clone(CFG0.win); applyWin();
 };
+
+/* ---- Finale: Reihenfolge ISO/Besichtigung + Zusatzblöcke ---- */
+document.getElementById("finOrderSwap").onclick=function(){
+  CFG.win.order=(CFG.win.order==="ib")?"bi":"ib";
+  saveCfg(); pf.render(); pf.save(); renderWin(); renderFinOrder();
+};
+document.getElementById("finExtraAdd").onclick=function(){
+  var nameEl=document.getElementById("finExtraName"), minEl=document.getElementById("finExtraMin");
+  var label=nameEl.value.trim(); if(!label) return;
+  var dur=Math.max(1,Math.min(180,parseInt(minEl.value,10)||10));
+  CFG.win.extra=CFG.win.extra||[];
+  CFG.win.extra.push({id:newId("xb"),label:label,dur:dur});
+  nameEl.value=""; minEl.value="10";
+  saveCfg(); pf.render(); pf.save(); renderFinExtra();
+};
+renderFinOrder(); renderFinExtra();
+
+/* ---- Wettkampf-Angaben (Titel/Ort/Datum) ---- */
+[["metaTitle","title"],["metaSub","sub"],["metaLocation","location"],["metaDate","date"]].forEach(function(pair){
+  var el=document.getElementById(pair[0]); if(!el) return;
+  el.onchange=function(){
+    CFG.meta[pair[1]]=this.value.trim()||CFG0.meta[pair[1]];
+    saveCfg(); renderMeta();
+  };
+});
+renderMeta();
 
 /* ---- Kategorien und Personen ---- */
 document.getElementById("addKatGo").onclick=function(){
@@ -4793,7 +4998,7 @@ function snapshot(){
 }
 function applySnapshot(s){
   if(!s||!s.cfg||!s.q||!s.f) return false;
-  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
+  CFG=s.cfg; cfgDefaults(CFG);
   reindex(); saveCfg();
   TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
   TXTBLOCKS=s.textblocks||{added:[],hidden:[]}; try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
@@ -4802,7 +5007,7 @@ function applySnapshot(s){
   pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
   pf.o.start=CFG.win.fs; pf.o.end=CFG.win.fe; pf.o.step=autoStep(CFG.win.fe-CFG.win.fs);
   pq.render(); pf.render(); pq.save(); pf.save();
-  renderWin(); renderCats(); renderPeople(); renderStats();
+  renderWin(); renderMeta(); renderFinOrder(); renderFinExtra(); renderCats(); renderPeople(); renderStats();
   document.querySelectorAll("[data-ed]").forEach(function(el){
     var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
   });
@@ -5380,7 +5585,7 @@ function buildPDF(){
   function foot(){
     doc.setFont("helvetica","normal"); doc.setFontSize(7);
     doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text("4. Offener Sächsischer Kidscup 2026 · Quacke Zittau · 26.09.2026",ML,PH-6);
+    doc.text([CFG.meta.title,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,PH-6);
     doc.text("Seite "+page,PW-MR,PH-6,{align:"right"});
     doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
   }
@@ -5422,6 +5627,17 @@ function buildPDF(){
       if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,hh,"F"); }
       var top=yy+(hh-nl*lh)/2+lh*0.78, cx2=x;
       cols.forEach(function(c,i){
+        /* Ankreuzkästchen statt Text (Issue: Helferliste "T-Shirt"-Spalte) -
+           zeichnet ein kleines leeres Quadrat statt r.c[i] zu drucken, zum
+           Abhaken von Hand auf der ausgedruckten Liste. Rein additiv: ohne
+           col.box läuft die Spalte wie bisher als Textspalte. */
+        if(c.box){
+          var bs=Math.min(3.6,hh-2,rh-2), bx=cx2+(c.w-bs)/2, by=yy+(hh-bs)/2;
+          doc.setDrawColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setLineWidth(.25);
+          doc.rect(bx,by,bs,bs);
+          doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]);
+          cx2+=c.w; return;
+        }
         if(r.col&&r.col[i]) doc.setTextColor(r.col[i][0],r.col[i][1],r.col[i][2]);
         doc.text(wrapped[i],c.r?cx2+c.w-1.5:cx2+1.5,top,{align:c.r?"right":"left"});
         doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
@@ -5488,25 +5704,10 @@ function buildPDF(){
   var q=pq.stat, f=pf.stat, ql=q.list, fl=f.list;
 
   /* --- Seite 1 --- */
-  var y=head("Regieplan Kids Cup – 4. Offener Sächsischer Kidscup 2026","Planstand "+ds);
+  var y=head("Regieplan Kids Cup – "+CFG.meta.title,"Planstand "+ds);
   doc.setFontSize(8); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-  doc.text("Lead, U9–U15 · Kletterhalle Quacke Zittau · Samstag, 26.09.2026",ML,y); y+=7;
+  doc.text([CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,y); y+=9;
   doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  var kpis=[["Athlet*innen",totalAth()],["Routen",pq.rows.length+pf.rows.length],
-            ["Kletterminuten",ql.reduce(function(a,b){return a+(b.e-b.s);},0)],
-            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*CFG.teamPers],
-            ["Quali-Ende",fmt(q.end)],["Finale-Ende",fmt(f.end)]];
-  var kw=CW/kpis.length;
-  kpis.forEach(function(k,i){
-    doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.2);
-    doc.rect(ML+i*kw,y,kw,14);
-    doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text(String(k[1]),ML+i*kw+3,y+7.5);
-    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
-    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text(String(k[0]).toUpperCase(),ML+i*kw+3,y+11.8);
-    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  });
-  y+=20;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Meldezahlen",ML,y); y+=2;
   var mrows=CFG.classes.map(function(c){
     var min=ql.filter(function(b){return b.cls===c.id;}).reduce(function(a,b){return a+(b.e-b.s);},0);
@@ -5519,56 +5720,38 @@ function buildPDF(){
      ML+112) gehalten, sonst überlappt die rechtsbündige "Kletter-Min"-Spalte
      mit der "Zeit"-Spalte von Tagesablauf (Fix für gemeldete Überlappung:
      116mm bei den alten Breiten liefen 4mm in Tagesablauf hinein). */
-  var ey=table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
+  table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Tagesablauf",ML+112,y);
   var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
     return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
                st.querySelector("div span").textContent.trim()]};
   });
-  var ey2=table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
-  var y3=Math.max(ey,ey2)+9;
-  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  doc.text("Routenübersicht",ML,y3); y3+=2;
-  function routeRows(plan,list){
-    return plan.rows.map(function(r){
-      var bs=list.filter(function(b){return b.r===r.id;});
-      var st=bs.reduce(function(a,b){return a+b.n;},0);
-      var mi=bs.reduce(function(a,b){return a+(b.e-b.s);},0);
-      var s0=bs.length?Math.min.apply(null,bs.map(function(b){return b.s;})):null;
-      var e0=bs.length?Math.max.apply(null,bs.map(function(b){return b.e;})):null;
-      return {c:[routeNum(r),CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
-                 s0==null?"—":fmt(s0)+"-"+fmt(e0)],col:[PC(r.cls).ac]};
-    });
-  }
-  var rr=routeRows(pq,ql).concat(routeRows(pf,fl));
-  var half=Math.ceil(rr.length/2), RC=[{t:"Route",w:14},{t:"Klasse",w:16},{t:"Typ",w:26},{t:"Sicherung",w:20},
-       {t:"Starts",w:15,r:true},{t:"Min",w:13,r:true},{t:"Zeitfenster",w:26}];
-  table(ML,y3,RC,rr.slice(0,half),{rh:5.2,fs:7});
-  table(ML+140,y3,RC,rr.slice(half),{rh:5.2,fs:7});
+  table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
   foot();
 
   /* --- Seite 2: Quali --- */
   y=head("Qualifikation – Zeitplan","Ende "+fmt(q.end)+" · max. "+q.maxR+" Routen gleichzeitig · "+(q.maxR*CFG.teamPers)+" Personen");
   y=gantt(ML,y,CW,110,pq,ql,44)+6;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Laufkarte der Startgruppen",ML,y); y+=2;
-  var lk=[];
-  pq.groups.forEach(function(g){
-    var bs=ql.filter(function(b){return b.gid===g.id;}).sort(function(a,b){return a.s-b.s;});
-    if(bs.length<2) return;
-    var pt=pq.pauseTxt(g,bs);
-    lk.push({c:[pq.label(g),g.n,routeNum(pq.row(bs[0].r))+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),routeNum(pq.row(bs[1].r))+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),pt.txt],
-             col:[PC(g.cls).ac,null,null,null,pt.ok?[24,96,69]:[142,47,41]]});
+  var lk=pq.laufkarteRows(ql).map(function(row){
+    var c=[row.label,row.n];
+    for(var i=0;i<3;i++){
+      var sl=row.slots[i];
+      c.push(sl?routeNum(sl.route):"—"); c.push(sl?fmt(sl.s)+"-"+fmt(sl.e):"");
+    }
+    c.push(row.pause?row.pause.txt:"—");
+    return {c:c, col:[PC(row.g.cls).ac,null,null,null,null,null,null,null,row.pause?(row.pause.ok?[24,96,69]:[142,47,41]):null]};
   });
-  table(ML,y,[{t:"Startgruppe",w:44},{t:"TN",w:12,r:true},{t:"Route 1",w:44},{t:"Route 2",w:44},{t:"Pause",w:20,r:true}],lk,{rh:5.4,fs:7.5});
+  table(ML,y,[{t:"Startgruppe",w:40},{t:"TN",w:11,r:true},
+    {t:"Route 1",w:14},{t:"Startzeiten",w:30},{t:"Route 2",w:14},{t:"Startzeiten",w:30},{t:"Route 3",w:14},{t:"Startzeiten",w:30},
+    {t:"Pause",w:19,r:true}],lk,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 3: Teams --- */
   y=head("Team-Zeitplan","Ein Routen-Team = Sicherung + Ergebnisdienst = "+CFG.teamPers+" Personen");
   var trows=[];
   LASTQ.T.forEach(function(t){
-    var ps=peopleOfTeam(t.idx), by={};
-    ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name);});
-    var pl=Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ")||"—";
+    var ps=peopleOfTeam(t.idx), pl=teamPeopleText(t.idx);
     t.stations.forEach(function(st,i){
       trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),routeNum(st.row)+"  "+pq.desc(st.row),
         st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"-"+fmt(x.e)+")";}).join(", "),
@@ -5584,9 +5767,9 @@ function buildPDF(){
   var frei=CFG.people.filter(function(p){return !p.team;});
   if(frei.length){
     ty+=4;
-    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Ohne Team-Zuordnung",ML,ty); ty+=2;
+    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Weitere Teammitglieder",ML,ty); ty+=2;
     var byc={};
-    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(personLabel(p));});
     /* title/sub ergänzt (Fix für Issue #92-Folge "blanke Seiten"): ohne sie
        rief ein Seitenumbruch mitten in dieser kleinen Tabelle head("","")
        auf - komplett titellose Seite. rh/der ty-Abstand oben zusätzlich
@@ -5599,6 +5782,43 @@ function buildPDF(){
   }
   foot();
 
+  /* --- Seite 3b: Klemmbrett-Karten je Team (zusätzlich zur Tabelle oben -
+     zum Ausschneiden und je Team aufs Klemmbrett zu legen, damit jedes Team
+     auf einen Blick sieht, wer dabei ist und wann/wo es dran ist). */
+  if(LASTQ.T.length){
+    var kbPerRow=3, kbPerCol=2, kbGap=5, kbCardW=(CW-kbGap*(kbPerRow-1))/kbPerRow, kbY0,kbCardH;
+    LASTQ.T.forEach(function(t,i){
+      var pos=i%(kbPerRow*kbPerCol);
+      if(pos===0){
+        kbY0=head("Klemmbrett-Karten","Zum Ausschneiden · eine Karte je Team · Team-Zeitplan s. vorherige Seite");
+        kbCardH=(PH-18-kbY0-kbGap*(kbPerCol-1))/kbPerCol;
+      }
+      var kcol=pos%kbPerRow, krow=Math.floor(pos/kbPerRow);
+      var cx=ML+kcol*(kbCardW+kbGap), cy=kbY0+krow*(kbCardH+kbGap), ac=PC(t.cls).ac;
+      if(doc.setLineDashPattern) doc.setLineDashPattern([1.2,1],0);
+      doc.setDrawColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setLineWidth(.2);
+      doc.rect(cx,cy,kbCardW,kbCardH,"D");
+      if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
+      doc.setFillColor(ac[0],ac[1],ac[2]); doc.rect(cx,cy,kbCardW,7.5,"F");
+      doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      doc.text(teamName(t.idx),cx+3,cy+5.2);
+      doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      var ky=cy+11.5;
+      doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Besetzung",cx+3,ky); ky+=3.6;
+      doc.setFont("helvetica","normal"); doc.setFontSize(7);
+      var kpl=doc.splitTextToSize(teamPeopleText(t.idx),kbCardW-6);
+      doc.text(kpl,cx+3,ky); ky+=kpl.length*2.9+3.5;
+      doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Einsätze",cx+3,ky); ky+=1.5;
+      var ksrows=t.stations.map(function(st){
+        return {c:[fmt(st.s)+"-"+fmt(st.e), routeNum(st.row),
+          st.items.map(function(x){return x.lab;}).join(", ")]};
+      });
+      table(cx+3,ky,[{t:"Zeit",w:(kbCardW-6)*.3},{t:"Rt.",w:(kbCardW-6)*.15},{t:"Wer klettert",w:(kbCardW-6)*.55}],
+        ksrows,{rh:4.4,fs:6.6});
+    });
+    foot();
+  }
+
   /* --- Seite 4: Finale --- */
   y=head("Finale","Ende "+fmt(f.end)+" · max. "+f.maxR+" Routen gleichzeitig");
   y=gantt(ML,y,CW,66,pf,fl,44)+6;
@@ -5606,21 +5826,22 @@ function buildPDF(){
   var frows=[], Tf=teams(pf,fl), rteam={};
   Tf.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
   CFG.classes.forEach(function(cc){
-    var c=cc.id, mode=classMode(pf,fl,c);
-    ["m","w"].forEach(function(gd,gi){
+    var c=cc.id;
+    ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, qq=quota(n);
       var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
-      frows.push({c:[CLn(c)+" "+gl(c,gd),n,(n>=20?10:6),qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
-                     blk&&rteam[blk.r]?rteam[blk.r]:"—",gi===0?mode:""],
+      var tidx=blk&&rteam[blk.r];
+      frows.push({c:[CLn(c)+" "+gl(c,gd),n,qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
+                     tidx?teamName(tidx)+" · "+teamPeopleText(tidx):"—"],
                   col:[PC(c).ac]});
     });
   });
   var sumG=0,sumF=0;
   CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
-  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,"—",sumF,pf.rows.length+" Routen","—",Tf.length,
-    Tf.length*CFG.teamPers+" Personen"]});
-  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},{t:"im Finale",w:20,r:true},
-              {t:"Route",w:20},{t:"Zeit",w:28},{t:"Team",w:16,r:true},{t:"Ablauf",w:34}],frows,{rh:5.4,fs:7.5});
+  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,sumF,pf.rows.length+" Routen","—",
+    Tf.length+" Routen-Teams · "+Tf.length*CFG.teamPers+" Personen"]});
+  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},
+              {t:"Route",w:16},{t:"Zeit",w:26},{t:"Team und Teammitglieder",w:CW-112}],frows,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 5: Wege --- */
@@ -5647,7 +5868,7 @@ function buildPDF(){
       doc.setFillColor(C.ac[0],C.ac[1],C.ac[2]); doc.rect(bx,mid-4,.7,8,"F");
       if(bw>16){
         doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setFontSize(6);
-        doc.text(String(routeNum(pq.row(b.r))),bx+1.4,mid-.6,{maxWidth:bw-2});
+        doc.text((bw>26?"Route ":"")+String(routeNum(pq.row(b.r))),bx+1.4,mid-.6,{maxWidth:bw-2});
         doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setFontSize(5);
         doc.text(fmt(b.s)+"-"+fmt(b.e),bx+1.4,mid+2.8,{maxWidth:bw-2});
       }
@@ -5672,7 +5893,7 @@ function buildPDF(){
      bewusst nur Admins sehen - eine E-Mail-Spalte hier würde diese
      Datenschutz-Grenze über die PDF-Hintertür unterlaufen. */
   y=head("Personal – Helferliste",CFG.people.length+" Personen erfasst · "+
-    CFG.people.filter(function(p){return !p.team;}).length+" ohne Team-Zuordnung");
+    CFG.people.filter(function(p){return !p.team;}).length+" weitere Teammitglieder");
   var peoRows=CFG.people.slice().sort(function(a,b){
     return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
   }).map(function(p){
@@ -5685,7 +5906,7 @@ function buildPDF(){
      Notizen bleibt über splitTextToSize erhalten, rh wirkt nur als
      Mindesthöhe für einzeilige Zeilen). Seitenumbruch mit korrektem
      title/sub bleibt als Sicherheitsnetz für größere Wettkämpfe bestehen. */
-  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"Notiz",w:148}],peoRows,
+  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"T-Shirt",w:18,box:true},{t:"Notiz",w:130}],peoRows,
     {rh:5.2,fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
   foot();
 
