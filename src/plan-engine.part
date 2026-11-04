@@ -632,28 +632,33 @@ function flowLanes(plan,list){
   return lanes;
 }
 function renderFlow(plan,list){
-  var W=980, LAB=168, PAD=16, X0=LAB, X1=W-PAD, LANE=48, TOP=32;
+  var W=980, LAB=168, PAD=16, X0=LAB, X1=W-PAD, LANE=50, TOP=32;
   var t0=plan.o.start, t1=plan.o.end, span=t1-t0;
   var X=function(t){return X0+((t-t0)/span)*(X1-X0);};
   var lanes=flowLanes(plan,list);
   var H=TOP+lanes.length*LANE+14;
-  var s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" role="img" aria-label="Wege der Startgruppen durch die Qualifikation">';
+  /* width="100%" statt fester Pixelbreite (Issue: Diagramm sollte beim
+     Ausdrucken/Aushängen die volle Seitenbreite nutzen statt der festen
+     980px) - das viewBox bestimmt weiterhin das Koordinatensystem und
+     damit das Seitenverhältnis, nur die tatsächliche Darstellungsgröße
+     folgt jetzt der verfügbaren Breite des Containers (.flowwrap). */
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Wege der Startgruppen durch die Qualifikation">';
   s+='<defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="currentColor"/></marker></defs>';
   for(var t=Math.ceil(t0/30)*30;t<=t1;t+=30){
     s+='<line x1="'+X(t).toFixed(1)+'" y1="'+(TOP-10)+'" x2="'+X(t).toFixed(1)+'" y2="'+(H-8)+'" stroke="var(--line)" stroke-width="1"/>';
-    s+='<text x="'+X(t).toFixed(1)+'" y="'+(TOP-16)+'" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">'+fmt(t)+'</text>';
+    s+='<text x="'+X(t).toFixed(1)+'" y="'+(TOP-16)+'" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">'+fmt(t)+'</text>';
   }
   lanes.forEach(function(L,i){
     var y=TOP+i*LANE, mid=y+26, g=L.g, w=g.gender==="w";
     s+='<g data-ac="'+ACOF[g.cls]+'" color="var(--ac)">';
-    s+='<text x="8" y="'+(mid+4)+'" font-family="var(--disp)" font-size="13" font-weight="500" fill="var(--ac)">'+esc(L.label)+'</text>';
+    s+='<text x="8" y="'+(mid+4)+'" font-family="var(--disp)" font-size="14" font-weight="600" fill="var(--ac)">'+esc(L.label)+'</text>';
     s+='<text x="'+(LAB-14)+'" y="'+(mid+4)+'" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--muted)">'+g.n+' TN</text>';
     L.bs.forEach(function(b,k){
       var x=X(b.s), bw=Math.max(6,X(b.e)-X(b.s));
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="'+bw.toFixed(1)+'" height="26" rx="3" fill="var('+(w?"--w-bg":"--m-bg")+')" stroke="var('+(w?"--w-br":"--m-br")+')"/>';
       s+='<rect x="'+x.toFixed(1)+'" y="'+(mid-13)+'" width="3" height="26" fill="var(--ac)"/>';
-      if(bw>58) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12" fill="var(--ink)">'+esc(routeNum(plan.row(b.r)))+'</text>';
-      if(bw>108) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
+      if(bw>68) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12.5" font-weight="500" fill="var(--ink)">Route '+esc(routeNum(plan.row(b.r)))+'</text>';
+      if(bw>112) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
       if(k===1){
         var pt=plan.pauseTxt(g,L.bs), xa=X(L.bs[0].e)+3, xb=x-4;
         if(xb>xa+76){

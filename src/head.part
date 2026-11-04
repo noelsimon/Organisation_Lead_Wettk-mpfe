@@ -1338,7 +1338,7 @@ body.editing{caret-color:var(--ink)}
     <h3>Wege der Startgruppen</h3>
     <p class="lede">Wer geht wann von welcher Route auf welche: dieselben Daten wie oben, nur andersherum sortiert – eine Zeile pro Startgruppe statt pro Route. Der gestrichelte Pfeil ist die Pause zwischen den beiden Runden – grün, wenn sie im Korridor 45 bis 65 Minuten liegt. Das Diagramm rechnet live mit, sobald du oben etwas verschiebst.</p>
     <div class="flowwrap" id="flow"></div>
-    <p class="hint" style="margin-top:12px">Seitlich scrollbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
+    <p class="hint" style="margin-top:12px">Passt sich der Breite des Bildschirms an – zum Aushängen auch gut druckbar. Farbe = Altersklasse, heller Balken = männlich, dunkler = weiblich.</p>
 
     <div id="routenplan">
       <h3>Routenplan</h3>
