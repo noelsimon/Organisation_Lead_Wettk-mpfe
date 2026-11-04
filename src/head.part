@@ -1475,6 +1475,21 @@ body.editing{caret-color:var(--ink)}
         </span> Min</label>
       </div>
       <p class="hint" style="margin:10px 0 0">Verschiebt den Start der Kletterblöcke – beide Zeitpläne (hier und in „Wertungsklassen und Meldezahlen") zeigen denselben Wert.</p>
+      <div class="cfgrow" style="margin-top:12px">
+        <label><button class="fbtn" id="finOrderSwap" type="button">⇄ Reihenfolge tauschen</button></label>
+        <span class="mono" id="finOrderOut" style="color:var(--muted)"></span>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Standardmäßig läuft erst die Besichtigung, danach ISO. Der Schalter tauscht die Reihenfolge für alle Finalrouten gleichzeitig.</p>
+      <div class="tblwrap" style="max-width:520px; margin-top:12px"><table id="finExtraTab">
+        <thead><tr><th>Zusatzblock vor dem Klettern</th><th class="num">Min</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="cfgrow">
+        <label>Neuer Zusatzblock <input class="cin" id="finExtraName" placeholder="z. B. Fotos" size="18"></label>
+        <label>Minuten <input class="nin" id="finExtraMin" type="number" min="1" max="180" value="10"></label>
+        <label><button class="fbtn" id="finExtraAdd" type="button">Hinzufügen</button></label>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Eigene, frei beschriftbare Blöcke (z. B. „Fotos", „Aufwärmen") vor dem ersten Kletterzug jeder Finalroute – erscheinen transparent/gestrichelt im Zeitplan wie Besichtigung und ISO, in der Reihenfolge dieser Liste.</p>
     </div>
 
     <div class="toolbar">
@@ -1511,7 +1526,7 @@ body.editing{caret-color:var(--ink)}
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
     <p class="gantt-hint">← Route fixiert · nach rechts wischen für spätere Zeiten →</p>
-    <p class="hint">Besichtigung und ISO sind als Block fixiert; ihre Dauer stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
+    <p class="hint">Besichtigung, ISO und eigene Zusatzblöcke sind als Block fixiert; Dauer, Reihenfolge und zusätzliche Blöcke stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lkf">

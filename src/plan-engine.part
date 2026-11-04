@@ -802,6 +802,30 @@ function renderMeta(){
   if(eb) eb.textContent=[CFG.meta.title,CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · ");
 }
 
+/* Reihenfolge Besichtigung/ISO + frei beschriftbare Zusatzblöcke vor dem
+   Finale-Klettern (siehe ffix()/finalFixedPhases() in script-core.part). */
+function renderFinOrder(){
+  var out=document.getElementById("finOrderOut"); if(!out) return;
+  out.textContent=CFG.win.order==="ib"?"Aktuell: erst ISO, dann Besichtigung":"Aktuell: erst Besichtigung, dann ISO";
+}
+function renderFinExtra(){
+  var body=document.querySelector("#finExtraTab tbody"); if(!body) return;
+  var h="";
+  (CFG.win.extra||[]).forEach(function(ex,i){
+    h+='<tr><td>'+esc(ex.label||"Zusatz")+'</td><td class="num">'+(+ex.dur||0)+'</td>'+
+       '<td><button class="rdel finExtraDel" type="button" data-i="'+i+'" title="Zusatzblock entfernen" aria-label="'+esc(ex.label||"Zusatzblock")+' entfernen">×</button></td></tr>';
+  });
+  if(!(CFG.win.extra||[]).length) h='<tr><td colspan="3" style="color:var(--muted)">Noch kein Zusatzblock.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(body.querySelectorAll(".finExtraDel"),function(btn){
+    btn.onclick=function(){
+      var i=parseInt(this.getAttribute("data-i"),10);
+      CFG.win.extra.splice(i,1);
+      saveCfg(); pf.render(); pf.save(); renderFinExtra();
+    };
+  });
+}
+
 /* ================= Zeitfenster ================= */
 function renderWin(){
   function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}

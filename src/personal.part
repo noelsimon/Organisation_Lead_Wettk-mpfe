@@ -437,6 +437,22 @@ document.getElementById("winReset").onclick=function(){
   CFG.win=clone(CFG0.win); applyWin();
 };
 
+/* ---- Finale: Reihenfolge ISO/Besichtigung + Zusatzblöcke ---- */
+document.getElementById("finOrderSwap").onclick=function(){
+  CFG.win.order=(CFG.win.order==="ib")?"bi":"ib";
+  saveCfg(); pf.render(); pf.save(); renderWin(); renderFinOrder();
+};
+document.getElementById("finExtraAdd").onclick=function(){
+  var nameEl=document.getElementById("finExtraName"), minEl=document.getElementById("finExtraMin");
+  var label=nameEl.value.trim(); if(!label) return;
+  var dur=Math.max(1,Math.min(180,parseInt(minEl.value,10)||10));
+  CFG.win.extra=CFG.win.extra||[];
+  CFG.win.extra.push({id:newId("xb"),label:label,dur:dur});
+  nameEl.value=""; minEl.value="10";
+  saveCfg(); pf.render(); pf.save(); renderFinExtra();
+};
+renderFinOrder(); renderFinExtra();
+
 /* ---- Wettkampf-Angaben (Titel/Ort/Datum) ---- */
 [["metaTitle","title"],["metaSub","sub"],["metaLocation","location"],["metaDate","date"]].forEach(function(pair){
   var el=document.getElementById(pair[0]); if(!el) return;

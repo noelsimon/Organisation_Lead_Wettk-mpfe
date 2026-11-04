@@ -1484,6 +1484,21 @@ body.editing{caret-color:var(--ink)}
         </span> Min</label>
       </div>
       <p class="hint" style="margin:10px 0 0">Verschiebt den Start der Kletterblöcke – beide Zeitpläne (hier und in „Wertungsklassen und Meldezahlen") zeigen denselben Wert.</p>
+      <div class="cfgrow" style="margin-top:12px">
+        <label><button class="fbtn" id="finOrderSwap" type="button">⇄ Reihenfolge tauschen</button></label>
+        <span class="mono" id="finOrderOut" style="color:var(--muted)"></span>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Standardmäßig läuft erst die Besichtigung, danach ISO. Der Schalter tauscht die Reihenfolge für alle Finalrouten gleichzeitig.</p>
+      <div class="tblwrap" style="max-width:520px; margin-top:12px"><table id="finExtraTab">
+        <thead><tr><th>Zusatzblock vor dem Klettern</th><th class="num">Min</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="cfgrow">
+        <label>Neuer Zusatzblock <input class="cin" id="finExtraName" placeholder="z. B. Fotos" size="18"></label>
+        <label>Minuten <input class="nin" id="finExtraMin" type="number" min="1" max="180" value="10"></label>
+        <label><button class="fbtn" id="finExtraAdd" type="button">Hinzufügen</button></label>
+      </div>
+      <p class="hint" style="margin:8px 0 0">Eigene, frei beschriftbare Blöcke (z. B. „Fotos", „Aufwärmen") vor dem ersten Kletterzug jeder Finalroute – erscheinen transparent/gestrichelt im Zeitplan wie Besichtigung und ISO, in der Reihenfolge dieser Liste.</p>
     </div>
 
     <div class="toolbar">
@@ -1520,7 +1535,7 @@ body.editing{caret-color:var(--ink)}
     <div class="editor" id="edF" hidden></div>
     <div class="gantt" id="gf" data-filter="all"><div class="gantt-scroll"><div class="gantt-inner" id="gf-inner" style="min-width:760px"></div></div></div>
     <p class="gantt-hint">← Route fixiert · nach rechts wischen für spätere Zeiten →</p>
-    <p class="hint">Besichtigung und ISO sind als Block fixiert; ihre Dauer stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
+    <p class="hint">Besichtigung, ISO und eigene Zusatzblöcke sind als Block fixiert; Dauer, Reihenfolge und zusätzliche Blöcke stellst du oben ein. Die Kletterblöcke darunter lassen sich verschieben und auf andere Finalrouten ziehen. Mit <strong>+ Route</strong> kommt eine weitere Finalroute dazu; das <strong>×</strong> am Routenkürzel löscht sie wieder, sobald kein Balken mehr darauf liegt.</p>
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lkf">
@@ -2724,6 +2739,30 @@ function renderMeta(){
   if(eb) eb.textContent=[CFG.meta.title,CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · ");
 }
 
+/* Reihenfolge Besichtigung/ISO + frei beschriftbare Zusatzblöcke vor dem
+   Finale-Klettern (siehe ffix()/finalFixedPhases() in script-core.part). */
+function renderFinOrder(){
+  var out=document.getElementById("finOrderOut"); if(!out) return;
+  out.textContent=CFG.win.order==="ib"?"Aktuell: erst ISO, dann Besichtigung":"Aktuell: erst Besichtigung, dann ISO";
+}
+function renderFinExtra(){
+  var body=document.querySelector("#finExtraTab tbody"); if(!body) return;
+  var h="";
+  (CFG.win.extra||[]).forEach(function(ex,i){
+    h+='<tr><td>'+esc(ex.label||"Zusatz")+'</td><td class="num">'+(+ex.dur||0)+'</td>'+
+       '<td><button class="rdel finExtraDel" type="button" data-i="'+i+'" title="Zusatzblock entfernen" aria-label="'+esc(ex.label||"Zusatzblock")+' entfernen">×</button></td></tr>';
+  });
+  if(!(CFG.win.extra||[]).length) h='<tr><td colspan="3" style="color:var(--muted)">Noch kein Zusatzblock.</td></tr>';
+  body.innerHTML=h;
+  Array.prototype.forEach.call(body.querySelectorAll(".finExtraDel"),function(btn){
+    btn.onclick=function(){
+      var i=parseInt(this.getAttribute("data-i"),10);
+      CFG.win.extra.splice(i,1);
+      saveCfg(); pf.render(); pf.save(); renderFinExtra();
+    };
+  });
+}
+
 /* ================= Zeitfenster ================= */
 function renderWin(){
   function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}
@@ -3181,6 +3220,22 @@ document.getElementById("stHelferSoll").onchange=function(){
 document.getElementById("winReset").onclick=function(){
   CFG.win=clone(CFG0.win); applyWin();
 };
+
+/* ---- Finale: Reihenfolge ISO/Besichtigung + Zusatzblöcke ---- */
+document.getElementById("finOrderSwap").onclick=function(){
+  CFG.win.order=(CFG.win.order==="ib")?"bi":"ib";
+  saveCfg(); pf.render(); pf.save(); renderWin(); renderFinOrder();
+};
+document.getElementById("finExtraAdd").onclick=function(){
+  var nameEl=document.getElementById("finExtraName"), minEl=document.getElementById("finExtraMin");
+  var label=nameEl.value.trim(); if(!label) return;
+  var dur=Math.max(1,Math.min(180,parseInt(minEl.value,10)||10));
+  CFG.win.extra=CFG.win.extra||[];
+  CFG.win.extra.push({id:newId("xb"),label:label,dur:dur});
+  nameEl.value=""; minEl.value="10";
+  saveCfg(); pf.render(); pf.save(); renderFinExtra();
+};
+renderFinOrder(); renderFinExtra();
 
 /* ---- Wettkampf-Angaben (Titel/Ort/Datum) ---- */
 [["metaTitle","title"],["metaSub","sub"],["metaLocation","location"],["metaDate","date"]].forEach(function(pair){
@@ -4952,7 +5007,7 @@ function applySnapshot(s){
   pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
   pf.o.start=CFG.win.fs; pf.o.end=CFG.win.fe; pf.o.step=autoStep(CFG.win.fe-CFG.win.fs);
   pq.render(); pf.render(); pq.save(); pf.save();
-  renderWin(); renderMeta(); renderCats(); renderPeople(); renderStats();
+  renderWin(); renderMeta(); renderFinOrder(); renderFinExtra(); renderCats(); renderPeople(); renderStats();
   document.querySelectorAll("[data-ed]").forEach(function(el){
     var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
   });
