@@ -5588,6 +5588,17 @@ function buildPDF(){
       if(r.fill){ doc.setFillColor(r.fill[0],r.fill[1],r.fill[2]); doc.rect(x,yy,tw,hh,"F"); }
       var top=yy+(hh-nl*lh)/2+lh*0.78, cx2=x;
       cols.forEach(function(c,i){
+        /* Ankreuzkästchen statt Text (Issue: Helferliste "T-Shirt"-Spalte) -
+           zeichnet ein kleines leeres Quadrat statt r.c[i] zu drucken, zum
+           Abhaken von Hand auf der ausgedruckten Liste. Rein additiv: ohne
+           col.box läuft die Spalte wie bisher als Textspalte. */
+        if(c.box){
+          var bs=Math.min(3.6,hh-2,rh-2), bx=cx2+(c.w-bs)/2, by=yy+(hh-bs)/2;
+          doc.setDrawColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]); doc.setLineWidth(.25);
+          doc.rect(bx,by,bs,bs);
+          doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]);
+          cx2+=c.w; return;
+        }
         if(r.col&&r.col[i]) doc.setTextColor(r.col[i][0],r.col[i][1],r.col[i][2]);
         doc.text(wrapped[i],c.r?cx2+c.w-1.5:cx2+1.5,top,{align:c.r?"right":"left"});
         doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
@@ -5819,7 +5830,7 @@ function buildPDF(){
      Notizen bleibt über splitTextToSize erhalten, rh wirkt nur als
      Mindesthöhe für einzeilige Zeilen). Seitenumbruch mit korrektem
      title/sub bleibt als Sicherheitsnetz für größere Wettkämpfe bestehen. */
-  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"Notiz",w:148}],peoRows,
+  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"T-Shirt",w:18,box:true},{t:"Notiz",w:130}],peoRows,
     {rh:5.2,fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
   foot();
 
