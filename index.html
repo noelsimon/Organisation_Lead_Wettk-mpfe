@@ -255,9 +255,15 @@ li{margin-bottom:6px}
 .blk.clash{outline:2px solid var(--bad); outline-offset:-1px}
 .blk.warn{outline:2px dashed var(--warn); outline-offset:-1px}
 .blk.sel{outline:2px solid var(--ink); outline-offset:-1px; box-shadow:0 2px 10px -3px rgba(0,0,0,.35)}
-.blk-del{position:absolute; top:1px; right:1px; width:15px; height:15px; line-height:13px; text-align:center;
+/* top/right auf 3px statt 1px (Issue: der Button saß so dicht an der Ecke,
+   dass er in die abgerundete Blockecke (--r-sm: 8px) hineinragte und den
+   Block "überlappt" wirken ließ, sobald er markiert/gehovert war; der
+   Schatten setzt ihn zusätzlich sichtbar vom Blockhintergrund ab, statt
+   optisch ins Eck zu schneiden). */
+.blk-del{position:absolute; top:3px; right:3px; width:15px; height:15px; line-height:13px; text-align:center;
   font-family:var(--serif); font-size:12px; padding:0; border:none; border-radius:50%; cursor:pointer;
-  background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease}
+  background:var(--surface); color:var(--muted); opacity:0; transition:opacity .12s ease;
+  box-shadow:0 1px 3px rgba(16,21,28,.25)}
 .blk:hover .blk-del,.blk-del:focus-visible{opacity:1; color:var(--bad)}
 /* Issue #73: auf Touch gibt es kein :hover - ohne das war der Löschen-Button
    an einem Balken nie erreichbar. Nach Auswahl (Tippen auf den Balken, siehe
