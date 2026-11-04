@@ -554,6 +554,43 @@ function buildPDF(){
   }
   foot();
 
+  /* --- Seite 3b: Klemmbrett-Karten je Team (zusätzlich zur Tabelle oben -
+     zum Ausschneiden und je Team aufs Klemmbrett zu legen, damit jedes Team
+     auf einen Blick sieht, wer dabei ist und wann/wo es dran ist). */
+  if(LASTQ.T.length){
+    var kbPerRow=3, kbPerCol=2, kbGap=5, kbCardW=(CW-kbGap*(kbPerRow-1))/kbPerRow, kbY0,kbCardH;
+    LASTQ.T.forEach(function(t,i){
+      var pos=i%(kbPerRow*kbPerCol);
+      if(pos===0){
+        kbY0=head("Klemmbrett-Karten","Zum Ausschneiden · eine Karte je Team · Team-Zeitplan s. vorherige Seite");
+        kbCardH=(PH-18-kbY0-kbGap*(kbPerCol-1))/kbPerCol;
+      }
+      var kcol=pos%kbPerRow, krow=Math.floor(pos/kbPerRow);
+      var cx=ML+kcol*(kbCardW+kbGap), cy=kbY0+krow*(kbCardH+kbGap), ac=PC(t.cls).ac;
+      if(doc.setLineDashPattern) doc.setLineDashPattern([1.2,1],0);
+      doc.setDrawColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setLineWidth(.2);
+      doc.rect(cx,cy,kbCardW,kbCardH,"D");
+      if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
+      doc.setFillColor(ac[0],ac[1],ac[2]); doc.rect(cx,cy,kbCardW,7.5,"F");
+      doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      doc.text(teamName(t.idx),cx+3,cy+5.2);
+      doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
+      var ky=cy+11.5;
+      doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Besetzung",cx+3,ky); ky+=3.6;
+      doc.setFont("helvetica","normal"); doc.setFontSize(7);
+      var kpl=doc.splitTextToSize(teamPeopleText(t.idx),kbCardW-6);
+      doc.text(kpl,cx+3,ky); ky+=kpl.length*2.9+3.5;
+      doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Einsätze",cx+3,ky); ky+=1.5;
+      var ksrows=t.stations.map(function(st){
+        return {c:[fmt(st.s)+"-"+fmt(st.e), routeNum(st.row),
+          st.items.map(function(x){return x.lab;}).join(", ")]};
+      });
+      table(cx+3,ky,[{t:"Zeit",w:(kbCardW-6)*.3},{t:"Rt.",w:(kbCardW-6)*.15},{t:"Wer klettert",w:(kbCardW-6)*.55}],
+        ksrows,{rh:4.4,fs:6.6});
+    });
+    foot();
+  }
+
   /* --- Seite 4: Finale --- */
   y=head("Finale","Ende "+fmt(f.end)+" · max. "+f.maxR+" Routen gleichzeitig");
   y=gantt(ML,y,CW,66,pf,fl,44)+6;
