@@ -34,6 +34,9 @@ export default [
         URLSearchParams: "readonly",
         FileReader: "readonly",
         IntersectionObserver: "readonly",
+        getComputedStyle: "readonly",
+        XMLSerializer: "readonly",
+        Image: "readonly",
         // eingebunden über <script src> in config.part / head.part
         jspdf: "readonly",
         Chart: "readonly",

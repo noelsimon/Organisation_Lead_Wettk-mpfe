@@ -1331,7 +1331,7 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lk">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
@@ -1361,7 +1361,7 @@ body.editing{caret-color:var(--ink)}
         <ul style="font-size:14.5px">
           <li>Standardmäßig klettern auf den gemischten Routen <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken. Mit dem Schalter <strong>↔ m/w</strong> an der Route lässt sich das auf abwechselnden Start (m/w/m/w) umstellen; die beiden Balken werden dann zu einem gemeinsamen, gestreiften Balken „männlich + weiblich · abwechselnd".</li>
           <li>Innerhalb einer Gruppe nach Ranking sortieren und in umgekehrter Reihenfolge starten: die Stärksten zuletzt.</li>
-          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt. Sind die beiden Routen einer Gruppe so gegeneinander gedreht, zeigt die Laufkarte statt eines einzelnen Werts eine <strong>Pausen-Spanne</strong> (z. B. „12–58 Min"), weil die Pause dann von Startnummer zu Startnummer unterschiedlich lang ist.</li>
+          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt. Sind die beiden Routen einer Gruppe so gegeneinander gedreht, zeigt das Wegediagramm unten statt eines einzelnen Werts eine <strong>Pausen-Spanne</strong> (z. B. „12–58 Min"), weil die Pause dann von Startnummer zu Startnummer unterschiedlich lang ist.</li>
           <li>Individuelle Startzeit = Blockbeginn + Startnummer × 6 Minuten.</li>
         </ul>
       </div>
@@ -1530,7 +1530,7 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lkf">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
