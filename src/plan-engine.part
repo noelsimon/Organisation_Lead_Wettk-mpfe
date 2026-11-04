@@ -650,18 +650,6 @@ function renderFlow(plan,list){
 }
 
 /* ================= Meldezahlen-Tabelle, Kennzahlen, Finalquoten ================= */
-function classMode(plan,list,cls){
-  var bs=list.filter(function(b){return b.cls===cls;});
-  var gids={}; bs.forEach(function(b){gids[b.gid]=1;});
-  if(Object.keys(gids).length<2) return "einzeln";
-  var over=false, sep=false;
-  for(var i=0;i<bs.length;i++) for(var j=i+1;j<bs.length;j++){
-    if(bs[i].gid===bs[j].gid) continue;
-    if(bs[i].s<bs[j].e&&bs[j].s<bs[i].e) over=true; else sep=true;
-  }
-  if(over&&sep) return "teils parallel";
-  return over?"parallel":"nacheinander";
-}
 function afterCfg(replan){
   reindex(); saveCfg();
   if(replan!==false){ pq.applyField(); pf.applyField(); }

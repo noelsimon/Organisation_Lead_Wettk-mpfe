@@ -221,22 +221,22 @@ function renderFinalTab(){
   T.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
   var h="", sumG=0, sumF=0;
   CFG.classes.forEach(function(cc){
-    var c=cc.id, mode=classMode(pf,list,c);
-    ["m","w"].forEach(function(gd,gi){
+    var c=cc.id;
+    ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, q=quota(n); sumG+=n; sumF+=q;
       var blk=list.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");})
                   .sort(function(a,b){return a.s-b.s;})[0];
+      var tidx=blk&&rteam[blk.r];
       h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
-         '<td class="num">'+n+'</td><td class="num">'+(n>=20?10:6)+'</td><td class="num">'+q+'</td>'+
+         '<td class="num">'+n+'</td><td class="num">'+q+'</td>'+
          '<td>'+(blk?'<strong class="mono">'+esc(routeNum(pf.row(blk.r)))+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
          '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
-         '<td class="num">'+(blk&&rteam[blk.r]?rteam[blk.r]:'—')+'</td>'+
-         (gi===0?'<td rowspan="2" style="vertical-align:middle"><span class="pill '+(mode==="parallel"?"ok":"")+'">'+mode+'</span></td>':'')+
+         '<td>'+(tidx?'<strong>'+teamName(tidx)+'</strong> · '+esc(teamPeopleText(tidx)):'<span style="color:var(--muted)">—</span>')+'</td>'+
          '</tr>';
     });
   });
-  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">—</td><td class="num">'+sumF+'</td>'+
-     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td class="num">'+T.length+'</td><td>'+T.length*CFG.teamPers+' Personen</td></tr>';
+  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">'+sumF+'</td>'+
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td>'+T.length+' Routen-Teams · '+T.length*CFG.teamPers+' Personen</td></tr>';
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 

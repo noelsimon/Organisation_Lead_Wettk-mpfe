@@ -1530,10 +1530,10 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Finalquoten</h3>
     <div class="tblwrap"><table id="finaltab">
-      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th class="num">im Finale</th><th>Route</th><th>Zeit</th><th class="num">Team</th><th>Ablauf</th></tr></thead>
+      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th>Route</th><th>Zeit</th><th>Team und Teammitglieder</th></tr></thead>
       <tbody></tbody>
     </table></div>
-    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. Die Spalte <strong>Ablauf</strong> liest den Zeitplan darüber aus: <span class="pill ok">parallel</span> heißt, die beiden Wertungen einer Klasse klettern gleichzeitig, <span class="pill">nacheinander</span> heißt versetzt, <span class="pill">einzeln</span> steht bei der U9, die nur einen gemeinsamen Block hat. Verschiebst du oben einen Balken, ändert sich die Spalte mit.</p>
+    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. <strong>Team und Teammitglieder</strong> zeigt das Routen-Team, das diese Finalroute betreut, mit den zugeteilten Personen. Verschiebst du oben einen Balken, ändert sich die Tabelle mit.</p>
 
     <h3>Routenplan</h3>
     <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
@@ -2572,18 +2572,6 @@ function renderFlow(plan,list){
 }
 
 /* ================= Meldezahlen-Tabelle, Kennzahlen, Finalquoten ================= */
-function classMode(plan,list,cls){
-  var bs=list.filter(function(b){return b.cls===cls;});
-  var gids={}; bs.forEach(function(b){gids[b.gid]=1;});
-  if(Object.keys(gids).length<2) return "einzeln";
-  var over=false, sep=false;
-  for(var i=0;i<bs.length;i++) for(var j=i+1;j<bs.length;j++){
-    if(bs[i].gid===bs[j].gid) continue;
-    if(bs[i].s<bs[j].e&&bs[j].s<bs[i].e) over=true; else sep=true;
-  }
-  if(over&&sep) return "teils parallel";
-  return over?"parallel":"nacheinander";
-}
 function afterCfg(replan){
   reindex(); saveCfg();
   if(replan!==false){ pq.applyField(); pf.applyField(); }
@@ -2950,22 +2938,22 @@ function renderFinalTab(){
   T.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
   var h="", sumG=0, sumF=0;
   CFG.classes.forEach(function(cc){
-    var c=cc.id, mode=classMode(pf,list,c);
-    ["m","w"].forEach(function(gd,gi){
+    var c=cc.id;
+    ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, q=quota(n); sumG+=n; sumF+=q;
       var blk=list.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");})
                   .sort(function(a,b){return a.s-b.s;})[0];
+      var tidx=blk&&rteam[blk.r];
       h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
-         '<td class="num">'+n+'</td><td class="num">'+(n>=20?10:6)+'</td><td class="num">'+q+'</td>'+
+         '<td class="num">'+n+'</td><td class="num">'+q+'</td>'+
          '<td>'+(blk?'<strong class="mono">'+esc(routeNum(pf.row(blk.r)))+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
          '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
-         '<td class="num">'+(blk&&rteam[blk.r]?rteam[blk.r]:'—')+'</td>'+
-         (gi===0?'<td rowspan="2" style="vertical-align:middle"><span class="pill '+(mode==="parallel"?"ok":"")+'">'+mode+'</span></td>':'')+
+         '<td>'+(tidx?'<strong>'+teamName(tidx)+'</strong> · '+esc(teamPeopleText(tidx)):'<span style="color:var(--muted)">—</span>')+'</td>'+
          '</tr>';
     });
   });
-  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">—</td><td class="num">'+sumF+'</td>'+
-     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td class="num">'+T.length+'</td><td>'+T.length*CFG.teamPers+' Personen</td></tr>';
+  h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">'+sumF+'</td>'+
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td>'+T.length+' Routen-Teams · '+T.length*CFG.teamPers+' Personen</td></tr>';
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 
@@ -5704,21 +5692,22 @@ function buildPDF(){
   var frows=[], Tf=teams(pf,fl), rteam={};
   Tf.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
   CFG.classes.forEach(function(cc){
-    var c=cc.id, mode=classMode(pf,fl,c);
-    ["m","w"].forEach(function(gd,gi){
+    var c=cc.id;
+    ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, qq=quota(n);
       var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
-      frows.push({c:[CLn(c)+" "+gl(c,gd),n,(n>=20?10:6),qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
-                     blk&&rteam[blk.r]?rteam[blk.r]:"—",gi===0?mode:""],
+      var tidx=blk&&rteam[blk.r];
+      frows.push({c:[CLn(c)+" "+gl(c,gd),n,qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
+                     tidx?teamName(tidx)+" · "+teamPeopleText(tidx):"—"],
                   col:[PC(c).ac]});
     });
   });
   var sumG=0,sumF=0;
   CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
-  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,"—",sumF,pf.rows.length+" Routen","—",Tf.length,
-    Tf.length*CFG.teamPers+" Personen"]});
-  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},{t:"im Finale",w:20,r:true},
-              {t:"Route",w:20},{t:"Zeit",w:28},{t:"Team",w:16,r:true},{t:"Ablauf",w:34}],frows,{rh:5.4,fs:7.5});
+  frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,sumF,pf.rows.length+" Routen","—",
+    Tf.length+" Routen-Teams · "+Tf.length*CFG.teamPers+" Personen"]});
+  table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},
+              {t:"Route",w:16},{t:"Zeit",w:26},{t:"Team und Teammitglieder",w:CW-112}],frows,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 5: Wege --- */
