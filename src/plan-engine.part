@@ -225,9 +225,15 @@ Plan.prototype.render=function(){
   h+='</div></div>';
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
+    var rc=CL(r.cls), rlm=(rc&&rc.lm)||"männlich", rlw=(rc&&rc.lw)||"weiblich";
     h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+
        '<input class="rnum" type="number" min="0" max="999" inputmode="numeric" data-route="'+r.id+'" value="'+esc(routeNum(r))+'" aria-label="Anzeige-Nummer für '+esc(self.desc(r))+'">'+
        '<span class="rbtns">'+
+       '<select class="rallow" data-allow="'+r.id+'" title="Geschlecht dieser Route nachträglich ändern" aria-label="Geschlecht für '+esc(self.desc(r))+'">'+
+         '<option value="mw"'+(r.allow==="mw"?" selected":"")+'>gemischt</option>'+
+         '<option value="m"'+(r.allow==="m"?" selected":"")+'>nur '+esc(rlm)+'</option>'+
+         '<option value="w"'+(r.allow==="w"?" selected":"")+'>nur '+esc(rlw)+'</option>'+
+       '</select>'+
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
@@ -258,6 +264,21 @@ Plan.prototype.render=function(){
   });
   Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
+  });
+  /* Geschlecht einer Route nachträglich ändern (gemischt <-> nur männlich/
+     nur weiblich), auch wenn schon Blöcke darauf liegen: r.allow steuert
+     nur die Anzeige/den Warnhinweis (siehe recalc()), keine Blöcke oder
+     Gruppen werden dabei verschoben oder gelöscht. Verlässt eine Route
+     "gemischt", ergibt der abwechselnde-Start-Schalter (↔ m/w) keinen Sinn
+     mehr und wird mit zurückgesetzt. */
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rallow"),function(sel){
+    sel.onchange=function(ev){
+      ev.stopPropagation();
+      var r=self.row(this.getAttribute("data-allow")); if(!r) return;
+      r.allow=this.value;
+      if(r.allow!=="mw") r.altStart=false;
+      self.render(); self.save();
+    };
   });
   /* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B): r.id bleibt
      unverändert der interne Schlüssel (blocks[].r, CFG.routeNotes,
@@ -756,6 +777,15 @@ function addClass(name,lm,lw,m,w,mode){
   pq.addClass(c); pf.addClass(c);
   afterCfg(); return true;
 }
+/* ================= Wettkampf-Angaben (Titel/Ort/Datum fürs PDF) ================= */
+function renderMeta(){
+  function set(id,v){var el=document.getElementById(id); if(el&&document.activeElement!==el) el.value=v||"";}
+  set("metaTitle",CFG.meta.title); set("metaSub",CFG.meta.sub);
+  set("metaLocation",CFG.meta.location); set("metaDate",CFG.meta.date);
+  var eb=document.getElementById("mastheadEyebrow");
+  if(eb) eb.textContent=[CFG.meta.title,CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · ");
+}
+
 /* ================= Zeitfenster ================= */
 function renderWin(){
   function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}

@@ -280,6 +280,15 @@ li{margin-bottom:6px}
 .rdir:hover,.ralt:hover{background:var(--sunken)}
 .ralt[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#fff}
 .rdir:focus-visible,.ralt:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+/* Geschlecht einer Route nachträglich ändern (gemischt/nur m/nur w) - gleiche
+   Bauart wie .rdir/.ralt, nur als <select> statt Button. */
+.rallow{font-family:var(--mono); font-size:10px; font-weight:600; line-height:1; padding:3px 18px 3px 7px; white-space:nowrap;
+  border-radius:var(--r-pill); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2); cursor:pointer;
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='9' height='9'%3E%3Cpath d='M5 9l7 7 7-7' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 6px center}
+.rallow:hover{background-color:var(--sunken)}
+.rallow:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .flowwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow); padding:8px 0 4px}
 .flowwrap svg{display:block; min-width:980px}
@@ -930,7 +939,7 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.rallow,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
   #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel,.sync-toast{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
@@ -973,7 +982,7 @@ body.editing{caret-color:var(--ink)}
 <header class="masthead">
   <div class="wrap">
     <div class="masthead-top">
-      <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
+      <p class="eyebrow" id="mastheadEyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
       <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten" aria-label="Profil bearbeiten">
         <img id="mastheadAvatarImg" alt="" hidden>
         <span id="mastheadAvatarInitial"></span>
@@ -1205,6 +1214,19 @@ body.editing{caret-color:var(--ink)}
         <label><button class="fbtn" id="addClsCancel" type="button">Abbrechen</button></label>
       </div>
       <p class="hint" style="margin:12px 0 0">Eine neue Klasse bekommt automatisch drei Qualirouten (gemischt, Gruppe 1, Gruppe 2) mit einem Karussell in derselben Logik wie U13 und U15, dazu zwei Finalrouten. Danach lässt sich alles wie gewohnt verschieben, teilen oder wieder löschen.</p>
+    </div>
+
+    <h3>Wettkampf-Angaben</h3>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Titel <input class="cin" id="metaTitle" size="36" placeholder="z. B. 5. Offener Sächsischer Kidscup 2027"></label>
+        <label>Unterzeile <input class="cin" id="metaSub" size="16" placeholder="z. B. Lead, U9–U15"></label>
+      </div>
+      <div class="cfgrow">
+        <label>Ort <input class="cin" id="metaLocation" size="28" placeholder="z. B. Kletterhalle Quacke Zittau"></label>
+        <label>Datum <input class="cin" id="metaDate" size="20" placeholder="z. B. Samstag, 26.09.2026"></label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Steht oben auf der Seite und auf jeder PDF-Seite als Titel bzw. Kopf-/Fußzeile – je Wettkampf einzeln, über „Wettkämpfe verwalten" im Profilmenü wählbar. Datum als Freitext, damit z. B. „Samstag, 26.09.2026" genauso geht wie nur „26.09.2026".</p>
     </div>
 
     <h3>Zeitfenster des Wettkampfs</h3>

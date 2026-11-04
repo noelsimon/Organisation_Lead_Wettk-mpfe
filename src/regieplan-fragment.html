@@ -289,6 +289,15 @@ li{margin-bottom:6px}
 .rdir:hover,.ralt:hover{background:var(--sunken)}
 .ralt[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#fff}
 .rdir:focus-visible,.ralt:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
+/* Geschlecht einer Route nachträglich ändern (gemischt/nur m/nur w) - gleiche
+   Bauart wie .rdir/.ralt, nur als <select> statt Button. */
+.rallow{font-family:var(--mono); font-size:10px; font-weight:600; line-height:1; padding:3px 18px 3px 7px; white-space:nowrap;
+  border-radius:var(--r-pill); border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2); cursor:pointer;
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='9' height='9'%3E%3Cpath d='M5 9l7 7 7-7' fill='none' stroke='%23888' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 6px center}
+.rallow:hover{background-color:var(--sunken)}
+.rallow:focus-visible{outline:2px solid var(--ring); outline-offset:1px}
 .addbox{background:var(--sunken); border:1px solid var(--line-strong); border-radius:var(--r-md); box-shadow:var(--shadow); padding:14px 16px; margin:0 0 14px}
 .flowwrap{overflow-x:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow); padding:8px 0 4px}
 .flowwrap svg{display:block; min-width:980px}
@@ -939,7 +948,7 @@ body.editing{caret-color:var(--ink)}
   }
   html,body{background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
   .wrap{max-width:none; padding:0}
-  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
+  .toolbar,.filters,.editor,.addbox,.dlbar,.fbtn,.rdel,.rdir,.ralt,.rallow,.hint,.textbar,.vbar,.cfgbox,.stbar,.pdfmsg,.sec-toggle,.jumpnav,.fmt-toolbar,.tabnav,.avatar-btn{display:none !important}
   #staende,#admin,#authWrap,#taskBox,#start,#anwesenheit,.chat-bubble,.chat-panel,.sync-toast{display:none !important}
   .nin,.cin,.tin,.stat-edit{border:none; background:transparent; padding:0; width:auto; max-width:none; color:var(--ink); -moz-appearance:textfield; -webkit-appearance:none; appearance:none}
   .nin::-webkit-outer-spin-button,.nin::-webkit-inner-spin-button{-webkit-appearance:none; margin:0}
@@ -982,7 +991,7 @@ body.editing{caret-color:var(--ink)}
 <header class="masthead">
   <div class="wrap">
     <div class="masthead-top">
-      <p class="eyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
+      <p class="eyebrow" id="mastheadEyebrow">4. Offener Sächsischer Kidscup 2026 · Lead · Quacke Zittau · 26.09.2026</p>
       <button type="button" id="mastheadProfileBtn" class="avatar-btn" hidden title="Profil bearbeiten" aria-label="Profil bearbeiten">
         <img id="mastheadAvatarImg" alt="" hidden>
         <span id="mastheadAvatarInitial"></span>
@@ -1214,6 +1223,19 @@ body.editing{caret-color:var(--ink)}
         <label><button class="fbtn" id="addClsCancel" type="button">Abbrechen</button></label>
       </div>
       <p class="hint" style="margin:12px 0 0">Eine neue Klasse bekommt automatisch drei Qualirouten (gemischt, Gruppe 1, Gruppe 2) mit einem Karussell in derselben Logik wie U13 und U15, dazu zwei Finalrouten. Danach lässt sich alles wie gewohnt verschieben, teilen oder wieder löschen.</p>
+    </div>
+
+    <h3>Wettkampf-Angaben</h3>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Titel <input class="cin" id="metaTitle" size="36" placeholder="z. B. 5. Offener Sächsischer Kidscup 2027"></label>
+        <label>Unterzeile <input class="cin" id="metaSub" size="16" placeholder="z. B. Lead, U9–U15"></label>
+      </div>
+      <div class="cfgrow">
+        <label>Ort <input class="cin" id="metaLocation" size="28" placeholder="z. B. Kletterhalle Quacke Zittau"></label>
+        <label>Datum <input class="cin" id="metaDate" size="20" placeholder="z. B. Samstag, 26.09.2026"></label>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Steht oben auf der Seite und auf jeder PDF-Seite als Titel bzw. Kopf-/Fußzeile – je Wettkampf einzeln, über „Wettkämpfe verwalten" im Profilmenü wählbar. Datum als Freitext, damit z. B. „Samstag, 26.09.2026" genauso geht wie nur „26.09.2026".</p>
     </div>
 
     <h3>Zeitfenster des Wettkampfs</h3>
@@ -2125,9 +2147,15 @@ Plan.prototype.render=function(){
   h+='</div></div>';
   this.rows.forEach(function(r){
     var busy=self.blocks.some(function(b){return b.r===r.id;});
+    var rc=CL(r.cls), rlm=(rc&&rc.lm)||"männlich", rlw=(rc&&rc.lw)||"weiblich";
     h+='<div class="grow" data-ac="'+ACOF[r.cls]+'"><div class="rlabel"><b>'+
        '<input class="rnum" type="number" min="0" max="999" inputmode="numeric" data-route="'+r.id+'" value="'+esc(routeNum(r))+'" aria-label="Anzeige-Nummer für '+esc(self.desc(r))+'">'+
        '<span class="rbtns">'+
+       '<select class="rallow" data-allow="'+r.id+'" title="Geschlecht dieser Route nachträglich ändern" aria-label="Geschlecht für '+esc(self.desc(r))+'">'+
+         '<option value="mw"'+(r.allow==="mw"?" selected":"")+'>gemischt</option>'+
+         '<option value="m"'+(r.allow==="m"?" selected":"")+'>nur '+esc(rlm)+'</option>'+
+         '<option value="w"'+(r.allow==="w"?" selected":"")+'>nur '+esc(rlw)+'</option>'+
+       '</select>'+
        (r.allow==="mw"?'<button class="ralt" type="button" data-alt="'+r.id+'" aria-pressed="'+(r.altStart?"true":"false")+
          '" title="Startreihenfolge auf dieser Route abwechselnd m/w statt erst alle Jungs, dann alle Mädchen">↔ m/w</button>':"")+
        '<button class="rdir" type="button" data-dir="'+r.id+'" title="Startreihenfolge '+
@@ -2158,6 +2186,21 @@ Plan.prototype.render=function(){
   });
   Array.prototype.forEach.call(this.el.querySelectorAll(".ralt"),function(btn){
     btn.onclick=function(ev){ev.stopPropagation(); self.toggleAlt(btn.getAttribute("data-alt"));};
+  });
+  /* Geschlecht einer Route nachträglich ändern (gemischt <-> nur männlich/
+     nur weiblich), auch wenn schon Blöcke darauf liegen: r.allow steuert
+     nur die Anzeige/den Warnhinweis (siehe recalc()), keine Blöcke oder
+     Gruppen werden dabei verschoben oder gelöscht. Verlässt eine Route
+     "gemischt", ergibt der abwechselnde-Start-Schalter (↔ m/w) keinen Sinn
+     mehr und wird mit zurückgesetzt. */
+  Array.prototype.forEach.call(this.el.querySelectorAll(".rallow"),function(sel){
+    sel.onchange=function(ev){
+      ev.stopPropagation();
+      var r=self.row(this.getAttribute("data-allow")); if(!r) return;
+      r.allow=this.value;
+      if(r.allow!=="mw") r.altStart=false;
+      self.render(); self.save();
+    };
   });
   /* Frei vergebbare Anzeige-Nummer je Route (Issue #92 Teil B): r.id bleibt
      unverändert der interne Schlüssel (blocks[].r, CFG.routeNotes,
@@ -2656,6 +2699,15 @@ function addClass(name,lm,lw,m,w,mode){
   pq.addClass(c); pf.addClass(c);
   afterCfg(); return true;
 }
+/* ================= Wettkampf-Angaben (Titel/Ort/Datum fürs PDF) ================= */
+function renderMeta(){
+  function set(id,v){var el=document.getElementById(id); if(el&&document.activeElement!==el) el.value=v||"";}
+  set("metaTitle",CFG.meta.title); set("metaSub",CFG.meta.sub);
+  set("metaLocation",CFG.meta.location); set("metaDate",CFG.meta.date);
+  var eb=document.getElementById("mastheadEyebrow");
+  if(eb) eb.textContent=[CFG.meta.title,CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · ");
+}
+
 /* ================= Zeitfenster ================= */
 function renderWin(){
   function set(id,v){var el=document.getElementById(id); if(el) el.value=fmt(v);}
@@ -3081,6 +3133,16 @@ document.getElementById("stHelferSoll").onchange=function(){
 document.getElementById("winReset").onclick=function(){
   CFG.win=clone(CFG0.win); applyWin();
 };
+
+/* ---- Wettkampf-Angaben (Titel/Ort/Datum) ---- */
+[["metaTitle","title"],["metaSub","sub"],["metaLocation","location"],["metaDate","date"]].forEach(function(pair){
+  var el=document.getElementById(pair[0]); if(!el) return;
+  el.onchange=function(){
+    CFG.meta[pair[1]]=this.value.trim()||CFG0.meta[pair[1]];
+    saveCfg(); renderMeta();
+  };
+});
+renderMeta();
 
 /* ---- Kategorien und Personen ---- */
 document.getElementById("addKatGo").onclick=function(){
@@ -4842,7 +4904,7 @@ function applySnapshot(s){
   pq.o.start=CFG.win.qs; pq.o.end=CFG.win.qe; pq.o.step=autoStep(CFG.win.qe-CFG.win.qs);
   pf.o.start=CFG.win.fs; pf.o.end=CFG.win.fe; pf.o.step=autoStep(CFG.win.fe-CFG.win.fs);
   pq.render(); pf.render(); pq.save(); pf.save();
-  renderWin(); renderCats(); renderPeople(); renderStats();
+  renderWin(); renderMeta(); renderCats(); renderPeople(); renderStats();
   document.querySelectorAll("[data-ed]").forEach(function(el){
     var k=el.getAttribute("data-ed"); if(TXT[k]!=null) el.innerHTML=sanitize(TXT[k]);
   });
@@ -5420,7 +5482,7 @@ function buildPDF(){
   function foot(){
     doc.setFont("helvetica","normal"); doc.setFontSize(7);
     doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text("4. Offener Sächsischer Kidscup 2026 · Quacke Zittau · 26.09.2026",ML,PH-6);
+    doc.text([CFG.meta.title,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,PH-6);
     doc.text("Seite "+page,PW-MR,PH-6,{align:"right"});
     doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
   }
@@ -5528,25 +5590,10 @@ function buildPDF(){
   var q=pq.stat, f=pf.stat, ql=q.list, fl=f.list;
 
   /* --- Seite 1 --- */
-  var y=head("Regieplan Kids Cup – 4. Offener Sächsischer Kidscup 2026","Planstand "+ds);
+  var y=head("Regieplan Kids Cup – "+CFG.meta.title,"Planstand "+ds);
   doc.setFontSize(8); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-  doc.text("Lead, U9–U15 · Kletterhalle Quacke Zittau · Samstag, 26.09.2026",ML,y); y+=7;
+  doc.text([CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,y); y+=9;
   doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  var kpis=[["Athlet*innen",totalAth()],["Routen",pq.rows.length+pf.rows.length],
-            ["Kletterminuten",ql.reduce(function(a,b){return a+(b.e-b.s);},0)],
-            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*CFG.teamPers],
-            ["Quali-Ende",fmt(q.end)],["Finale-Ende",fmt(f.end)]];
-  var kw=CW/kpis.length;
-  kpis.forEach(function(k,i){
-    doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.2);
-    doc.rect(ML+i*kw,y,kw,14);
-    doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text(String(k[1]),ML+i*kw+3,y+7.5);
-    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
-    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text(String(k[0]).toUpperCase(),ML+i*kw+3,y+11.8);
-    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  });
-  y+=20;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Meldezahlen",ML,y); y+=2;
   var mrows=CFG.classes.map(function(c){
     var min=ql.filter(function(b){return b.cls===c.id;}).reduce(function(a,b){return a+(b.e-b.s);},0);
@@ -5559,32 +5606,13 @@ function buildPDF(){
      ML+112) gehalten, sonst überlappt die rechtsbündige "Kletter-Min"-Spalte
      mit der "Zeit"-Spalte von Tagesablauf (Fix für gemeldete Überlappung:
      116mm bei den alten Breiten liefen 4mm in Tagesablauf hinein). */
-  var ey=table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
+  table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Tagesablauf",ML+112,y);
   var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
     return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
                st.querySelector("div span").textContent.trim()]};
   });
-  var ey2=table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
-  var y3=Math.max(ey,ey2)+9;
-  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  doc.text("Routenübersicht",ML,y3); y3+=2;
-  function routeRows(plan,list){
-    return plan.rows.map(function(r){
-      var bs=list.filter(function(b){return b.r===r.id;});
-      var st=bs.reduce(function(a,b){return a+b.n;},0);
-      var mi=bs.reduce(function(a,b){return a+(b.e-b.s);},0);
-      var s0=bs.length?Math.min.apply(null,bs.map(function(b){return b.s;})):null;
-      var e0=bs.length?Math.max.apply(null,bs.map(function(b){return b.e;})):null;
-      return {c:[routeNum(r),CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
-                 s0==null?"—":fmt(s0)+"-"+fmt(e0)],col:[PC(r.cls).ac]};
-    });
-  }
-  var rr=routeRows(pq,ql).concat(routeRows(pf,fl));
-  var half=Math.ceil(rr.length/2), RC=[{t:"Route",w:14},{t:"Klasse",w:16},{t:"Typ",w:26},{t:"Sicherung",w:20},
-       {t:"Starts",w:15,r:true},{t:"Min",w:13,r:true},{t:"Zeitfenster",w:26}];
-  table(ML,y3,RC,rr.slice(0,half),{rh:5.2,fs:7});
-  table(ML+140,y3,RC,rr.slice(half),{rh:5.2,fs:7});
+  table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
   foot();
 
   /* --- Seite 2: Quali --- */

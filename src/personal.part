@@ -405,6 +405,16 @@ document.getElementById("winReset").onclick=function(){
   CFG.win=clone(CFG0.win); applyWin();
 };
 
+/* ---- Wettkampf-Angaben (Titel/Ort/Datum) ---- */
+[["metaTitle","title"],["metaSub","sub"],["metaLocation","location"],["metaDate","date"]].forEach(function(pair){
+  var el=document.getElementById(pair[0]); if(!el) return;
+  el.onchange=function(){
+    CFG.meta[pair[1]]=this.value.trim()||CFG0.meta[pair[1]];
+    saveCfg(); renderMeta();
+  };
+});
+renderMeta();
+
 /* ---- Kategorien und Personen ---- */
 document.getElementById("addKatGo").onclick=function(){
   var n=document.getElementById("newKat").value.trim(); if(!n) return;

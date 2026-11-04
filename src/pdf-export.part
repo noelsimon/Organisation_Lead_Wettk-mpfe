@@ -357,7 +357,7 @@ function buildPDF(){
   function foot(){
     doc.setFont("helvetica","normal"); doc.setFontSize(7);
     doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text("4. Offener Sächsischer Kidscup 2026 · Quacke Zittau · 26.09.2026",ML,PH-6);
+    doc.text([CFG.meta.title,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,PH-6);
     doc.text("Seite "+page,PW-MR,PH-6,{align:"right"});
     doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
   }
@@ -465,25 +465,10 @@ function buildPDF(){
   var q=pq.stat, f=pf.stat, ql=q.list, fl=f.list;
 
   /* --- Seite 1 --- */
-  var y=head("Regieplan Kids Cup – 4. Offener Sächsischer Kidscup 2026","Planstand "+ds);
+  var y=head("Regieplan Kids Cup – "+CFG.meta.title,"Planstand "+ds);
   doc.setFontSize(8); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-  doc.text("Lead, U9–U15 · Kletterhalle Quacke Zittau · Samstag, 26.09.2026",ML,y); y+=7;
+  doc.text([CFG.meta.sub,CFG.meta.location,CFG.meta.date].filter(Boolean).join(" · "),ML,y); y+=9;
   doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  var kpis=[["Athlet*innen",totalAth()],["Routen",pq.rows.length+pf.rows.length],
-            ["Kletterminuten",ql.reduce(function(a,b){return a+(b.e-b.s);},0)],
-            ["Routen-Teams",Math.max(q.maxR,f.maxR)],["Personen",Math.max(q.maxR,f.maxR)*CFG.teamPers],
-            ["Quali-Ende",fmt(q.end)],["Finale-Ende",fmt(f.end)]];
-  var kw=CW/kpis.length;
-  kpis.forEach(function(k,i){
-    doc.setDrawColor(PDFCOL.line[0],PDFCOL.line[1],PDFCOL.line[2]); doc.setLineWidth(.2);
-    doc.rect(ML+i*kw,y,kw,14);
-    doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.text(String(k[1]),ML+i*kw+3,y+7.5);
-    doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
-    doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-    doc.text(String(k[0]).toUpperCase(),ML+i*kw+3,y+11.8);
-    doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  });
-  y+=20;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Meldezahlen",ML,y); y+=2;
   var mrows=CFG.classes.map(function(c){
     var min=ql.filter(function(b){return b.cls===c.id;}).reduce(function(a,b){return a+(b.e-b.s);},0);
@@ -496,32 +481,13 @@ function buildPDF(){
      ML+112) gehalten, sonst überlappt die rechtsbündige "Kletter-Min"-Spalte
      mit der "Zeit"-Spalte von Tagesablauf (Fix für gemeldete Überlappung:
      116mm bei den alten Breiten liefen 4mm in Tagesablauf hinein). */
-  var ey=table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
+  table(ML,y,[{t:"Klasse",w:20},{t:"Gruppe 1",w:24,r:true},{t:"Gruppe 2",w:24,r:true},{t:"gesamt",w:16,r:true},{t:"Kletter-Min",w:22,r:true}],mrows,{fs:7.5});
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Tagesablauf",ML+112,y);
   var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
     return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
                st.querySelector("div span").textContent.trim()]};
   });
-  var ey2=table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
-  var y3=Math.max(ey,ey2)+9;
-  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-  doc.text("Routenübersicht",ML,y3); y3+=2;
-  function routeRows(plan,list){
-    return plan.rows.map(function(r){
-      var bs=list.filter(function(b){return b.r===r.id;});
-      var st=bs.reduce(function(a,b){return a+b.n;},0);
-      var mi=bs.reduce(function(a,b){return a+(b.e-b.s);},0);
-      var s0=bs.length?Math.min.apply(null,bs.map(function(b){return b.s;})):null;
-      var e0=bs.length?Math.max.apply(null,bs.map(function(b){return b.e;})):null;
-      return {c:[routeNum(r),CLn(r.cls),allowTxt(r),r.mode==="TR"?"Toprope":"Vorstieg",st,mi,
-                 s0==null?"—":fmt(s0)+"-"+fmt(e0)],col:[PC(r.cls).ac]};
-    });
-  }
-  var rr=routeRows(pq,ql).concat(routeRows(pf,fl));
-  var half=Math.ceil(rr.length/2), RC=[{t:"Route",w:14},{t:"Klasse",w:16},{t:"Typ",w:26},{t:"Sicherung",w:20},
-       {t:"Starts",w:15,r:true},{t:"Min",w:13,r:true},{t:"Zeitfenster",w:26}];
-  table(ML,y3,RC,rr.slice(0,half),{rh:5.2,fs:7});
-  table(ML+140,y3,RC,rr.slice(half),{rh:5.2,fs:7});
+  table(ML+112,y+2,[{t:"Zeit",w:16},{t:"Was",w:56},{t:"Hinweis",w:89}],steps,{rh:5.2,fs:7});
   foot();
 
   /* --- Seite 2: Quali --- */
