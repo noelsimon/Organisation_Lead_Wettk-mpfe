@@ -85,6 +85,15 @@ function renderCats(){
   var s=document.getElementById("newPcat");
   if(s) s.innerHTML=CFG.cats.map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>';}).join("");
 }
+/* Qualifizierungsstand je Person (erleichtert die Einsatzplanung: wer darf
+   wo als Sicherung/Schiri eingesetzt werden) - rein informativ, steuert
+   nichts automatisch. "" = keine Angabe, bestehende Personen ohne dieses
+   Feld zeigen das unverändert so an. */
+var QUALOPTS=[["","— keine Angabe —"],["TR","Top Rope"],["VS","Vorstieg"],["beide","Top Rope + Vorstieg"]];
+function qualOptsHtml(sel){
+  return QUALOPTS.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===(sel||"")?" selected":"")+'>'+esc(o[1])+'</option>';}).join("");
+}
+function qualLabel(q){ for(var i=0;i<QUALOPTS.length;i++) if(QUALOPTS[i][0]===q) return QUALOPTS[i][1]; return ""; }
 function renderPeople(){
   var table=document.getElementById("peotab"), body=document.querySelector("#peotab tbody"); if(!body) return;
   var isAdmin=!!(PROFILE&&PROFILE.is_admin);
@@ -101,11 +110,13 @@ function renderPeople(){
        '<input class="cin pnm" data-p="'+p.id+'" value="'+esc(p.name)+'"></div></td>'+
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
+       '<td class="num">'+toggleSwHtml("pspringer",p.id,!!p.springer,"Springer: "+p.name)+'</td>'+
+       '<td><select class="cin sel pqual" data-p="'+p.id+'">'+qualOptsHtml(p.qual)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!list.length) h='<tr><td colspan="6" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
+  if(!list.length) h='<tr><td colspan="8" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
@@ -123,7 +134,15 @@ function renderPeople(){
   upd(".pnm",function(p,v){p.name=v.trim()||p.name;});
   upd(".pcat",function(p,v){p.cat=v;});
   upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
+  upd(".pqual",function(p,v){p.qual=v;});
   upd(".pnote",function(p,v){p.note=v;});
+  Array.prototype.forEach.call(document.querySelectorAll(".pspringer"),function(cb){
+    cb.onchange=function(){
+      var id=this.getAttribute("data-p"), on=this.checked;
+      for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) CFG.people[i].springer=on;
+      saveCfg(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
   Array.prototype.forEach.call(document.querySelectorAll(".pemail"),function(el){
     el.onchange=function(){
       var id=this.getAttribute("data-p"), v=this.value.trim();
@@ -152,7 +171,7 @@ function renderPeople(){
   if(box){
     var free={};
     CFG.people.filter(function(p){return !p.team;}).forEach(function(p){
-      var k=catName(p.cat); (free[k]=free[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));
+      var k=catName(p.cat); (free[k]=free[k]||[]).push(personLabel(p));
     });
     var ks=Object.keys(free);
     box.innerHTML=ks.length
@@ -163,12 +182,25 @@ function renderPeople(){
 function peopleOfTeam(idx){
   return CFG.people.filter(function(p){return +p.team===idx;});
 }
+/* Gemeinsame Beschriftung für Team-Zeitplan (on-screen + PDF), Finalquoten
+   und die Klemmbrett-Karten: Name, dahinter "Springer" statt Kernbesetzung
+   markiert (zum Auswechseln vorgesehen), dahinter die Notiz. */
+function personLabel(p){ return p.name+(p.springer?" · Springer":"")+(p.note?" ("+p.note+")":""); }
 function teamPeopleHtml(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return '<span style="color:var(--muted)">—</span>';
   var by={};
-  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
   return Object.keys(by).map(function(k){
     return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
+}
+/* Textform derselben Zuordnung für den PDF-Export (Team-Zeitplan,
+   Finalquoten, Klemmbrett-Karten) - kein HTML, sonst identische Gruppierung
+   nach Kategorie wie teamPeopleHtml(). */
+function teamPeopleText(idx){
+  var ps=peopleOfTeam(idx); if(!ps.length) return "—";
+  var by={};
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
+  return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ");
 }
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};

@@ -509,9 +509,7 @@ function buildPDF(){
   y=head("Team-Zeitplan","Ein Routen-Team = Sicherung + Ergebnisdienst = "+CFG.teamPers+" Personen");
   var trows=[];
   LASTQ.T.forEach(function(t){
-    var ps=peopleOfTeam(t.idx), by={};
-    ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(p.name);});
-    var pl=Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ")||"—";
+    var ps=peopleOfTeam(t.idx), pl=teamPeopleText(t.idx);
     t.stations.forEach(function(st,i){
       trows.push({c:[i===0?teamName(t.idx):"",fmt(st.s)+"-"+fmt(st.e),routeNum(st.row)+"  "+pq.desc(st.row),
         st.items.map(function(x){return x.lab+" ("+fmt(x.s)+"-"+fmt(x.e)+")";}).join(", "),
@@ -527,9 +525,9 @@ function buildPDF(){
   var frei=CFG.people.filter(function(p){return !p.team;});
   if(frei.length){
     ty+=4;
-    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Ohne Team-Zuordnung",ML,ty); ty+=2;
+    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Weitere Teammitglieder",ML,ty); ty+=2;
     var byc={};
-    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(p.name+(p.note?" ("+p.note+")":""));});
+    frei.forEach(function(p){var k=catName(p.cat); (byc[k]=byc[k]||[]).push(personLabel(p));});
     /* title/sub ergänzt (Fix für Issue #92-Folge "blanke Seiten"): ohne sie
        rief ein Seitenumbruch mitten in dieser kleinen Tabelle head("","")
        auf - komplett titellose Seite. rh/der ty-Abstand oben zusätzlich
@@ -615,7 +613,7 @@ function buildPDF(){
      bewusst nur Admins sehen - eine E-Mail-Spalte hier würde diese
      Datenschutz-Grenze über die PDF-Hintertür unterlaufen. */
   y=head("Personal – Helferliste",CFG.people.length+" Personen erfasst · "+
-    CFG.people.filter(function(p){return !p.team;}).length+" ohne Team-Zuordnung");
+    CFG.people.filter(function(p){return !p.team;}).length+" weitere Teammitglieder");
   var peoRows=CFG.people.slice().sort(function(a,b){
     return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
   }).map(function(p){

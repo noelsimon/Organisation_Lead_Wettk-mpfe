@@ -1415,7 +1415,7 @@ body.editing{caret-color:var(--ink)}
     <div class="scroller peo-catstats" id="peoCatStats"></div>
     <div class="att-filters" id="peoCatChips" role="group" aria-label="Personen nach Kategorie filtern"></div>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -1430,7 +1430,7 @@ body.editing{caret-color:var(--ink)}
     </div>
     <p class="pdfmsg" id="peoMsg" role="status"></p>
 
-    <h4>Ohne Team-Zuordnung</h4>
+    <h4>Weitere Teammitglieder</h4>
     <div id="nolist" style="margin:0 0 22px"></div>
 
     <div class="cards g3">
