@@ -114,7 +114,7 @@ Plan.prototype.addClass=function(c){
     blk(gm,rm,t0); blk(gm,r1,Math.min(this.o.end-dm,t0+offM));
     blk(gw,r2,t0); blk(gw,rm,Math.min(this.o.end-dw,t0+offW));
   }else{
-    t0=this.o.start+(CFG.win.bes||25)+(CFG.win.iso||20);
+    t0=this.o.start+finalFixedDur();
     var ra=row("w"), rb=row("m");
     var ga=grp("w",quota(c.w)), gb=grp("m",quota(c.m));
     blk(ga,ra,t0); blk(gb,rb,t0);
@@ -765,7 +765,7 @@ function renderWin(){
   ["winIso","finIsoIn"].forEach(function(id){var el=document.getElementById(id); if(el) el.value=CFG.win.iso;});
   var out=document.getElementById("winOut");
   if(out) out.textContent="Quali "+fmt(CFG.win.qs)+"–"+fmt(CFG.win.qe)+" · Finale "+fmt(CFG.win.fs)+"–"+fmt(CFG.win.fe)+
-    " · erster Finalzug "+fmt(CFG.win.fs+(+CFG.win.bes||0)+(+CFG.win.iso||0));
+    " · erster Finalzug "+fmt(CFG.win.fs+finalFixedDur());
 }
 function applyWin(){
   if(CFG.win.qe<=CFG.win.qs) CFG.win.qe=CFG.win.qs+60;

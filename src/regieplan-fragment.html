@@ -1756,13 +1756,21 @@ var clone=function(x){return JSON.parse(JSON.stringify(x));};
 
 /* ================= Konfiguration: Wertungsklassen, Zeitfenster, Personal ================= */
 var CFG0={
+  /* Freie Angaben fürs PDF und die Kopfzeile (Issue: PDF zeigte bei jedem
+     Wettkampf hartkodiert "4. Offener Sächsischer Kidscup 2026 · Quacke
+     Zittau · 26.09.2026", unabhängig vom tatsächlich gewählten Wettkampf) -
+     liegt bewusst in CFG statt in der competitions-Tabelle, damit es über
+     dieselbe pushState("cfg",…)-Synchronisierung läuft wie alles andere
+     und ohne neue Migration auskommt. */
+  meta:{title:"4. Offener Sächsischer Kidscup 2026", sub:"Lead, U9–U15",
+        location:"Kletterhalle Quacke Zittau", date:"Samstag, 26.09.2026"},
   classes:[
     {id:"U9",  name:"U9",  color:0, lm:"männlich", lw:"weiblich", m:4, w:6,  mode:"TR"},
     {id:"U11", name:"U11", color:1, lm:"männlich", lw:"weiblich", m:7, w:13, mode:"TR"},
     {id:"U13", name:"U13", color:2, lm:"männlich", lw:"weiblich", m:8, w:16, mode:"TR"},
     {id:"U15", name:"U15", color:3, lm:"männlich", lw:"weiblich", m:5, w:8,  mode:"Vorstieg"}
   ],
-  win:{qs:M(10,15), qe:M(13,45), fs:M(13,30), fe:M(15,45), bes:25, iso:20},
+  win:{qs:M(10,15), qe:M(13,45), fs:M(13,30), fe:M(15,45), bes:25, iso:20, order:"bi", extra:[]},
   cats:[{id:"k1",name:"Sicherung"},{id:"k2",name:"Ergebnisdienst"},{id:"k3",name:"Routenbau"},
         {id:"k4",name:"Orga-Team"},{id:"k5",name:"Buffet"}],
   people:[],
@@ -1772,6 +1780,21 @@ var CFG0={
   seq:100
 };
 var CFG=clone(CFG0);
+/* Fehlende Felder an bestehendem CFG ergänzen (Bestandsdaten ohne meta/
+   win.order/win.extra, z. B. aus localStorage oder einem älteren
+   Supabase-Stand) - rein additiv, nie Vorhandenes überschreiben. Gemeinsam
+   genutzt von der localStorage-Migration unten und applySnapshot()
+   (aufgaben-chat.part), damit beide Lade-Pfade dieselben Defaults ziehen. */
+function cfgDefaults(c){
+  c.win=c.win||clone(CFG0.win); c.cats=c.cats||clone(CFG0.cats);
+  c.people=c.people||[]; c.seq=c.seq||100; c.helferSoll=c.helferSoll||0; c.teamPers=c.teamPers||3; c.routeNotes=c.routeNotes||{};
+  ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(c.win[k]==null) c.win[k]=CFG0.win[k]; });
+  c.win.order=(c.win.order==="ib")?"ib":"bi";
+  c.win.extra=c.win.extra||[];
+  c.meta=c.meta||{};
+  Object.keys(CFG0.meta).forEach(function(k){ if(c.meta[k]==null) c.meta[k]=CFG0.meta[k]; });
+  return c;
+}
 var CLASSES=[], ACOF={}, FIELD={}, LABS={}, CNAME={};
 function reindex(){
   CLASSES=[]; ACOF={}; FIELD={}; LABS={}; CNAME={};
@@ -1789,11 +1812,8 @@ function gl(id,g){return (LABS[id]&&LABS[id][g])||GTXT[g]||g;}
 function newId(p){return p+(++CFG.seq);}
 function saveCfg(){try{localStorage.setItem("kidscup-cfg-v1",JSON.stringify(CFG));}catch(e){} pushState("cfg",CFG);}
 try{var _c=JSON.parse(localStorage.getItem("kidscup-cfg-v1")||"null");
-  if(_c&&_c.classes&&_c.classes.length){
-    CFG=_c; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||clone(CFG0.cats);
-    CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
-    ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(CFG.win[k]==null) CFG.win[k]=CFG0.win[k]; });
-  }}catch(e){}
+  if(_c&&_c.classes&&_c.classes.length){ CFG=_c; cfgDefaults(CFG); }
+  }catch(e){}
 reindex();
 function quota(n){ if(n<=0) return 0; return Math.min(n, n>=20?10:6); }
 function totalAth(){var t=0;CFG.classes.forEach(function(c){t+=(+c.m||0)+(+c.w||0);});return t;}
@@ -1849,11 +1869,31 @@ var FBLOCKS=[
  {id:"c5",gid:"h5",r:"F5",s:M(14,15)}, {id:"c6",gid:"h6",r:"F6",s:M(14,15)},
  {id:"c7",gid:"h7",r:"F7",s:M(14,53)}
 ];
+/* Reihenfolge Besichtigung/ISO vertauschbar (CFG.win.order) plus beliebig
+   viele frei benannte Zusatzblöcke (CFG.win.extra, z. B. "Fotos" oder
+   "Aufwärmen") vor dem ersten Kletterblock jeder Finalroute - in dieser
+   Reihenfolge direkt aneinander. Ohne CFG.win.order/.extra (siehe
+   cfgDefaults()) verhält es sich exakt wie vorher: Besichtigung, dann ISO,
+   keine Zusatzblöcke. */
+function finalFixedPhases(){
+  var phases=(CFG.win.order==="ib")
+    ? [{kind:"iso",lab:"ISO",dur:+CFG.win.iso||0},{kind:"bes",lab:"Besichtigung",dur:+CFG.win.bes||0}]
+    : [{kind:"bes",lab:"Besichtigung",dur:+CFG.win.bes||0},{kind:"iso",lab:"ISO",dur:+CFG.win.iso||0}];
+  (CFG.win.extra||[]).forEach(function(ex){
+    phases.push({kind:"extra",id:ex.id,lab:ex.label||"Zusatz",dur:+ex.dur||0,extra:true});
+  });
+  return phases;
+}
+function finalFixedDur(){
+  return finalFixedPhases().reduce(function(a,p){return a+(p.dur>0?p.dur:0);},0);
+}
 function ffix(plan){
-  var out=[], s=plan.o.start, b=+CFG.win.bes||0, i=+CFG.win.iso||0;
+  var out=[], s0=plan.o.start, phases=finalFixedPhases();
   plan.rows.forEach(function(row){
-    if(b>0) out.push({r:row.id, cls:row.cls, dur:b, s:s, lab:"Besichtigung"});
-    if(i>0) out.push({r:row.id, cls:row.cls, dur:i, s:s+b, lab:"ISO"});
+    var t=s0;
+    phases.forEach(function(p){
+      if(p.dur>0){ out.push({r:row.id, cls:row.cls, dur:p.dur, s:t, lab:p.lab, extra:!!p.extra}); t+=p.dur; }
+    });
   });
   return out;
 }
@@ -1974,7 +2014,7 @@ Plan.prototype.addClass=function(c){
     blk(gm,rm,t0); blk(gm,r1,Math.min(this.o.end-dm,t0+offM));
     blk(gw,r2,t0); blk(gw,rm,Math.min(this.o.end-dw,t0+offW));
   }else{
-    t0=this.o.start+(CFG.win.bes||25)+(CFG.win.iso||20);
+    t0=this.o.start+finalFixedDur();
     var ra=row("w"), rb=row("m");
     var ga=grp("w",quota(c.w)), gb=grp("m",quota(c.m));
     blk(ga,ra,t0); blk(gb,rb,t0);
@@ -2625,7 +2665,7 @@ function renderWin(){
   ["winIso","finIsoIn"].forEach(function(id){var el=document.getElementById(id); if(el) el.value=CFG.win.iso;});
   var out=document.getElementById("winOut");
   if(out) out.textContent="Quali "+fmt(CFG.win.qs)+"–"+fmt(CFG.win.qe)+" · Finale "+fmt(CFG.win.fs)+"–"+fmt(CFG.win.fe)+
-    " · erster Finalzug "+fmt(CFG.win.fs+(+CFG.win.bes||0)+(+CFG.win.iso||0));
+    " · erster Finalzug "+fmt(CFG.win.fs+finalFixedDur());
 }
 function applyWin(){
   if(CFG.win.qe<=CFG.win.qs) CFG.win.qe=CFG.win.qs+60;
@@ -4793,7 +4833,7 @@ function snapshot(){
 }
 function applySnapshot(s){
   if(!s||!s.cfg||!s.q||!s.f) return false;
-  CFG=s.cfg; CFG.win=CFG.win||clone(CFG0.win); CFG.cats=CFG.cats||[]; CFG.people=CFG.people||[]; CFG.seq=CFG.seq||100; CFG.helferSoll=CFG.helferSoll||0; CFG.teamPers=CFG.teamPers||3; CFG.routeNotes=CFG.routeNotes||{};
+  CFG=s.cfg; cfgDefaults(CFG);
   reindex(); saveCfg();
   TXT=s.texts||{}; try{localStorage.setItem(TXTKEY,JSON.stringify(TXT));}catch(e){}
   TXTBLOCKS=s.textblocks||{added:[],hidden:[]}; try{localStorage.setItem(TXTBLOCKKEY,JSON.stringify(TXTBLOCKS));}catch(e){}
