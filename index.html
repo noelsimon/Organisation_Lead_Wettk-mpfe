@@ -1356,7 +1356,7 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lk">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Route 2</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
@@ -1540,7 +1540,7 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lkf">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Route 2</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
@@ -2416,18 +2416,41 @@ Plan.prototype.recalc=function(){
   if(o.laufkarte) this.laufkarte(list);
   if(o.onchange) o.onchange(this,list);
 };
-Plan.prototype.laufkarte=function(list){
-  var self=this,by={},h="";
+/* Daten für die Laufkarte, gemeinsam genutzt von der On-Screen-Tabelle
+   unten und der PDF-Seite "Laufkarte der Startgruppen" (pdf-export.part),
+   damit beide nie auseinanderlaufen. Bisher waren hier genau zwei Runden
+   je Startgruppe hartkodiert (bs[0]/bs[1]) - eine dritte, manuell über
+   "+ Balken" hinzugefügte Runde (z. B. ein drittes U9-Quali-Team) fiel
+   dadurch kommentarlos unter den Tisch. slots enthält jetzt alle Runden
+   der Gruppe, sortiert nach Startzeit; die Anzeige (Spalten "Route N" /
+   "Startzeiten") zeigt bis zu drei davon. */
+Plan.prototype.laufkarteRows=function(list){
+  var self=this,by={},rows=[];
   list.forEach(function(b){by[b.id]=b;});
   this.groups.forEach(function(g){
     var bs=self.blocks.filter(function(b){return b.gid===g.id;}).map(function(b){return by[b.id];})
-            .sort(function(a,b){return a.s-b.s;});
+            .filter(Boolean).sort(function(a,b){return a.s-b.s;});
     if(bs.length<2) return;
-    var pt=self.pauseTxt(g,bs);
-    h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[0].r)))+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[1].r)))+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
-       '<td class="num"><span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span></td></tr>';
+    rows.push({g:g, label:self.label(g), n:g.n,
+      slots:bs.map(function(b){return {route:self.row(b.r), s:b.s, e:b.e};}),
+      /* Pausen-Kennzahl bezieht sich (wie pauseRange()) auf genau zwei
+         Runden - bei mehr als zwei Runden (3. Route) gibt es keinen
+         einzelnen "die" Pause-Wert mehr, darum dann kein Flag statt eines
+         irreführenden einzelnen Werts. */
+      pause:bs.length===2?self.pauseTxt(g,bs):null});
+  });
+  return rows;
+};
+Plan.prototype.laufkarte=function(list){
+  var self=this,h="";
+  this.laufkarteRows(list).forEach(function(row){
+    var pt=row.pause;
+    h+='<tr data-ac="'+ACOF[row.g.cls]+'"><td><span class="ac">'+esc(row.label)+'</span></td><td class="num">'+row.n+'</td>';
+    for(var i=0;i<3;i++){
+      var sl=row.slots[i];
+      h+='<td>'+(sl?esc(routeNum(sl.route)):"")+'</td><td class="tm">'+(sl?fmt(sl.s)+'–'+fmt(sl.e):"")+'</td>';
+    }
+    h+='<td class="num">'+(pt?'<span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span>':'—')+'</td></tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
 };
@@ -5655,15 +5678,18 @@ function buildPDF(){
   y=head("Qualifikation – Zeitplan","Ende "+fmt(q.end)+" · max. "+q.maxR+" Routen gleichzeitig · "+(q.maxR*CFG.teamPers)+" Personen");
   y=gantt(ML,y,CW,110,pq,ql,44)+6;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Laufkarte der Startgruppen",ML,y); y+=2;
-  var lk=[];
-  pq.groups.forEach(function(g){
-    var bs=ql.filter(function(b){return b.gid===g.id;}).sort(function(a,b){return a.s-b.s;});
-    if(bs.length<2) return;
-    var pt=pq.pauseTxt(g,bs);
-    lk.push({c:[pq.label(g),g.n,routeNum(pq.row(bs[0].r))+" · "+fmt(bs[0].s)+"-"+fmt(bs[0].e),routeNum(pq.row(bs[1].r))+" · "+fmt(bs[1].s)+"-"+fmt(bs[1].e),pt.txt],
-             col:[PC(g.cls).ac,null,null,null,pt.ok?[24,96,69]:[142,47,41]]});
+  var lk=pq.laufkarteRows(ql).map(function(row){
+    var c=[row.label,row.n];
+    for(var i=0;i<3;i++){
+      var sl=row.slots[i];
+      c.push(sl?routeNum(sl.route):"—"); c.push(sl?fmt(sl.s)+"-"+fmt(sl.e):"");
+    }
+    c.push(row.pause?row.pause.txt:"—");
+    return {c:c, col:[PC(row.g.cls).ac,null,null,null,null,null,null,null,row.pause?(row.pause.ok?[24,96,69]:[142,47,41]):null]};
   });
-  table(ML,y,[{t:"Startgruppe",w:44},{t:"TN",w:12,r:true},{t:"Route 1",w:44},{t:"Route 2",w:44},{t:"Pause",w:20,r:true}],lk,{rh:5.4,fs:7.5});
+  table(ML,y,[{t:"Startgruppe",w:40},{t:"TN",w:11,r:true},
+    {t:"Route 1",w:14},{t:"Startzeiten",w:30},{t:"Route 2",w:14},{t:"Startzeiten",w:30},{t:"Route 3",w:14},{t:"Startzeiten",w:30},
+    {t:"Pause",w:19,r:true}],lk,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 3: Teams --- */

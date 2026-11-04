@@ -478,18 +478,41 @@ Plan.prototype.recalc=function(){
   if(o.laufkarte) this.laufkarte(list);
   if(o.onchange) o.onchange(this,list);
 };
-Plan.prototype.laufkarte=function(list){
-  var self=this,by={},h="";
+/* Daten für die Laufkarte, gemeinsam genutzt von der On-Screen-Tabelle
+   unten und der PDF-Seite "Laufkarte der Startgruppen" (pdf-export.part),
+   damit beide nie auseinanderlaufen. Bisher waren hier genau zwei Runden
+   je Startgruppe hartkodiert (bs[0]/bs[1]) - eine dritte, manuell über
+   "+ Balken" hinzugefügte Runde (z. B. ein drittes U9-Quali-Team) fiel
+   dadurch kommentarlos unter den Tisch. slots enthält jetzt alle Runden
+   der Gruppe, sortiert nach Startzeit; die Anzeige (Spalten "Route N" /
+   "Startzeiten") zeigt bis zu drei davon. */
+Plan.prototype.laufkarteRows=function(list){
+  var self=this,by={},rows=[];
   list.forEach(function(b){by[b.id]=b;});
   this.groups.forEach(function(g){
     var bs=self.blocks.filter(function(b){return b.gid===g.id;}).map(function(b){return by[b.id];})
-            .sort(function(a,b){return a.s-b.s;});
+            .filter(Boolean).sort(function(a,b){return a.s-b.s;});
     if(bs.length<2) return;
-    var pt=self.pauseTxt(g,bs);
-    h+='<tr data-ac="'+ACOF[g.cls]+'"><td><span class="ac">'+esc(self.label(g))+'</span></td><td class="num">'+g.n+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[0].r)))+' · '+fmt(bs[0].s)+'–'+fmt(bs[0].e)+'</td>'+
-       '<td class="tm">'+esc(routeNum(self.row(bs[1].r)))+' · '+fmt(bs[1].s)+'–'+fmt(bs[1].e)+'</td>'+
-       '<td class="num"><span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span></td></tr>';
+    rows.push({g:g, label:self.label(g), n:g.n,
+      slots:bs.map(function(b){return {route:self.row(b.r), s:b.s, e:b.e};}),
+      /* Pausen-Kennzahl bezieht sich (wie pauseRange()) auf genau zwei
+         Runden - bei mehr als zwei Runden (3. Route) gibt es keinen
+         einzelnen "die" Pause-Wert mehr, darum dann kein Flag statt eines
+         irreführenden einzelnen Werts. */
+      pause:bs.length===2?self.pauseTxt(g,bs):null});
+  });
+  return rows;
+};
+Plan.prototype.laufkarte=function(list){
+  var self=this,h="";
+  this.laufkarteRows(list).forEach(function(row){
+    var pt=row.pause;
+    h+='<tr data-ac="'+ACOF[row.g.cls]+'"><td><span class="ac">'+esc(row.label)+'</span></td><td class="num">'+row.n+'</td>';
+    for(var i=0;i<3;i++){
+      var sl=row.slots[i];
+      h+='<td>'+(sl?esc(routeNum(sl.route)):"")+'</td><td class="tm">'+(sl?fmt(sl.s)+'–'+fmt(sl.e):"")+'</td>';
+    }
+    h+='<td class="num">'+(pt?'<span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span>':'—')+'</td></tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
 };
