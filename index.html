@@ -1356,7 +1356,7 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lk">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
@@ -1386,7 +1386,7 @@ body.editing{caret-color:var(--ink)}
         <ul style="font-size:14.5px">
           <li>Standardmäßig klettern auf den gemischten Routen <strong>erst die Jungs, dann die Mädchen</strong> – daher die zweifarbigen Balken. Mit dem Schalter <strong>↔ m/w</strong> an der Route lässt sich das auf abwechselnden Start (m/w/m/w) umstellen; die beiden Balken werden dann zu einem gemeinsamen, gestreiften Balken „männlich + weiblich · abwechselnd".</li>
           <li>Innerhalb einer Gruppe nach Ranking sortieren und in umgekehrter Reihenfolge starten: die Stärksten zuletzt.</li>
-          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt. Sind die beiden Routen einer Gruppe so gegeneinander gedreht, zeigt die Laufkarte statt eines einzelnen Werts eine <strong>Pausen-Spanne</strong> (z. B. „12–58 Min"), weil die Pause dann von Startnummer zu Startnummer unterschiedlich lang ist.</li>
+          <li>Standardmäßig <strong>dieselbe Reihenfolge auf beiden Routen</strong> – nur so ist die Pause für alle in der Gruppe gleich. Der Schalter <strong>1→n / n→1</strong> an einer Route dreht ihre Startreihenfolge um, z. B. damit Startnummer 1 auf der zweiten Route zuletzt beginnt. Sind die beiden Routen einer Gruppe so gegeneinander gedreht, zeigt das Wegediagramm unten statt eines einzelnen Werts eine <strong>Pausen-Spanne</strong> (z. B. „12–58 Min"), weil die Pause dann von Startnummer zu Startnummer unterschiedlich lang ist.</li>
           <li>Individuelle Startzeit = Blockbeginn + Startnummer × 6 Minuten.</li>
         </ul>
       </div>
@@ -1555,7 +1555,7 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Laufkarte der Startgruppen</h3>
     <div class="tblwrap"><table id="lkf">
-      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th><th class="num">Pause</th></tr></thead>
+      <thead><tr><th>Startgruppe</th><th class="num">TN</th><th>Route 1</th><th>Startzeiten</th><th>Route 2</th><th>Startzeiten</th><th>Route 3</th><th>Startzeiten</th></tr></thead>
       <tbody></tbody>
     </table></div>
 
@@ -2459,13 +2459,12 @@ Plan.prototype.laufkarteRows=function(list){
 Plan.prototype.laufkarte=function(list){
   var self=this,h="";
   this.laufkarteRows(list).forEach(function(row){
-    var pt=row.pause;
     h+='<tr data-ac="'+ACOF[row.g.cls]+'"><td><span class="ac">'+esc(row.label)+'</span></td><td class="num">'+row.n+'</td>';
     for(var i=0;i<3;i++){
       var sl=row.slots[i];
       h+='<td>'+(sl?esc(routeNum(sl.route)):"")+'</td><td class="tm">'+(sl?fmt(sl.s)+'–'+fmt(sl.e):"")+'</td>';
     }
-    h+='<td class="num">'+(pt?'<span class="pill '+(pt.ok?"ok":"bad")+'"'+(pt.uneven?' title="Startreihenfolge auf den beiden Routen ist gegeneinander gedreht: die Pause ist nicht für alle in der Gruppe gleich."':'')+'>'+pt.txt+'</span>':'—')+'</td></tr>';
+    h+='</tr>';
   });
   document.querySelector(this.o.laufkarte+" tbody").innerHTML=h;
 };
@@ -2994,13 +2993,26 @@ function teamPeopleHtml(idx){
     return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
 }
 /* Textform derselben Zuordnung für den PDF-Export (Team-Zeitplan,
-   Finalquoten, Klemmbrett-Karten) - kein HTML, sonst identische Gruppierung
-   nach Kategorie wie teamPeopleHtml(). */
+   Finalquoten) - kein HTML, sonst identische Gruppierung nach Kategorie wie
+   teamPeopleHtml(). */
 function teamPeopleText(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return "—";
   var by={};
   ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
   return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ");
+}
+/* Eigene, notizfreie Zeilen je Kategorie für die Klemmbrett-Karten: Notizen
+   können sensible/interne Hinweise sein und gehören nicht aufs Klemmbrett,
+   und jede Kategorie soll dort in einer eigenen Zeile stehen statt mit " · "
+   zusammengefasst zu werden (anders als teamPeopleText()). */
+function teamPeopleLines(idx){
+  var ps=peopleOfTeam(idx); if(!ps.length) return ["—"];
+  var by={};
+  ps.forEach(function(p){
+    var k=catName(p.cat), label=p.name+(p.springer?" · Springer":"");
+    (by[k]=by[k]||[]).push(label);
+  });
+  return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");});
 }
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};
@@ -5581,6 +5593,18 @@ function buildPDF(){
     return o;
   }
   function PC(cls){return PDFCOL[ACOF[cls]]||PDFCOL.c7;}
+  /* Zeichenweise kürzen statt doc.text()s Wortumbruch (Issue: "Besichtigung"
+     ist deutlich länger als "ISO" - bei knappem Balken lief das Wort bisher
+     per maxWidth in eine zweite Zeile um, die dann die Zeitangabe darunter
+     überlagerte und dadurch unleserlich bzw. "verschwunden" wirkte). Gibt
+     bei Platzmangel eine mit "…" gekürzte einzeilige Fassung zurück, nie
+     mehrzeilig. */
+  function fitText(label,maxW){
+    if(doc.getTextWidth(label)<=maxW) return label;
+    var s=String(label);
+    while(s.length>1 && doc.getTextWidth(s+"…")>maxW) s=s.slice(0,-1);
+    return s.length<label.length ? s+"…" : s;
+  }
   var _text=doc.text.bind(doc), _split=doc.splitTextToSize.bind(doc);
   doc.text=function(t,x,y,o){ return _text(Array.isArray(t)?t.map(P):P(t),x,y,o); };
   doc.splitTextToSize=function(t,w,o){ return _split(P(t),w,o); };
@@ -5692,10 +5716,12 @@ function buildPDF(){
         if(doc.setLineDashPattern) doc.setLineDashPattern([.7,.7],0);
         doc.rect(bx,yy+.6,bw,rh-1.8,"D");
         if(doc.setLineDashPattern) doc.setLineDashPattern([],0);
-        if(bw>16){
+        if(bw>7){
           doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
-          doc.setFontSize(5.6); doc.text(fx.lab,bx+1.4,yy+3.1,{maxWidth:bw-2});
-          doc.setFontSize(4.8); doc.text(fmt(fx.s)+"-"+fmt(fx.s+fx.dur),bx+1.4,yy+5.6,{maxWidth:bw-2});
+          doc.setFontSize(5.6); doc.text(fitText(fx.lab,bw-2),bx+1.4,yy+3.1);
+          if(bw>16){
+            doc.setFontSize(4.8); doc.text(fitText(fmt(fx.s)+"-"+fmt(fx.s+fx.dur),bw-2),bx+1.4,yy+5.6);
+          }
         }
       });
       list.filter(function(b){return b.r===r.id;}).forEach(function(b){
@@ -5755,12 +5781,11 @@ function buildPDF(){
       var sl=row.slots[i];
       c.push(sl?routeNum(sl.route):"—"); c.push(sl?fmt(sl.s)+"-"+fmt(sl.e):"");
     }
-    c.push(row.pause?row.pause.txt:"—");
-    return {c:c, col:[PC(row.g.cls).ac,null,null,null,null,null,null,null,row.pause?(row.pause.ok?[24,96,69]:[142,47,41]):null]};
+    return {c:c, col:[PC(row.g.cls).ac]};
   });
-  table(ML,y,[{t:"Startgruppe",w:40},{t:"TN",w:11,r:true},
-    {t:"Route 1",w:14},{t:"Startzeiten",w:30},{t:"Route 2",w:14},{t:"Startzeiten",w:30},{t:"Route 3",w:14},{t:"Startzeiten",w:30},
-    {t:"Pause",w:19,r:true}],lk,{rh:5.4,fs:7.5});
+  table(ML,y,[{t:"Startgruppe",w:58},{t:"TN",w:11,r:true},
+    {t:"Route 1",w:14},{t:"Startzeiten",w:30},{t:"Route 2",w:14},{t:"Startzeiten",w:30},{t:"Route 3",w:14},{t:"Startzeiten",w:30}],
+    lk,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 3: Teams --- */
@@ -5822,7 +5847,8 @@ function buildPDF(){
       var ky=cy+11.5;
       doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Besetzung",cx+3,ky); ky+=3.6;
       doc.setFont("helvetica","normal"); doc.setFontSize(7);
-      var kpl=doc.splitTextToSize(teamPeopleText(t.idx),kbCardW-6);
+      var kpl=[];
+      teamPeopleLines(t.idx).forEach(function(line){ kpl=kpl.concat(doc.splitTextToSize(line,kbCardW-6)); });
       doc.text(kpl,cx+3,ky); ky+=kpl.length*2.9+3.5;
       doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Einsätze",cx+3,ky); ky+=1.5;
       var ksrows=t.stations.map(function(st){

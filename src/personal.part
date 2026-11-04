@@ -194,13 +194,26 @@ function teamPeopleHtml(idx){
     return '<span class="pgrp"><b>'+esc(k)+'</b> '+esc(by[k].join(", "))+'</span>';}).join(" ");
 }
 /* Textform derselben Zuordnung für den PDF-Export (Team-Zeitplan,
-   Finalquoten, Klemmbrett-Karten) - kein HTML, sonst identische Gruppierung
-   nach Kategorie wie teamPeopleHtml(). */
+   Finalquoten) - kein HTML, sonst identische Gruppierung nach Kategorie wie
+   teamPeopleHtml(). */
 function teamPeopleText(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return "—";
   var by={};
   ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
   return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ");
+}
+/* Eigene, notizfreie Zeilen je Kategorie für die Klemmbrett-Karten: Notizen
+   können sensible/interne Hinweise sein und gehören nicht aufs Klemmbrett,
+   und jede Kategorie soll dort in einer eigenen Zeile stehen statt mit " · "
+   zusammengefasst zu werden (anders als teamPeopleText()). */
+function teamPeopleLines(idx){
+  var ps=peopleOfTeam(idx); if(!ps.length) return ["—"];
+  var by={};
+  ps.forEach(function(p){
+    var k=catName(p.cat), label=p.name+(p.springer?" · Springer":"");
+    (by[k]=by[k]||[]).push(label);
+  });
+  return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");});
 }
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};
