@@ -5266,6 +5266,62 @@ function pdfSay(msg,bad){
   var el=document.getElementById("pdfmsg");
   el.textContent=msg||""; el.className="pdfmsg"+(bad?" bad":"");
 }
+/* Rastert das echte, live auf der Seite stehende "Wege der Startgruppen"-SVG
+   (#flow svg, von renderFlow() gebaut) zu einem PNG - für den PDF-Export,
+   damit dort exakt dasselbe Diagramm wie auf der Webseite erscheint statt
+   eines eigenen, nur ähnlichen jsPDF-Nachbaus (Issue: beide Versionen liefen
+   bei Änderungen am Diagramm leicht auseinander).
+   Das SVG selbst nutzt CSS-Variablen (var(--ac) usw.) für Farben/Schrift,
+   die nur im Seitenkontext aufgelöst werden - vor dem Rastern werden sie
+   darum je Element über getComputedStyle() durch die tatsächlich berechneten
+   Werte ersetzt (eine Kopie, das Original auf der Seite bleibt unverändert).
+   Liefert null, wenn kein #flow-SVG existiert oder das Rastern fehlschlägt -
+   der Aufrufer fällt dann auf den alten Nachbau zurück. */
+function flowSvgImage(scale){
+  return new Promise(function(resolve){
+    try{
+      var live=document.querySelector("#flow svg");
+      if(!live){ resolve(null); return; }
+      var vb=live.viewBox.baseVal;
+      var W=(vb&&vb.width)?vb.width:980, H=(vb&&vb.height)?vb.height:300;
+      var clone=live.cloneNode(true);
+      clone.setAttribute("xmlns","http://www.w3.org/2000/svg");
+      clone.setAttribute("width",W); clone.setAttribute("height",H);
+      clone.style.width=""; clone.style.height="";
+      function inlineStyle(src,dst){
+        var cs=getComputedStyle(src);
+        ["fill","stroke","color"].forEach(function(p){
+          var attr=src.getAttribute(p);
+          if(attr&&attr.indexOf("var(")>=0) dst.setAttribute(p,cs[p]);
+        });
+        var ff=src.getAttribute("font-family");
+        if(ff&&ff.indexOf("var(")>=0) dst.setAttribute("font-family",cs.fontFamily);
+      }
+      inlineStyle(live,clone);
+      var liveEls=live.querySelectorAll("*"), cloneEls=clone.querySelectorAll("*");
+      for(var i=0;i<liveEls.length;i++) inlineStyle(liveEls[i],cloneEls[i]);
+      var xml=new XMLSerializer().serializeToString(clone);
+      var blob=new Blob([xml],{type:"image/svg+xml;charset=utf-8"});
+      var url=URL.createObjectURL(blob), img=new Image();
+      img.onload=function(){
+        var s=scale||2.5, canvas=document.createElement("canvas");
+        canvas.width=Math.round(W*s); canvas.height=Math.round(H*s);
+        var ctx=canvas.getContext("2d");
+        ctx.fillStyle="#fff"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        URL.revokeObjectURL(url);
+        /* JPEG statt PNG (Issue: PNG mit Alphakanal landete bei jsPDF
+           unkomprimiert im PDF, ~16 MB für dieses eine Bild). Der weiße
+           Hintergrund oben macht Transparenz hier ohnehin überflüssig, und
+           JPEG bei hoher Qualität komprimiert ein überwiegend flächiges
+           Liniendiagramm wie dieses auf einen Bruchteil der Größe. */
+        resolve({dataUrl:canvas.toDataURL("image/jpeg",0.92), w:W, h:H});
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); resolve(null); };
+      img.src=url;
+    }catch(e){ resolve(null); }
+  });
+}
 function T(el,fb){var n=document.querySelector('[data-ed="'+el+'"]'); return n?n.textContent.trim():fb;}
 
 /* ================= Kontakt-E-Mail je Person (nur Admin) =================
@@ -5886,8 +5942,14 @@ function buildPDF(){
               {t:"Route",w:16},{t:"Zeit",w:26},{t:"Team und Teammitglieder",w:CW-112}],frows,{rh:5.4,fs:7.5});
   foot();
 
-  /* --- Seite 5: Wege --- */
-  y=head("Wege der Startgruppen","Eine Zeile je Startgruppe · Pfeil = Pause zwischen den Runden");
+  /* --- Seite 5: Wege ---
+     Zeigt das echte SVG-Diagramm der Webseite als eingebettetes Bild
+     (flowSvgImage(), ganz am Ende dieser Funktion, nachdem alle Seiten stehen -
+     siehe dort). drawFlowFallback() ist der alte, eigenständig mit jsPDF
+     gezeichnete Nachbau und bleibt als Sicherheitsnetz, falls das Rastern im
+     Browser aus irgendeinem Grund fehlschlägt (z. B. kein SVG vorhanden). */
+  var flowPage=null, flowY=null;
+  function drawFlowFallback(y){
   var lanes=flowLanes(pq,ql), t0=pq.o.start,t1=pq.o.end,span=t1-t0;
   var lx=ML+42, lw=CW-42, LX=function(t){return lx+((t-t0)/span)*lw;};
   doc.setFontSize(6.5); doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
@@ -5926,6 +5988,9 @@ function buildPDF(){
       }
     });
   });
+  }
+  flowY=head("Wege der Startgruppen","Eine Zeile je Startgruppe · Pfeil = Pause zwischen den Runden");
+  flowPage=page;
   foot();
 
   /* --- Seite 6: Personal - Helferliste ---
@@ -5952,7 +6017,19 @@ function buildPDF(){
     {rh:5.2,fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
   foot();
 
-  return doc;
+  var lastPage=page;
+  function placeFlow(png){
+    doc.setPage(flowPage);
+    if(png){
+      var maxW=CW, maxH=PH-18-flowY, scale=Math.min(maxW/png.w,maxH/png.h);
+      doc.addImage(png.dataUrl,"JPEG",ML,flowY,png.w*scale,png.h*scale);
+    } else {
+      drawFlowFallback(flowY);
+    }
+    doc.setPage(lastPage);
+    return doc;
+  }
+  return flowSvgImage(2.5).then(placeFlow).catch(function(){ return placeFlow(null); });
 }
 var busy=false;
 document.getElementById("pdfbtn").onclick=function(){
@@ -5963,7 +6040,10 @@ document.getElementById("pdfbtn").onclick=function(){
     : loadJs("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"))
   .then(function(){
     if(!(window.jspdf&&window.jspdf.jsPDF)) throw new Error("jspdf");
-    var doc=buildPDF(), blob=doc.output("blob");
+    return buildPDF();
+  })
+  .then(function(doc){
+    var blob=doc.output("blob");
     return (window.claude&&window.claude.use?window.claude.use("downloads"):Promise.resolve(null))
       .then(function(dl){
         if(dl&&dl.save) return dl.save({filename:"Regieplan-Kidscup-2026.pdf",data:blob})
