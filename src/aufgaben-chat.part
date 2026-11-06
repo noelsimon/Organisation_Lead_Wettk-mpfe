@@ -714,6 +714,8 @@ function applySnapshot(s){
   applyHiddenBlocks();
   document.querySelectorAll("[data-ed]").forEach(updateEmptyFlag);
   updateEmptyContainers();
+  migrateScheduleFromRail();
+  renderSchedule();
   if(editing) renderRestoreList();
   return true;
 }

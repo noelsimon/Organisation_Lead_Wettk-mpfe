@@ -1,7 +1,7 @@
 /* ================= Texte bearbeiten ================= */
 var TXTKEY="kidscup-texts-v1";
 function editables(){
-  var sel="h1, .dek, main h2, main h3, main h4, main p, main li, main .route-desc, main .eyebrow, header .eyebrow, footer p, .rail .step div b, .rail .step div span, .rail .step time";
+  var sel="h1, .dek, main h2, main h3, main h4, main p, main li, main .route-desc, main .eyebrow, header .eyebrow, footer p";
   var list=Array.prototype.slice.call(document.querySelectorAll(sel)).filter(function(el){
     return !el.closest(".gantt,.tblwrap,.readout,.editor,.addbox,.toolbar,.flowwrap,.dlbar,.textbar,.legend");
   });

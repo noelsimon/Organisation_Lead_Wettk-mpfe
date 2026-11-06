@@ -571,10 +571,7 @@ function buildPDF(){
      Zeilenhöhe als eigener, gut lesbarer Abschnitt. */
   y=meldEnd+9;
   doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.text("Tagesablauf",ML,y); y+=3;
-  var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
-    return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
-               st.querySelector("div span").textContent.trim()]};
-  });
+  var steps=CFG.schedule.map(function(s){ return {c:[s.time, s.title, s.hint]}; });
   table(ML,y,[{t:"Zeit",w:26},{t:"Was",w:70},{t:"Hinweis",w:CW-96}],steps,
     {rh:7.5,fs:9,title:"Tagesablauf",sub:"Fortsetzung"});
   foot();

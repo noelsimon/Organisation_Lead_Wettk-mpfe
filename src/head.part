@@ -320,12 +320,18 @@ tbody tr.sum td{background:var(--surface-2); font-weight:600; border-top:1px sol
 td .ac{font-family:var(--disp); font-weight:600; color:var(--ac); letter-spacing:.03em}
 
 .rail{display:grid; margin:0 0 18px}
-.rail .step{display:grid; grid-template-columns:76px 1fr; gap:14px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line)}
+/* Zeit/Titel/Hinweis sind editierbare Felder statt Fließtext (Issue: der
+   Tagesablauf war vorher nur per Freitext-Bearbeitung (contenteditable)
+   änderbar - fehleranfällig, keine Möglichkeit Zeilen hinzuzufügen,
+   zu löschen oder umzusortieren). Drittes Grid-Feld für die neuen
+   Sortieren/Löschen-Buttons je Zeile. */
+.rail .step{display:grid; grid-template-columns:76px 1fr auto; gap:8px 14px; align-items:start; padding:9px 0; border-bottom:1px solid var(--line)}
 .rail .step:last-child{border-bottom:none}
-.rail .step time{font-family:var(--mono); font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums}
-.rail .step div b{font-family:var(--disp); font-weight:500; font-size:15px; display:block}
-.rail .step div span{font-size:13.5px; color:var(--muted)}
-.rail .step.q{border-left:3px solid var(--line-strong); padding-left:12px; margin-left:-15px}
+.rail .step .stime{font-family:var(--mono); font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums; width:100%}
+.rail .step .scontent{display:flex; flex-direction:column; gap:4px; min-width:0}
+.rail .step .stitle{font-family:var(--disp); font-weight:500; font-size:15px; width:100%}
+.rail .step .shint{font-size:13.5px; color:var(--muted); width:100%}
+.rail .step .step-actions{display:flex; gap:4px; align-items:center; align-self:center}
 footer{border-top:1px solid var(--line); margin-top:48px; padding:26px 0 40px; font-size:13px; color:var(--muted)}
 footer p{max-width:74ch; margin-bottom:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
@@ -1267,19 +1273,34 @@ body.editing{caret-color:var(--ink)}
     <div class="sec-head">
       <p class="eyebrow" role="heading" aria-level="2">Tagesablauf</p>
     </div>
-    <div class="rail">
+    <p class="lede">Zeit, Programmpunkt und Hinweis direkt in den Feldern ändern. Mit den Pfeilen Zeilen umsortieren, mit „+ Eintrag hinzufügen" unten neue ergänzen. Erscheint so auch im PDF-Aushang.</p>
+    <!-- Diese Zeilen sind nur der Startzustand vor dem ersten Skript-Durchlauf
+         (z. B. ohne JavaScript) und zugleich die Quelle für die einmalige
+         Übernahme nach CFG.schedule bei bestehenden Wettkämpfen, siehe
+         migrateScheduleFromRail() (personal.part). renderSchedule() ersetzt
+         den Inhalt danach durch die editierbare, aus CFG.schedule
+         gespeiste Version - diese Zeilen hier nie von Hand pflegen. -->
+    <div class="rail" id="tagRail">
       <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
       <div class="step" data-ac="mix"><time>09:15</time><div><b>Technical Meeting</b><span>bis 10:00 · laut Ausschreibung</span></div></div>
       <div class="step" data-ac="mix"><time>10:00</time><div><b>Aufwärmen</b><span>30 Minuten zwischen Meeting und erstem Start</span></div></div>
-      <div class="step q" data-ac="mix"><time>10:30</time><div><b>Start Qualifikation</b><span>Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen</span></div></div>
-      <div class="step q" data-ac="mix"><time>12:36</time><div><b>U11 fertig</b><span>danach U9 12:45, U15 12:48</span></div></div>
-      <div class="step q" data-ac="mix"><time>12:59</time><div><b>Quali zu Ende</b><span>U13 als letzte Klasse</span></div></div>
+      <div class="step" data-ac="mix"><time>10:30</time><div><b>Start Qualifikation</b><span>Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen</span></div></div>
+      <div class="step" data-ac="mix"><time>12:36</time><div><b>U11 fertig</b><span>danach U9 12:45, U15 12:48</span></div></div>
+      <div class="step" data-ac="mix"><time>12:59</time><div><b>Quali zu Ende</b><span>U13 als letzte Klasse</span></div></div>
       <div class="step" data-ac="mix"><time>13:00</time><div><b>Auswertung und Aushang</b><span>30 Minuten bis zur Besichtigung</span></div></div>
       <div class="step" data-ac="mix"><time>13:30</time><div><b>Besichtigung der Finalrouten</b><span>25 Minuten, alle Finalist*innen gemeinsam</span></div></div>
       <div class="step" data-ac="mix"><time>13:55</time><div><b>ISO-Raum</b><span>20 Minuten: Athlet*innen werden in Startreihenfolge aufgestellt</span></div></div>
       <div class="step" data-ac="mix"><time>14:15</time><div><b>Start Finale</b><span>Alle Routen parallel – U9 durchgehend, U11 und U15 je weiblich vor männlich, U13 parallel</span></div></div>
       <div class="step" data-ac="mix"><time>15:29</time><div><b>Letzter Zug des Tages</b><span>eine Minute vor der ausgeschriebenen Wettkampfzeit</span></div></div>
       <div class="step" data-ac="mix"><time>15:45</time><div><b>Siegerehrung</b><span>acht Wertungen, Medaillen und Urkunden Platz 1 bis 3</span></div></div>
+    </div>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Zeit <input class="cin" id="newTagTime" placeholder="z. B. 09:00" size="8"></label>
+        <label>Programmpunkt <input class="cin" id="newTagTitle" placeholder="z. B. Registrierung" size="20"></label>
+        <label>Hinweis <input class="cin" id="newTagHint" placeholder="optional" size="26"></label>
+        <label><button class="fbtn" id="addTagGo" type="button">Eintrag hinzufügen</button></label>
+      </div>
     </div>
   </div>
 </section>

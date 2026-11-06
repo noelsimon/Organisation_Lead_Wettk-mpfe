@@ -85,6 +85,88 @@ function renderCats(){
   var s=document.getElementById("newPcat");
   if(s) s.innerHTML=CFG.cats.map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>';}).join("");
 }
+/* ================= Tagesablauf ================= */
+/* Einmalige Übernahme des bisherigen Freitexts aus dem (bis dahin noch
+   statischen) #tagRail-Markup nach CFG.schedule, beim allerersten Laden
+   nach dieser Umstellung (CFG.scheduleFromRail noch false/leer) - läuft
+   NACH der TXT-Übernahme in applySnapshot(), liest also, was dort gerade
+   wirklich steht (inkl. bisheriger Freitext-Bearbeitungen), nicht die
+   ursprünglichen Platzhalter. Rein additiv: vorhandene Eingaben gehen so
+   nicht verloren, auch wenn sie unsauber waren - lassen sich danach aber
+   einfach in den neuen Feldern geradeziehen. */
+function migrateScheduleFromRail(){
+  if(CFG.scheduleFromRail) return;
+  var steps=Array.prototype.slice.call(document.querySelectorAll("#tagRail .step")).map(function(st){
+    var t=st.querySelector("time"), b=st.querySelector("div b"), s=st.querySelector("div span");
+    return {id:newId("t"), time:t?t.textContent.trim():"", title:b?b.textContent.trim():"", hint:s?s.textContent.trim():""};
+  });
+  if(steps.length) CFG.schedule=steps;
+  CFG.scheduleFromRail=true;
+  saveCfg();
+}
+function renderSchedule(){
+  var box=document.getElementById("tagRail"); if(!box) return;
+  var h="";
+  CFG.schedule.forEach(function(s,i){
+    h+='<div class="step" data-ac="mix">'+
+       '<input class="cin stime" data-id="'+s.id+'" value="'+esc(s.time)+'" aria-label="Uhrzeit">'+
+       '<div class="scontent">'+
+         '<input class="cin stitle" data-id="'+s.id+'" value="'+esc(s.title)+'" placeholder="Programmpunkt" aria-label="Programmpunkt">'+
+         '<input class="cin shint" data-id="'+s.id+'" value="'+esc(s.hint)+'" placeholder="Hinweis (optional)" aria-label="Hinweis">'+
+       '</div>'+
+       '<span class="step-actions">'+
+         '<button class="rdir sup" type="button" data-id="'+s.id+'" title="Nach oben verschieben" aria-label="'+esc(s.title||s.time||"Eintrag")+' nach oben verschieben"'+(i===0?" disabled":"")+'>↑</button>'+
+         '<button class="rdir sdown" type="button" data-id="'+s.id+'" title="Nach unten verschieben" aria-label="'+esc(s.title||s.time||"Eintrag")+' nach unten verschieben"'+(i===CFG.schedule.length-1?" disabled":"")+'>↓</button>'+
+         '<button class="rdel sdel" type="button" data-id="'+s.id+'" title="Eintrag löschen" aria-label="'+esc(s.title||s.time||"Eintrag")+' löschen">×</button>'+
+       '</span></div>';
+  });
+  box.innerHTML=h||'<p class="hint">Noch kein Tagesablauf – unten einen Eintrag hinzufügen.</p>';
+  function upd(sel,fn){
+    Array.prototype.forEach.call(box.querySelectorAll(sel),function(el){
+      el.onchange=function(){
+        var id=this.getAttribute("data-id");
+        for(var i=0;i<CFG.schedule.length;i++) if(CFG.schedule[i].id===id) fn(CFG.schedule[i],this.value);
+        saveCfg();
+      };
+    });
+  }
+  upd(".stime",function(s,v){s.time=v.trim();});
+  upd(".stitle",function(s,v){s.title=v.trim();});
+  upd(".shint",function(s,v){s.hint=v.trim();});
+  Array.prototype.forEach.call(box.querySelectorAll(".sup"),function(b){
+    b.onclick=function(){ moveSchedule(this.getAttribute("data-id"),-1); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll(".sdown"),function(b){
+    b.onclick=function(){ moveSchedule(this.getAttribute("data-id"),1); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll(".sdel"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-id");
+      var s=CFG.schedule.filter(function(x){return x.id===id;})[0]; if(!s) return;
+      confirmDestructive({
+        title:"Eintrag löschen",
+        message:'Eintrag „'+esc(s.title||s.time||"Eintrag")+'" wirklich aus dem Tagesablauf löschen?',
+        onConfirm:function(){
+          CFG.schedule=CFG.schedule.filter(function(x){return x.id!==id;});
+          saveCfg(); renderSchedule(); closeModal();
+        }
+      });
+    };
+  });
+}
+function moveSchedule(id,dir){
+  var idx=-1; for(var i=0;i<CFG.schedule.length;i++) if(CFG.schedule[i].id===id){idx=i;break;}
+  var j=idx+dir; if(idx<0||j<0||j>=CFG.schedule.length) return;
+  var tmp=CFG.schedule[idx]; CFG.schedule[idx]=CFG.schedule[j]; CFG.schedule[j]=tmp;
+  saveCfg(); renderSchedule();
+}
+document.getElementById("addTagGo").onclick=function(){
+  var t=document.getElementById("newTagTime"), ti=document.getElementById("newTagTitle"), h=document.getElementById("newTagHint");
+  if(!ti.value.trim()) return;
+  CFG.schedule.push({id:newId("t"), time:t.value.trim(), title:ti.value.trim(), hint:h.value.trim()});
+  t.value=""; ti.value=""; h.value="";
+  saveCfg(); renderSchedule();
+};
 /* Qualifizierungsstand je Person (erleichtert die Einsatzplanung: wer darf
    wo als Sicherung/Schiri eingesetzt werden) - rein informativ, steuert
    nichts automatisch. "" = keine Angabe, bestehende Personen ohne dieses
