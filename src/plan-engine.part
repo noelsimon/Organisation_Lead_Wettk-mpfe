@@ -659,14 +659,19 @@ function renderFlow(plan,list){
       if(bw>68) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid-1)+'" font-family="var(--disp)" font-size="12.5" font-weight="500" fill="var(--ink)">Route '+esc(routeNum(plan.row(b.r)))+'</text>';
       if(bw>112) s+='<text x="'+(x+8).toFixed(1)+'" y="'+(mid+10)+'" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">'+fmt(b.s)+'–'+fmt(b.e)+'</text>';
       if(k===1){
+        /* class="pause-mark" rein additiv zum Markieren (Issue: beim
+           PDF-Export - der das Diagramm als Bild dieses SVG einbettet,
+           siehe flowSvgImage() in pdf-export.part - sollen die
+           Pausen-Pfeile/-Texte nicht mit aufs gedruckte Aushang-Blatt;
+           on-screen bleiben sie unverändert sichtbar). */
         var pt=plan.pauseTxt(g,L.bs), xa=X(L.bs[0].e)+3, xb=x-4;
         if(xb>xa+76){
-          s+='<line x1="'+xa.toFixed(1)+'" y1="'+mid+'" x2="'+xb.toFixed(1)+'" y2="'+mid+'" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
-          s+='<text x="'+((xa+xb)/2).toFixed(1)+'" y="'+(mid-6)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(pt.ok?"--ok":"--bad")+')">Pause '+pt.txt+'</text>';
+          s+='<line class="pause-mark" x1="'+xa.toFixed(1)+'" y1="'+mid+'" x2="'+xb.toFixed(1)+'" y2="'+mid+'" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
+          s+='<text class="pause-mark" x="'+((xa+xb)/2).toFixed(1)+'" y="'+(mid-6)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(pt.ok?"--ok":"--bad")+')">Pause '+pt.txt+'</text>';
         } else {
           var x1=X(L.bs[0].s)+2, x2=x-2;
-          s+='<path d="M'+x1.toFixed(1)+','+(mid-15)+' C'+x1.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-15)+'" fill="none" stroke="var(--line-strong)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
-          s+='<text x="'+((x1+x2)/2).toFixed(1)+'" y="'+(mid-25)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(pt.ok?"--ok":"--bad")+')">Pause '+pt.txt+'</text>';
+          s+='<path class="pause-mark" d="M'+x1.toFixed(1)+','+(mid-15)+' C'+x1.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-23)+' '+x2.toFixed(1)+','+(mid-15)+'" fill="none" stroke="var(--line-strong)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#ah)" color="var(--line-strong)"/>';
+          s+='<text class="pause-mark" x="'+((x1+x2)/2).toFixed(1)+'" y="'+(mid-25)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var('+(pt.ok?"--ok":"--bad")+')">Pause '+pt.txt+'</text>';
         }
       }
     });

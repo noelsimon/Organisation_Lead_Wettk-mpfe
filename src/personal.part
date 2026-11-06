@@ -112,11 +112,12 @@ function renderPeople(){
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td class="num">'+toggleSwHtml("pspringer",p.id,!!p.springer,"Springer: "+p.name)+'</td>'+
        '<td><select class="cin sel pqual" data-p="'+p.id+'">'+qualOptsHtml(p.qual)+'</select></td>'+
+       '<td><select class="cin sel pfin" data-p="'+p.id+'">'+finWertOptsHtml(p.finWert)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!list.length) h='<tr><td colspan="8" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
+  if(!list.length) h='<tr><td colspan="9" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
@@ -127,7 +128,7 @@ function renderPeople(){
       el.onchange=function(){
         var id=this.getAttribute("data-p");
         for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) fn(CFG.people[i],this.value);
-        saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+        saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list); renderFinalTab();
       };
     });
   }
@@ -135,6 +136,7 @@ function renderPeople(){
   upd(".pcat",function(p,v){p.cat=v;});
   upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
   upd(".pqual",function(p,v){p.qual=v;});
+  upd(".pfin",function(p,v){p.finWert=v;});
   upd(".pnote",function(p,v){p.note=v;});
   Array.prototype.forEach.call(document.querySelectorAll(".pspringer"),function(cb){
     cb.onchange=function(){
@@ -215,6 +217,39 @@ function teamPeopleLines(idx){
   });
   return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");});
 }
+/* ================= Finale: wer sichert welche Wertung ================= */
+/* Explizite Personen-Zuordnung je Finale-Wertung (Issue: die bisherige
+   Finalquoten-Spalte "Team und Teammitglieder" übernahm einfach die
+   Quali-Teamnummer 1:1 für die Finale-Routen (teams(pf,fl)) - stimmte nur,
+   wenn zufällig dieselbe Teamnummer in Quali und Finale dieselben Personen
+   meint. p.finWert (Wertungs-Key "Klassen-ID|Geschlecht", z. B. "U15|w")
+   macht die Zuordnung explizit und unabhängig vom Quali-Team: eine Person
+   wird direkt einer Finale-Wertung zugeteilt, z. B. "Markus Körner" auf
+   "U15 weiblich". Additiv, keine bestehenden Felder/Daten berührt. */
+function wertKey(cls,gender){ return cls+"|"+gender; }
+function wertLabel(cls,gender){ return CLn(cls)+" "+gl(cls,gender); }
+function finalWertOptions(){
+  var out=[];
+  CFG.classes.forEach(function(c){
+    ["m","w"].forEach(function(gd){
+      if(+c[gd]>0) out.push({key:wertKey(c.id,gd), label:wertLabel(c.id,gd)});
+    });
+  });
+  return out;
+}
+function finWertOptsHtml(sel){
+  return '<option value=""'+(sel?"":" selected")+'>— kein Finale —</option>'+
+    finalWertOptions().map(function(o){return '<option value="'+esc(o.key)+'"'+(o.key===sel?" selected":"")+'>'+esc(o.label)+'</option>';}).join("");
+}
+function peopleOfFinalWert(key){
+  return CFG.people.filter(function(p){return p.finWert===key;});
+}
+function finalWertPeopleText(key){
+  var ps=peopleOfFinalWert(key); if(!ps.length) return "—";
+  var by={};
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
+  return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ");
+}
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};
   function set(id,v){var el=document.getElementById(id); if(el) el.textContent=v;}
@@ -230,26 +265,25 @@ function renderStats(){
   renderStart();
 }
 function renderFinalTab(){
-  var list=(pf.stat&&pf.stat.list)||[], T=teams(pf,list), rteam={};
-  T.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
-  var h="", sumG=0, sumF=0;
+  var list=(pf.stat&&pf.stat.list)||[];
+  var h="", sumG=0, sumF=0, assigned=0;
   CFG.classes.forEach(function(cc){
     var c=cc.id;
     ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, q=quota(n); sumG+=n; sumF+=q;
       var blk=list.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");})
                   .sort(function(a,b){return a.s-b.s;})[0];
-      var tidx=blk&&rteam[blk.r];
+      var key=wertKey(c,gd), nAssigned=peopleOfFinalWert(key).length; assigned+=nAssigned;
       h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
          '<td class="num">'+n+'</td><td class="num">'+q+'</td>'+
          '<td>'+(blk?'<strong class="mono">'+esc(routeNum(pf.row(blk.r)))+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
          '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
-         '<td>'+(tidx?'<strong>'+teamName(tidx)+'</strong> · '+esc(teamPeopleText(tidx)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+         '<td>'+(nAssigned?esc(finalWertPeopleText(key)):'<span style="color:var(--muted)">noch niemand zugeteilt</span>')+'</td>'+
          '</tr>';
     });
   });
   h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">'+sumF+'</td>'+
-     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td>'+T.length+' Routen-Teams · '+T.length*CFG.teamPers+' Personen</td></tr>';
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td>'+assigned+(assigned===1?' Person':' Personen')+' zugeteilt</td></tr>';
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 

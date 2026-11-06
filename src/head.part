@@ -1417,11 +1417,11 @@ body.editing{caret-color:var(--ink)}
     </div>
 
     <h3>Personen und ihre Teams</h3>
-    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
+    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf. Über die Spalte „Finale" lässt sich zusätzlich festlegen, wer im Finale welche Wertung sichert (z. B. Markus Körner für U15 weiblich) – unabhängig vom Quali-Team, taucht bei Finalquoten und auf den Klemmbrett-Karten auf.</p>
     <div class="scroller peo-catstats" id="peoCatStats"></div>
     <div class="att-filters" id="peoCatChips" role="group" aria-label="Personen nach Kategorie filtern"></div>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Finale</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -1542,10 +1542,10 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Finalquoten</h3>
     <div class="tblwrap"><table id="finaltab">
-      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th>Route</th><th>Zeit</th><th>Team und Teammitglieder</th></tr></thead>
+      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th>Route</th><th>Zeit</th><th>Wer sichert</th></tr></thead>
       <tbody></tbody>
     </table></div>
-    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. <strong>Team und Teammitglieder</strong> zeigt das Routen-Team, das diese Finalroute betreut, mit den zugeteilten Personen. Verschiebst du oben einen Balken, ändert sich die Tabelle mit.</p>
+    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. <strong>Wer sichert</strong> zeigt die Personen, die dieser Wertung im Finale fest zugeteilt sind – unabhängig vom Quali-Team. Zuteilen geht bei „Personen und ihre Teams" über die Spalte „Finale". Verschiebst du oben einen Balken, ändert sich Route/Zeit mit.</p>
 
     <h3>Routenplan</h3>
     <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
