@@ -279,6 +279,27 @@ function peopleOfTeam(idx){
    markiert (zum Auswechseln vorgesehen), dahinter "Call Zone" für Schiris/
    Sicherungspersonal, die zeitweise dort aushelfen, dahinter die Notiz. */
 function personLabel(p){ return p.name+(p.springer?" · Springer":"")+(p.callZone?" · Call Zone":"")+(p.note?" ("+p.note+")":""); }
+/* Zusammengefasste Tätigkeitsbeschreibung je Person für die Helferliste
+   (Issue: unklar, welche Tätigkeit jede Person genau übernimmt - Kategorie
+   allein sagte nichts über Springer/Call-Zone/Finale-Einsatz). Fasst
+   Kategorie, Springer, Call Zone und eine etwaige Finale-Zuteilung in
+   einem Text zusammen, der in der PDF farblich nach Kategorie hervorgehoben
+   wird (siehe personTaskColor()). */
+function personTaskText(p){
+  var parts=[catName(p.cat)];
+  if(p.springer) parts.push("Springer");
+  if(p.callZone) parts.push("Call Zone");
+  var txt=parts.join(" · ");
+  if(p.finWert){
+    var fw=p.finWert.split("|");
+    txt+=" · Finale: "+wertLabel(fw[0],fw[1]);
+  }
+  return txt;
+}
+function personTaskColor(p){
+  if(!p.cat) return PDFCOL.muted;
+  return (PDFCOL[PALETTE[catColorIdx(p.cat)%8].k]||PDFCOL.c7).ac;
+}
 function teamPeopleHtml(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return '<span style="color:var(--muted)">—</span>';
   var by={};

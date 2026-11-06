@@ -3134,6 +3134,27 @@ function peopleOfTeam(idx){
    markiert (zum Auswechseln vorgesehen), dahinter "Call Zone" für Schiris/
    Sicherungspersonal, die zeitweise dort aushelfen, dahinter die Notiz. */
 function personLabel(p){ return p.name+(p.springer?" · Springer":"")+(p.callZone?" · Call Zone":"")+(p.note?" ("+p.note+")":""); }
+/* Zusammengefasste Tätigkeitsbeschreibung je Person für die Helferliste
+   (Issue: unklar, welche Tätigkeit jede Person genau übernimmt - Kategorie
+   allein sagte nichts über Springer/Call-Zone/Finale-Einsatz). Fasst
+   Kategorie, Springer, Call Zone und eine etwaige Finale-Zuteilung in
+   einem Text zusammen, der in der PDF farblich nach Kategorie hervorgehoben
+   wird (siehe personTaskColor()). */
+function personTaskText(p){
+  var parts=[catName(p.cat)];
+  if(p.springer) parts.push("Springer");
+  if(p.callZone) parts.push("Call Zone");
+  var txt=parts.join(" · ");
+  if(p.finWert){
+    var fw=p.finWert.split("|");
+    txt+=" · Finale: "+wertLabel(fw[0],fw[1]);
+  }
+  return txt;
+}
+function personTaskColor(p){
+  if(!p.cat) return PDFCOL.muted;
+  return (PDFCOL[PALETTE[catColorIdx(p.cat)%8].k]||PDFCOL.c7).ac;
+}
 function teamPeopleHtml(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return '<span style="color:var(--muted)">—</span>';
   var by={};
@@ -6201,7 +6222,8 @@ function buildPDF(){
   var peoRows=CFG.people.slice().sort(function(a,b){
     return (catName(a.cat)+a.name).localeCompare(catName(b.cat)+b.name,"de");
   }).map(function(p){
-    return {c:[p.name,catName(p.cat),p.team?teamName(p.team):"—",p.note||"—"]};
+    return {c:[p.name,personTaskText(p),p.team?teamName(p.team):"—",p.note||"—"],
+            col:[null,personTaskColor(p)]};
   });
   /* rh knapp über dem bei fs:7.5 ohnehin nötigen Minimum (2.1+1 Zeile ≈
      5.1mm) gesetzt statt des generischen Default (6mm) - passt bei
@@ -6209,8 +6231,12 @@ function buildPDF(){
      eine Seite, ohne Notizen abzuschneiden (Zeilenumbruch bei langen
      Notizen bleibt über splitTextToSize erhalten, rh wirkt nur als
      Mindesthöhe für einzeilige Zeilen). Seitenumbruch mit korrektem
-     title/sub bleibt als Sicherheitsnetz für größere Wettkämpfe bestehen. */
-  table(ML,y,[{t:"Name",w:45},{t:"Kategorie",w:35},{t:"Team",w:45},{t:"T-Shirt",w:18,box:true},{t:"Notiz",w:130}],peoRows,
+     title/sub bleibt als Sicherheitsnetz für größere Wettkämpfe bestehen.
+     Tätigkeit (Issue: unklar, wer welche Tätigkeit übernimmt) statt bloßer
+     "Kategorie" - Text fasst Kategorie/Springer/Call Zone/Finale-Zuteilung
+     zusammen und ist nach Kategorie eingefärbt, damit er auf einen Blick
+     auffällt. */
+  table(ML,y,[{t:"Name",w:38},{t:"Tätigkeit",w:72},{t:"Team",w:38},{t:"T-Shirt",w:18,box:true},{t:"Notiz",w:107}],peoRows,
     {rh:5.2,fs:7.5,title:"Personal – Helferliste",sub:"Fortsetzung"});
   foot();
 
