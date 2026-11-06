@@ -1447,11 +1447,11 @@ body.editing{caret-color:var(--ink)}
     </div>
 
     <h3>Personen und ihre Teams</h3>
-    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf. Über die Spalte „Finale" lässt sich zusätzlich festlegen, wer im Finale welche Wertung sichert (z. B. Markus Körner für U15 weiblich) – unabhängig vom Quali-Team, taucht bei Finalquoten und auf den Klemmbrett-Karten auf.</p>
+    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf. Der Schalter „Call Zone" markiert Schiris/Sicherungspersonal, die zeitweise dort aushelfen – erscheint dann überall mit, wo die Person sonst auch auftaucht (Team-Zeitplan, Klemmbrett-Karten). Über die Spalte „Finale" lässt sich zusätzlich festlegen, wer im Finale welche Wertung sichert (z. B. Markus Körner für U15 weiblich) – unabhängig vom Quali-Team, taucht bei Finalquoten und auf den Klemmbrett-Karten auf.</p>
     <div class="scroller peo-catstats" id="peoCatStats"></div>
     <div class="att-filters" id="peoCatChips" role="group" aria-label="Personen nach Kategorie filtern"></div>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Finale</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th class="num">Call Zone</th><th>Qualifizierung</th><th>Finale</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -3032,13 +3032,14 @@ function renderPeople(){
        '<td><select class="cin sel pcat" data-p="'+p.id+'"><option value="">— ohne —</option>'+cats+'</select></td>'+
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td class="num">'+toggleSwHtml("pspringer",p.id,!!p.springer,"Springer: "+p.name)+'</td>'+
+       '<td class="num">'+toggleSwHtml("pcallzone",p.id,!!p.callZone,"Call Zone: "+p.name)+'</td>'+
        '<td><select class="cin sel pqual" data-p="'+p.id+'">'+qualOptsHtml(p.qual)+'</select></td>'+
        '<td><select class="cin sel pfin" data-p="'+p.id+'">'+finWertOptsHtml(p.finWert)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!list.length) h='<tr><td colspan="9" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
+  if(!list.length) h='<tr><td colspan="10" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
@@ -3064,6 +3065,13 @@ function renderPeople(){
       var id=this.getAttribute("data-p"), on=this.checked;
       for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) CFG.people[i].springer=on;
       saveCfg(); renderTeams(LASTQ.plan,LASTQ.list);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".pcallzone"),function(cb){
+    cb.onchange=function(){
+      var id=this.getAttribute("data-p"), on=this.checked;
+      for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) CFG.people[i].callZone=on;
+      saveCfg(); renderTeams(LASTQ.plan,LASTQ.list); renderFinalTab();
     };
   });
   Array.prototype.forEach.call(document.querySelectorAll(".pemail"),function(el){
@@ -3107,8 +3115,9 @@ function peopleOfTeam(idx){
 }
 /* Gemeinsame Beschriftung für Team-Zeitplan (on-screen + PDF), Finalquoten
    und die Klemmbrett-Karten: Name, dahinter "Springer" statt Kernbesetzung
-   markiert (zum Auswechseln vorgesehen), dahinter die Notiz. */
-function personLabel(p){ return p.name+(p.springer?" · Springer":"")+(p.note?" ("+p.note+")":""); }
+   markiert (zum Auswechseln vorgesehen), dahinter "Call Zone" für Schiris/
+   Sicherungspersonal, die zeitweise dort aushelfen, dahinter die Notiz. */
+function personLabel(p){ return p.name+(p.springer?" · Springer":"")+(p.callZone?" · Call Zone":"")+(p.note?" ("+p.note+")":""); }
 function teamPeopleHtml(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return '<span style="color:var(--muted)">—</span>';
   var by={};
@@ -3133,7 +3142,7 @@ function teamPeopleLines(idx){
   var ps=peopleOfTeam(idx); if(!ps.length) return ["—"];
   var by={};
   ps.forEach(function(p){
-    var k=catName(p.cat), label=p.name+(p.springer?" · Springer":"");
+    var k=catName(p.cat), label=p.name+(p.springer?" · Springer":"")+(p.callZone?" · Call Zone":"");
     (by[k]=by[k]||[]).push(label);
   });
   return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");});
