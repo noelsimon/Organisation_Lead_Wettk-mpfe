@@ -1426,11 +1426,11 @@ body.editing{caret-color:var(--ink)}
     </div>
 
     <h3>Personen und ihre Teams</h3>
-    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf.</p>
+    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf. Über die Spalte „Finale" lässt sich zusätzlich festlegen, wer im Finale welche Wertung sichert (z. B. Markus Körner für U15 weiblich) – unabhängig vom Quali-Team, taucht bei Finalquoten und auf den Klemmbrett-Karten auf.</p>
     <div class="scroller peo-catstats" id="peoCatStats"></div>
     <div class="att-filters" id="peoCatChips" role="group" aria-label="Personen nach Kategorie filtern"></div>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Finale</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
@@ -1551,10 +1551,10 @@ body.editing{caret-color:var(--ink)}
 
     <h3>Finalquoten</h3>
     <div class="tblwrap"><table id="finaltab">
-      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th>Route</th><th>Zeit</th><th>Team und Teammitglieder</th></tr></thead>
+      <thead><tr><th>Wertung</th><th class="num">gemeldet</th><th class="num">Quote</th><th>Route</th><th>Zeit</th><th>Wer sichert</th></tr></thead>
       <tbody></tbody>
     </table></div>
-    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. <strong>Team und Teammitglieder</strong> zeigt das Routen-Team, das diese Finalroute betreut, mit den zugeteilten Personen. Verschiebst du oben einen Balken, ändert sich die Tabelle mit.</p>
+    <p class="hint">Quote je Wertungsgruppe (Klasse × Geschlecht): ab 20 Gemeldeten 10 Plätze, darunter 6, nie mehr als gemeldet. <strong>Wer sichert</strong> zeigt die Personen, die dieser Wertung im Finale fest zugeteilt sind – unabhängig vom Quali-Team. Zuteilen geht bei „Personen und ihre Teams" über die Spalte „Finale". Verschiebst du oben einen Balken, ändert sich Route/Zeit mit.</p>
 
     <h3>Routenplan</h3>
     <p class="lede">Alle Finalrouten im Überblick, entsteht direkt aus dem Zeitplan oben: Starts, Kletterminuten und Zeitspanne je Route rechnen sich automatisch. Route hinzufügen oder löschen im Zeitplan – hier passt sich die Karte sofort an.</p>
@@ -2906,11 +2906,12 @@ function renderPeople(){
        '<td><select class="cin sel pteam" data-p="'+p.id+'">'+teamOpts(p.team)+'</select></td>'+
        '<td class="num">'+toggleSwHtml("pspringer",p.id,!!p.springer,"Springer: "+p.name)+'</td>'+
        '<td><select class="cin sel pqual" data-p="'+p.id+'">'+qualOptsHtml(p.qual)+'</select></td>'+
+       '<td><select class="cin sel pfin" data-p="'+p.id+'">'+finWertOptsHtml(p.finWert)+'</select></td>'+
        '<td><input class="cin pnote" data-p="'+p.id+'" value="'+esc(p.note||"")+'" placeholder="Notiz, z. B. ab 12:00"></td>'+
        (isAdmin?'<td class="email-col"><input class="cin pemail" type="email" data-p="'+p.id+'" value="'+esc(CONTACTS[p.id]||"")+'" placeholder="optional"></td>':'<td class="email-col"></td>')+
        '<td><button class="rdel pdel" type="button" data-p="'+p.id+'" title="Person entfernen" aria-label="'+esc(p.name||"Person")+' entfernen">×</button></td></tr>';
   });
-  if(!list.length) h='<tr><td colspan="8" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
+  if(!list.length) h='<tr><td colspan="9" style="color:var(--muted)">'+(CFG.people.length?"Keine Treffer für diesen Filter.":"Noch keine Personen erfasst.")+'</td></tr>';
   body.innerHTML=h;
   renderStats();
   renderPayTab();
@@ -2921,7 +2922,7 @@ function renderPeople(){
       el.onchange=function(){
         var id=this.getAttribute("data-p");
         for(var i=0;i<CFG.people.length;i++) if(CFG.people[i].id===id) fn(CFG.people[i],this.value);
-        saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list);
+        saveCfg(); renderPeople(); renderTeams(LASTQ.plan,LASTQ.list); renderFinalTab();
       };
     });
   }
@@ -2929,6 +2930,7 @@ function renderPeople(){
   upd(".pcat",function(p,v){p.cat=v;});
   upd(".pteam",function(p,v){p.team=parseInt(v,10)||0;});
   upd(".pqual",function(p,v){p.qual=v;});
+  upd(".pfin",function(p,v){p.finWert=v;});
   upd(".pnote",function(p,v){p.note=v;});
   Array.prototype.forEach.call(document.querySelectorAll(".pspringer"),function(cb){
     cb.onchange=function(){
@@ -3009,6 +3011,39 @@ function teamPeopleLines(idx){
   });
   return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");});
 }
+/* ================= Finale: wer sichert welche Wertung ================= */
+/* Explizite Personen-Zuordnung je Finale-Wertung (Issue: die bisherige
+   Finalquoten-Spalte "Team und Teammitglieder" übernahm einfach die
+   Quali-Teamnummer 1:1 für die Finale-Routen (teams(pf,fl)) - stimmte nur,
+   wenn zufällig dieselbe Teamnummer in Quali und Finale dieselben Personen
+   meint. p.finWert (Wertungs-Key "Klassen-ID|Geschlecht", z. B. "U15|w")
+   macht die Zuordnung explizit und unabhängig vom Quali-Team: eine Person
+   wird direkt einer Finale-Wertung zugeteilt, z. B. "Markus Körner" auf
+   "U15 weiblich". Additiv, keine bestehenden Felder/Daten berührt. */
+function wertKey(cls,gender){ return cls+"|"+gender; }
+function wertLabel(cls,gender){ return CLn(cls)+" "+gl(cls,gender); }
+function finalWertOptions(){
+  var out=[];
+  CFG.classes.forEach(function(c){
+    ["m","w"].forEach(function(gd){
+      if(+c[gd]>0) out.push({key:wertKey(c.id,gd), label:wertLabel(c.id,gd)});
+    });
+  });
+  return out;
+}
+function finWertOptsHtml(sel){
+  return '<option value=""'+(sel?"":" selected")+'>— kein Finale —</option>'+
+    finalWertOptions().map(function(o){return '<option value="'+esc(o.key)+'"'+(o.key===sel?" selected":"")+'>'+esc(o.label)+'</option>';}).join("");
+}
+function peopleOfFinalWert(key){
+  return CFG.people.filter(function(p){return p.finWert===key;});
+}
+function finalWertPeopleText(key){
+  var ps=peopleOfFinalWert(key); if(!ps.length) return "—";
+  var by={};
+  ps.forEach(function(p){var k=catName(p.cat); (by[k]=by[k]||[]).push(personLabel(p));});
+  return Object.keys(by).map(function(k){return k+": "+by[k].join(", ");}).join(" · ");
+}
 function renderStats(){
   var q=pq.stat||{}, f=pf.stat||{};
   function set(id,v){var el=document.getElementById(id); if(el) el.textContent=v;}
@@ -3024,26 +3059,25 @@ function renderStats(){
   renderStart();
 }
 function renderFinalTab(){
-  var list=(pf.stat&&pf.stat.list)||[], T=teams(pf,list), rteam={};
-  T.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
-  var h="", sumG=0, sumF=0;
+  var list=(pf.stat&&pf.stat.list)||[];
+  var h="", sumG=0, sumF=0, assigned=0;
   CFG.classes.forEach(function(cc){
     var c=cc.id;
     ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, q=quota(n); sumG+=n; sumF+=q;
       var blk=list.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");})
                   .sort(function(a,b){return a.s-b.s;})[0];
-      var tidx=blk&&rteam[blk.r];
+      var key=wertKey(c,gd), nAssigned=peopleOfFinalWert(key).length; assigned+=nAssigned;
       h+='<tr data-ac="'+ACOF[c]+'"><td><span class="ac">'+esc(CLn(c))+'</span> '+esc(gl(c,gd))+'</td>'+
          '<td class="num">'+n+'</td><td class="num">'+q+'</td>'+
          '<td>'+(blk?'<strong class="mono">'+esc(routeNum(pf.row(blk.r)))+'</strong>':'<span style="color:var(--muted)">—</span>')+'</td>'+
          '<td class="tm">'+(blk?fmt(blk.s)+'–'+fmt(blk.e):'—')+'</td>'+
-         '<td>'+(tidx?'<strong>'+teamName(tidx)+'</strong> · '+esc(teamPeopleText(tidx)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+         '<td>'+(nAssigned?esc(finalWertPeopleText(key)):'<span style="color:var(--muted)">noch niemand zugeteilt</span>')+'</td>'+
          '</tr>';
     });
   });
   h+='<tr class="sum"><td>Summe</td><td class="num">'+sumG+'</td><td class="num">'+sumF+'</td>'+
-     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td>'+T.length+' Routen-Teams · '+T.length*CFG.teamPers+' Personen</td></tr>';
+     '<td>'+pf.rows.length+' Routen</td><td class="tm">—</td><td>'+assigned+(assigned===1?' Person':' Personen')+' zugeteilt</td></tr>';
   document.querySelector("#finaltab tbody").innerHTML=h;
 }
 
@@ -5914,8 +5948,25 @@ function buildPDF(){
         return {c:[fmt(st.s)+"-"+fmt(st.e), routeNum(st.row),
           st.items.map(function(x){return x.lab;}).join(", ")]};
       });
-      table(cx+3,ky,[{t:"Zeit",w:(kbCardW-6)*.3},{t:"Rt.",w:(kbCardW-6)*.15},{t:"Wer klettert",w:(kbCardW-6)*.55}],
+      var einsatzEnd=table(cx+3,ky,[{t:"Zeit",w:(kbCardW-6)*.3},{t:"Rt.",w:(kbCardW-6)*.15},{t:"Wer klettert",w:(kbCardW-6)*.55}],
         ksrows,{rh:4.4,fs:6.6});
+      /* Finale-Einsatz der Teammitglieder (Issue: "welches Team sichert im
+         Finale und wann" soll auch auf der Klemmbrett-Karte stehen) - nutzt
+         die explizite Zuordnung p.finWert, nicht die Quali-Teamnummer. */
+      var finPeople=peopleOfTeam(t.idx).filter(function(p){return p.finWert;});
+      if(finPeople.length){
+        var fky=einsatzEnd+3;
+        doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Finale",cx+3,fky); fky+=3.4;
+        doc.setFont("helvetica","normal"); doc.setFontSize(6.6);
+        var flines=[];
+        finPeople.forEach(function(p){
+          var parts=p.finWert.split("|"), cls=parts[0], gd=parts[1];
+          var blk=fl.filter(function(b){return b.cls===cls&&(b.gender===gd||b.gender==="mw");})
+                    .sort(function(a,b){return a.s-b.s;})[0];
+          flines=flines.concat(doc.splitTextToSize(p.name+" – "+wertLabel(cls,gd)+(blk?" · "+fmt(blk.s)+"-"+fmt(blk.e):""),kbCardW-6));
+        });
+        doc.text(flines,cx+3,fky);
+      }
     });
     foot();
   }
@@ -5924,25 +5975,24 @@ function buildPDF(){
   y=head("Finale","Ende "+fmt(f.end)+" · max. "+f.maxR+" Routen gleichzeitig");
   y=gantt(ML,y,CW,66,pf,fl,44)+6;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Finalquoten",ML,y); y+=2;
-  var frows=[], Tf=teams(pf,fl), rteam={};
-  Tf.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
+  var frows=[], assigned=0;
   CFG.classes.forEach(function(cc){
     var c=cc.id;
     ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, qq=quota(n);
       var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
-      var tidx=blk&&rteam[blk.r];
+      var key=wertKey(c,gd), nAssigned=peopleOfFinalWert(key).length; assigned+=nAssigned;
       frows.push({c:[CLn(c)+" "+gl(c,gd),n,qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
-                     tidx?teamName(tidx)+" · "+teamPeopleText(tidx):"—"],
+                     nAssigned?finalWertPeopleText(key):"noch niemand zugeteilt"],
                   col:[PC(c).ac]});
     });
   });
   var sumG=0,sumF=0;
   CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
   frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,sumF,pf.rows.length+" Routen","—",
-    Tf.length+" Routen-Teams · "+Tf.length*CFG.teamPers+" Personen"]});
+    assigned+(assigned===1?" Person":" Personen")+" zugeteilt"]});
   table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},
-              {t:"Route",w:16},{t:"Zeit",w:26},{t:"Team und Teammitglieder",w:CW-112}],frows,{rh:5.4,fs:7.5});
+              {t:"Route",w:16},{t:"Zeit",w:26},{t:"Wer sichert",w:CW-112}],frows,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 5: Wege ---

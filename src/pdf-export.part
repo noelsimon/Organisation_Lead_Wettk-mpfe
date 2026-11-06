@@ -663,8 +663,25 @@ function buildPDF(){
         return {c:[fmt(st.s)+"-"+fmt(st.e), routeNum(st.row),
           st.items.map(function(x){return x.lab;}).join(", ")]};
       });
-      table(cx+3,ky,[{t:"Zeit",w:(kbCardW-6)*.3},{t:"Rt.",w:(kbCardW-6)*.15},{t:"Wer klettert",w:(kbCardW-6)*.55}],
+      var einsatzEnd=table(cx+3,ky,[{t:"Zeit",w:(kbCardW-6)*.3},{t:"Rt.",w:(kbCardW-6)*.15},{t:"Wer klettert",w:(kbCardW-6)*.55}],
         ksrows,{rh:4.4,fs:6.6});
+      /* Finale-Einsatz der Teammitglieder (Issue: "welches Team sichert im
+         Finale und wann" soll auch auf der Klemmbrett-Karte stehen) - nutzt
+         die explizite Zuordnung p.finWert, nicht die Quali-Teamnummer. */
+      var finPeople=peopleOfTeam(t.idx).filter(function(p){return p.finWert;});
+      if(finPeople.length){
+        var fky=einsatzEnd+3;
+        doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.text("Finale",cx+3,fky); fky+=3.4;
+        doc.setFont("helvetica","normal"); doc.setFontSize(6.6);
+        var flines=[];
+        finPeople.forEach(function(p){
+          var parts=p.finWert.split("|"), cls=parts[0], gd=parts[1];
+          var blk=fl.filter(function(b){return b.cls===cls&&(b.gender===gd||b.gender==="mw");})
+                    .sort(function(a,b){return a.s-b.s;})[0];
+          flines=flines.concat(doc.splitTextToSize(p.name+" – "+wertLabel(cls,gd)+(blk?" · "+fmt(blk.s)+"-"+fmt(blk.e):""),kbCardW-6));
+        });
+        doc.text(flines,cx+3,fky);
+      }
     });
     foot();
   }
@@ -673,25 +690,24 @@ function buildPDF(){
   y=head("Finale","Ende "+fmt(f.end)+" · max. "+f.maxR+" Routen gleichzeitig");
   y=gantt(ML,y,CW,66,pf,fl,44)+6;
   doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.text("Finalquoten",ML,y); y+=2;
-  var frows=[], Tf=teams(pf,fl), rteam={};
-  Tf.forEach(function(t){t.stations.forEach(function(st){rteam[st.r]=t.idx;});});
+  var frows=[], assigned=0;
   CFG.classes.forEach(function(cc){
     var c=cc.id;
     ["m","w"].forEach(function(gd){
       var n=+cc[gd]||0, qq=quota(n);
       var blk=fl.filter(function(b){return b.cls===c&&(b.gender===gd||b.gender==="mw");}).sort(function(a,b){return a.s-b.s;})[0];
-      var tidx=blk&&rteam[blk.r];
+      var key=wertKey(c,gd), nAssigned=peopleOfFinalWert(key).length; assigned+=nAssigned;
       frows.push({c:[CLn(c)+" "+gl(c,gd),n,qq,blk?routeNum(pf.row(blk.r)):"—",blk?fmt(blk.s)+"-"+fmt(blk.e):"—",
-                     tidx?teamName(tidx)+" · "+teamPeopleText(tidx):"—"],
+                     nAssigned?finalWertPeopleText(key):"noch niemand zugeteilt"],
                   col:[PC(c).ac]});
     });
   });
   var sumG=0,sumF=0;
   CFG.classes.forEach(function(cc){["m","w"].forEach(function(gd){sumG+=(+cc[gd]||0); sumF+=quota(+cc[gd]||0);});});
   frows.push({bold:true,fill:PDFCOL.soft,c:["Summe",sumG,sumF,pf.rows.length+" Routen","—",
-    Tf.length+" Routen-Teams · "+Tf.length*CFG.teamPers+" Personen"]});
+    assigned+(assigned===1?" Person":" Personen")+" zugeteilt"]});
   table(ML,y,[{t:"Wertung",w:34},{t:"gemeldet",w:20,r:true},{t:"Quote",w:16,r:true},
-              {t:"Route",w:16},{t:"Zeit",w:26},{t:"Team und Teammitglieder",w:CW-112}],frows,{rh:5.4,fs:7.5});
+              {t:"Route",w:16},{t:"Zeit",w:26},{t:"Wer sichert",w:CW-112}],frows,{rh:5.4,fs:7.5});
   foot();
 
   /* --- Seite 5: Wege ---
