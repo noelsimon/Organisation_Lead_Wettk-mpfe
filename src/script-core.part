@@ -76,6 +76,28 @@ var CFG0={
   helferSoll:0,
   teamPers:3,
   routeNotes:{},
+  /* Tagesablauf (Issue: der alte Tagesablauf war fest im HTML verdrahteter
+     Text, nur per Freitext-Bearbeitung (contenteditable) änderbar - leicht
+     zu verschieben/verdoppeln, keine Möglichkeit Zeilen hinzuzufügen oder
+     umzusortieren. Jetzt eine normale, additive Liste wie CFG.classes/cats,
+     mit eigener Oberfläche zum Bearbeiten/Sortieren/Hinzufügen. Startwerte
+     entsprechen dem bisherigen festen Text, damit sich für neue Wettkämpfe
+     nichts sichtbar ändert. */
+  schedule:[
+    {id:"t1",  time:"09:00", title:"Registrierung", hint:"bis 09:45 · laut Ausschreibung"},
+    {id:"t2",  time:"09:15", title:"Technical Meeting", hint:"bis 10:00 · laut Ausschreibung"},
+    {id:"t3",  time:"10:00", title:"Aufwärmen", hint:"30 Minuten zwischen Meeting und erstem Start"},
+    {id:"t4",  time:"10:30", title:"Start Qualifikation", hint:"Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen"},
+    {id:"t5",  time:"12:36", title:"U11 fertig", hint:"danach U9 12:45, U15 12:48"},
+    {id:"t6",  time:"12:59", title:"Quali zu Ende", hint:"U13 als letzte Klasse"},
+    {id:"t7",  time:"13:00", title:"Auswertung und Aushang", hint:"30 Minuten bis zur Besichtigung"},
+    {id:"t8",  time:"13:30", title:"Besichtigung der Finalrouten", hint:"25 Minuten, alle Finalist*innen gemeinsam"},
+    {id:"t9",  time:"13:55", title:"ISO-Raum", hint:"20 Minuten: Athlet*innen werden in Startreihenfolge aufgestellt"},
+    {id:"t10", time:"14:15", title:"Start Finale", hint:"Alle Routen parallel – U9 durchgehend, U11 und U15 je weiblich vor männlich, U13 parallel"},
+    {id:"t11", time:"15:29", title:"Letzter Zug des Tages", hint:"eine Minute vor der ausgeschriebenen Wettkampfzeit"},
+    {id:"t12", time:"15:45", title:"Siegerehrung", hint:"acht Wertungen, Medaillen und Urkunden Platz 1 bis 3"}
+  ],
+  scheduleFromRail:false,
   seq:100
 };
 var CFG=clone(CFG0);
@@ -87,6 +109,8 @@ var CFG=clone(CFG0);
 function cfgDefaults(c){
   c.win=c.win||clone(CFG0.win); c.cats=c.cats||clone(CFG0.cats);
   c.people=c.people||[]; c.seq=c.seq||100; c.helferSoll=c.helferSoll||0; c.teamPers=c.teamPers||3; c.routeNotes=c.routeNotes||{};
+  if(!c.schedule){ c.schedule=clone(CFG0.schedule); c.scheduleFromRail=false; }
+  else if(c.scheduleFromRail==null) c.scheduleFromRail=true;
   ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(c.win[k]==null) c.win[k]=CFG0.win[k]; });
   c.win.order=(c.win.order==="ib")?"ib":"bi";
   c.win.extra=c.win.extra||[];

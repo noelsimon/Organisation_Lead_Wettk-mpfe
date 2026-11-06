@@ -576,6 +576,7 @@ function pullState(){
             var el=document.querySelector('[data-ed="'+cssEsc(k)+'"]');
             pushText(k,TXT[k],el?el.getAttribute("data-scope"):"root");
           });
+          migrateScheduleFromRail(); renderSchedule();
         }
       }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
     });

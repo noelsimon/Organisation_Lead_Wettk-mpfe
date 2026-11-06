@@ -329,12 +329,18 @@ tbody tr.sum td{background:var(--surface-2); font-weight:600; border-top:1px sol
 td .ac{font-family:var(--disp); font-weight:600; color:var(--ac); letter-spacing:.03em}
 
 .rail{display:grid; margin:0 0 18px}
-.rail .step{display:grid; grid-template-columns:76px 1fr; gap:14px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line)}
+/* Zeit/Titel/Hinweis sind editierbare Felder statt Fließtext (Issue: der
+   Tagesablauf war vorher nur per Freitext-Bearbeitung (contenteditable)
+   änderbar - fehleranfällig, keine Möglichkeit Zeilen hinzuzufügen,
+   zu löschen oder umzusortieren). Drittes Grid-Feld für die neuen
+   Sortieren/Löschen-Buttons je Zeile. */
+.rail .step{display:grid; grid-template-columns:76px 1fr auto; gap:8px 14px; align-items:start; padding:9px 0; border-bottom:1px solid var(--line)}
 .rail .step:last-child{border-bottom:none}
-.rail .step time{font-family:var(--mono); font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums}
-.rail .step div b{font-family:var(--disp); font-weight:500; font-size:15px; display:block}
-.rail .step div span{font-size:13.5px; color:var(--muted)}
-.rail .step.q{border-left:3px solid var(--line-strong); padding-left:12px; margin-left:-15px}
+.rail .step .stime{font-family:var(--mono); font-size:14px; color:var(--ink); font-variant-numeric:tabular-nums; width:100%}
+.rail .step .scontent{display:flex; flex-direction:column; gap:4px; min-width:0}
+.rail .step .stitle{font-family:var(--disp); font-weight:500; font-size:15px; width:100%}
+.rail .step .shint{font-size:13.5px; color:var(--muted); width:100%}
+.rail .step .step-actions{display:flex; gap:4px; align-items:center; align-self:center}
 footer{border-top:1px solid var(--line); margin-top:48px; padding:26px 0 40px; font-size:13px; color:var(--muted)}
 footer p{max-width:74ch; margin-bottom:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
@@ -1276,19 +1282,34 @@ body.editing{caret-color:var(--ink)}
     <div class="sec-head">
       <p class="eyebrow" role="heading" aria-level="2">Tagesablauf</p>
     </div>
-    <div class="rail">
+    <p class="lede">Zeit, Programmpunkt und Hinweis direkt in den Feldern ändern. Mit den Pfeilen Zeilen umsortieren, mit „+ Eintrag hinzufügen" unten neue ergänzen. Erscheint so auch im PDF-Aushang.</p>
+    <!-- Diese Zeilen sind nur der Startzustand vor dem ersten Skript-Durchlauf
+         (z. B. ohne JavaScript) und zugleich die Quelle für die einmalige
+         Übernahme nach CFG.schedule bei bestehenden Wettkämpfen, siehe
+         migrateScheduleFromRail() (personal.part). renderSchedule() ersetzt
+         den Inhalt danach durch die editierbare, aus CFG.schedule
+         gespeiste Version - diese Zeilen hier nie von Hand pflegen. -->
+    <div class="rail" id="tagRail">
       <div class="step" data-ac="mix"><time>09:00</time><div><b>Registrierung</b><span>bis 09:45 · laut Ausschreibung</span></div></div>
       <div class="step" data-ac="mix"><time>09:15</time><div><b>Technical Meeting</b><span>bis 10:00 · laut Ausschreibung</span></div></div>
       <div class="step" data-ac="mix"><time>10:00</time><div><b>Aufwärmen</b><span>30 Minuten zwischen Meeting und erstem Start</span></div></div>
-      <div class="step q" data-ac="mix"><time>10:30</time><div><b>Start Qualifikation</b><span>Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen</span></div></div>
-      <div class="step q" data-ac="mix"><time>12:36</time><div><b>U11 fertig</b><span>danach U9 12:45, U15 12:48</span></div></div>
-      <div class="step q" data-ac="mix"><time>12:59</time><div><b>Quali zu Ende</b><span>U13 als letzte Klasse</span></div></div>
+      <div class="step" data-ac="mix"><time>10:30</time><div><b>Start Qualifikation</b><span>Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen</span></div></div>
+      <div class="step" data-ac="mix"><time>12:36</time><div><b>U11 fertig</b><span>danach U9 12:45, U15 12:48</span></div></div>
+      <div class="step" data-ac="mix"><time>12:59</time><div><b>Quali zu Ende</b><span>U13 als letzte Klasse</span></div></div>
       <div class="step" data-ac="mix"><time>13:00</time><div><b>Auswertung und Aushang</b><span>30 Minuten bis zur Besichtigung</span></div></div>
       <div class="step" data-ac="mix"><time>13:30</time><div><b>Besichtigung der Finalrouten</b><span>25 Minuten, alle Finalist*innen gemeinsam</span></div></div>
       <div class="step" data-ac="mix"><time>13:55</time><div><b>ISO-Raum</b><span>20 Minuten: Athlet*innen werden in Startreihenfolge aufgestellt</span></div></div>
       <div class="step" data-ac="mix"><time>14:15</time><div><b>Start Finale</b><span>Alle Routen parallel – U9 durchgehend, U11 und U15 je weiblich vor männlich, U13 parallel</span></div></div>
       <div class="step" data-ac="mix"><time>15:29</time><div><b>Letzter Zug des Tages</b><span>eine Minute vor der ausgeschriebenen Wettkampfzeit</span></div></div>
       <div class="step" data-ac="mix"><time>15:45</time><div><b>Siegerehrung</b><span>acht Wertungen, Medaillen und Urkunden Platz 1 bis 3</span></div></div>
+    </div>
+    <div class="cfgbox">
+      <div class="cfgrow">
+        <label>Zeit <input class="cin" id="newTagTime" placeholder="z. B. 09:00" size="8"></label>
+        <label>Programmpunkt <input class="cin" id="newTagTitle" placeholder="z. B. Registrierung" size="20"></label>
+        <label>Hinweis <input class="cin" id="newTagHint" placeholder="optional" size="26"></label>
+        <label><button class="fbtn" id="addTagGo" type="button">Eintrag hinzufügen</button></label>
+      </div>
     </div>
   </div>
 </section>
@@ -1820,6 +1841,28 @@ var CFG0={
   helferSoll:0,
   teamPers:3,
   routeNotes:{},
+  /* Tagesablauf (Issue: der alte Tagesablauf war fest im HTML verdrahteter
+     Text, nur per Freitext-Bearbeitung (contenteditable) änderbar - leicht
+     zu verschieben/verdoppeln, keine Möglichkeit Zeilen hinzuzufügen oder
+     umzusortieren. Jetzt eine normale, additive Liste wie CFG.classes/cats,
+     mit eigener Oberfläche zum Bearbeiten/Sortieren/Hinzufügen. Startwerte
+     entsprechen dem bisherigen festen Text, damit sich für neue Wettkämpfe
+     nichts sichtbar ändert. */
+  schedule:[
+    {id:"t1",  time:"09:00", title:"Registrierung", hint:"bis 09:45 · laut Ausschreibung"},
+    {id:"t2",  time:"09:15", title:"Technical Meeting", hint:"bis 10:00 · laut Ausschreibung"},
+    {id:"t3",  time:"10:00", title:"Aufwärmen", hint:"30 Minuten zwischen Meeting und erstem Start"},
+    {id:"t4",  time:"10:30", title:"Start Qualifikation", hint:"Alle vier Klassen starten gleichzeitig – jede auf ihren eigenen Routen"},
+    {id:"t5",  time:"12:36", title:"U11 fertig", hint:"danach U9 12:45, U15 12:48"},
+    {id:"t6",  time:"12:59", title:"Quali zu Ende", hint:"U13 als letzte Klasse"},
+    {id:"t7",  time:"13:00", title:"Auswertung und Aushang", hint:"30 Minuten bis zur Besichtigung"},
+    {id:"t8",  time:"13:30", title:"Besichtigung der Finalrouten", hint:"25 Minuten, alle Finalist*innen gemeinsam"},
+    {id:"t9",  time:"13:55", title:"ISO-Raum", hint:"20 Minuten: Athlet*innen werden in Startreihenfolge aufgestellt"},
+    {id:"t10", time:"14:15", title:"Start Finale", hint:"Alle Routen parallel – U9 durchgehend, U11 und U15 je weiblich vor männlich, U13 parallel"},
+    {id:"t11", time:"15:29", title:"Letzter Zug des Tages", hint:"eine Minute vor der ausgeschriebenen Wettkampfzeit"},
+    {id:"t12", time:"15:45", title:"Siegerehrung", hint:"acht Wertungen, Medaillen und Urkunden Platz 1 bis 3"}
+  ],
+  scheduleFromRail:false,
   seq:100
 };
 var CFG=clone(CFG0);
@@ -1831,6 +1874,8 @@ var CFG=clone(CFG0);
 function cfgDefaults(c){
   c.win=c.win||clone(CFG0.win); c.cats=c.cats||clone(CFG0.cats);
   c.people=c.people||[]; c.seq=c.seq||100; c.helferSoll=c.helferSoll||0; c.teamPers=c.teamPers||3; c.routeNotes=c.routeNotes||{};
+  if(!c.schedule){ c.schedule=clone(CFG0.schedule); c.scheduleFromRail=false; }
+  else if(c.scheduleFromRail==null) c.scheduleFromRail=true;
   ["qs","qe","fs","fe","bes","iso"].forEach(function(k){ if(c.win[k]==null) c.win[k]=CFG0.win[k]; });
   c.win.order=(c.win.order==="ib")?"ib":"bi";
   c.win.extra=c.win.extra||[];
@@ -2879,6 +2924,88 @@ function renderCats(){
   var s=document.getElementById("newPcat");
   if(s) s.innerHTML=CFG.cats.map(function(k){return '<option value="'+k.id+'">'+esc(k.name)+'</option>';}).join("");
 }
+/* ================= Tagesablauf ================= */
+/* Einmalige Übernahme des bisherigen Freitexts aus dem (bis dahin noch
+   statischen) #tagRail-Markup nach CFG.schedule, beim allerersten Laden
+   nach dieser Umstellung (CFG.scheduleFromRail noch false/leer) - läuft
+   NACH der TXT-Übernahme in applySnapshot(), liest also, was dort gerade
+   wirklich steht (inkl. bisheriger Freitext-Bearbeitungen), nicht die
+   ursprünglichen Platzhalter. Rein additiv: vorhandene Eingaben gehen so
+   nicht verloren, auch wenn sie unsauber waren - lassen sich danach aber
+   einfach in den neuen Feldern geradeziehen. */
+function migrateScheduleFromRail(){
+  if(CFG.scheduleFromRail) return;
+  var steps=Array.prototype.slice.call(document.querySelectorAll("#tagRail .step")).map(function(st){
+    var t=st.querySelector("time"), b=st.querySelector("div b"), s=st.querySelector("div span");
+    return {id:newId("t"), time:t?t.textContent.trim():"", title:b?b.textContent.trim():"", hint:s?s.textContent.trim():""};
+  });
+  if(steps.length) CFG.schedule=steps;
+  CFG.scheduleFromRail=true;
+  saveCfg();
+}
+function renderSchedule(){
+  var box=document.getElementById("tagRail"); if(!box) return;
+  var h="";
+  CFG.schedule.forEach(function(s,i){
+    h+='<div class="step" data-ac="mix">'+
+       '<input class="cin stime" data-id="'+s.id+'" value="'+esc(s.time)+'" aria-label="Uhrzeit">'+
+       '<div class="scontent">'+
+         '<input class="cin stitle" data-id="'+s.id+'" value="'+esc(s.title)+'" placeholder="Programmpunkt" aria-label="Programmpunkt">'+
+         '<input class="cin shint" data-id="'+s.id+'" value="'+esc(s.hint)+'" placeholder="Hinweis (optional)" aria-label="Hinweis">'+
+       '</div>'+
+       '<span class="step-actions">'+
+         '<button class="rdir sup" type="button" data-id="'+s.id+'" title="Nach oben verschieben" aria-label="'+esc(s.title||s.time||"Eintrag")+' nach oben verschieben"'+(i===0?" disabled":"")+'>↑</button>'+
+         '<button class="rdir sdown" type="button" data-id="'+s.id+'" title="Nach unten verschieben" aria-label="'+esc(s.title||s.time||"Eintrag")+' nach unten verschieben"'+(i===CFG.schedule.length-1?" disabled":"")+'>↓</button>'+
+         '<button class="rdel sdel" type="button" data-id="'+s.id+'" title="Eintrag löschen" aria-label="'+esc(s.title||s.time||"Eintrag")+' löschen">×</button>'+
+       '</span></div>';
+  });
+  box.innerHTML=h||'<p class="hint">Noch kein Tagesablauf – unten einen Eintrag hinzufügen.</p>';
+  function upd(sel,fn){
+    Array.prototype.forEach.call(box.querySelectorAll(sel),function(el){
+      el.onchange=function(){
+        var id=this.getAttribute("data-id");
+        for(var i=0;i<CFG.schedule.length;i++) if(CFG.schedule[i].id===id) fn(CFG.schedule[i],this.value);
+        saveCfg();
+      };
+    });
+  }
+  upd(".stime",function(s,v){s.time=v.trim();});
+  upd(".stitle",function(s,v){s.title=v.trim();});
+  upd(".shint",function(s,v){s.hint=v.trim();});
+  Array.prototype.forEach.call(box.querySelectorAll(".sup"),function(b){
+    b.onclick=function(){ moveSchedule(this.getAttribute("data-id"),-1); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll(".sdown"),function(b){
+    b.onclick=function(){ moveSchedule(this.getAttribute("data-id"),1); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll(".sdel"),function(b){
+    b.onclick=function(){
+      var id=this.getAttribute("data-id");
+      var s=CFG.schedule.filter(function(x){return x.id===id;})[0]; if(!s) return;
+      confirmDestructive({
+        title:"Eintrag löschen",
+        message:'Eintrag „'+esc(s.title||s.time||"Eintrag")+'" wirklich aus dem Tagesablauf löschen?',
+        onConfirm:function(){
+          CFG.schedule=CFG.schedule.filter(function(x){return x.id!==id;});
+          saveCfg(); renderSchedule(); closeModal();
+        }
+      });
+    };
+  });
+}
+function moveSchedule(id,dir){
+  var idx=-1; for(var i=0;i<CFG.schedule.length;i++) if(CFG.schedule[i].id===id){idx=i;break;}
+  var j=idx+dir; if(idx<0||j<0||j>=CFG.schedule.length) return;
+  var tmp=CFG.schedule[idx]; CFG.schedule[idx]=CFG.schedule[j]; CFG.schedule[j]=tmp;
+  saveCfg(); renderSchedule();
+}
+document.getElementById("addTagGo").onclick=function(){
+  var t=document.getElementById("newTagTime"), ti=document.getElementById("newTagTitle"), h=document.getElementById("newTagHint");
+  if(!ti.value.trim()) return;
+  CFG.schedule.push({id:newId("t"), time:t.value.trim(), title:ti.value.trim(), hint:h.value.trim()});
+  t.value=""; ti.value=""; h.value="";
+  saveCfg(); renderSchedule();
+};
 /* Qualifizierungsstand je Person (erleichtert die Einsatzplanung: wer darf
    wo als Sicherung/Schiri eingesetzt werden) - rein informativ, steuert
    nichts automatisch. "" = keine Angabe, bestehende Personen ohne dieses
@@ -3422,7 +3549,7 @@ renderFilterBtns();
 /* ================= Texte bearbeiten ================= */
 var TXTKEY="kidscup-texts-v1";
 function editables(){
-  var sel="h1, .dek, main h2, main h3, main h4, main p, main li, main .route-desc, main .eyebrow, header .eyebrow, footer p, .rail .step div b, .rail .step div span, .rail .step time";
+  var sel="h1, .dek, main h2, main h3, main h4, main p, main li, main .route-desc, main .eyebrow, header .eyebrow, footer p";
   var list=Array.prototype.slice.call(document.querySelectorAll(sel)).filter(function(el){
     return !el.closest(".gantt,.tblwrap,.readout,.editor,.addbox,.toolbar,.flowwrap,.dlbar,.textbar,.legend");
   });
@@ -4337,6 +4464,7 @@ function pullState(){
             var el=document.querySelector('[data-ed="'+cssEsc(k)+'"]');
             pushText(k,TXT[k],el?el.getAttribute("data-scope"):"root");
           });
+          migrateScheduleFromRail(); renderSchedule();
         }
       }).catch(function(err){ console.warn("Laden des Plans fehlgeschlagen:",err); });
     });
@@ -5072,6 +5200,8 @@ function applySnapshot(s){
   applyHiddenBlocks();
   document.querySelectorAll("[data-ed]").forEach(updateEmptyFlag);
   updateEmptyContainers();
+  migrateScheduleFromRail();
+  renderSchedule();
   if(editing) renderRestoreList();
   return true;
 }
@@ -5856,10 +5986,7 @@ function buildPDF(){
      Zeilenhöhe als eigener, gut lesbarer Abschnitt. */
   y=meldEnd+9;
   doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.text("Tagesablauf",ML,y); y+=3;
-  var steps=Array.prototype.slice.call(document.querySelectorAll(".rail .step")).map(function(st){
-    return {c:[st.querySelector("time").textContent.trim(), st.querySelector("div b").textContent.trim(),
-               st.querySelector("div span").textContent.trim()]};
-  });
+  var steps=CFG.schedule.map(function(s){ return {c:[s.time, s.title, s.hint]}; });
   table(ML,y,[{t:"Zeit",w:26},{t:"Was",w:70},{t:"Hinweis",w:CW-96}],steps,
     {rh:7.5,fs:9,title:"Tagesablauf",sub:"Fortsetzung"});
   foot();
