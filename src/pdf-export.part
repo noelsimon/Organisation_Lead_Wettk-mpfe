@@ -32,6 +32,12 @@ function flowSvgImage(scale){
       clone.setAttribute("xmlns","http://www.w3.org/2000/svg");
       clone.setAttribute("width",W); clone.setAttribute("height",H);
       clone.style.width=""; clone.style.height="";
+      /* Pausen-Pfeile/-Texte (class="pause-mark", siehe renderFlow()) gehören
+         nicht auf den gedruckten Aushang - nur auf der Kopie entfernt, das
+         Original auf der Seite zeigt sie unverändert weiter an. */
+      Array.prototype.forEach.call(clone.querySelectorAll(".pause-mark"),function(el){
+        el.parentNode&&el.parentNode.removeChild(el);
+      });
       function inlineStyle(src,dst){
         var cs=getComputedStyle(src);
         ["fill","stroke","color"].forEach(function(p){
@@ -711,7 +717,7 @@ function buildPDF(){
     doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
     doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]);
     doc.text(L.g.n+" TN",lx-2,mid+1,{align:"right"});
-    L.bs.forEach(function(b,k){
+    L.bs.forEach(function(b){
       var bx=LX(b.s), bw=Math.max(1.4,LX(b.e)-LX(b.s)), fcol=w?C.w:C.m;
       doc.setFillColor(fcol[0],fcol[1],fcol[2]); doc.setDrawColor(C.ac[0],C.ac[1],C.ac[2]); doc.setLineWidth(.15);
       doc.rect(bx,mid-4,bw,8,"FD");
@@ -722,20 +728,12 @@ function buildPDF(){
         doc.setTextColor(PDFCOL.muted[0],PDFCOL.muted[1],PDFCOL.muted[2]); doc.setFontSize(5);
         doc.text(fmt(b.s)+"-"+fmt(b.e),bx+1.4,mid+2.8,{maxWidth:bw-2});
       }
-      if(k===1){
-        var pt=pq.pauseTxt(L.g,L.bs), ok=pt.ok;
-        var xa=LX(L.bs[0].e)+.8, xb=bx-.8;
-        doc.setDrawColor(150,158,150); doc.setLineWidth(.25);
-        if(xb>xa+22){ doc.line(xa,mid,xb,mid); doc.setFontSize(5.4);
-          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+pt.txt,(xa+xb)/2,mid-1.2,{align:"center"}); }
-        else { doc.line(LX(L.bs[0].s)+.6,mid-5.4,bx-.6,mid-5.4); doc.setFontSize(5.4);
-          doc.setTextColor(ok?24:142,ok?96:47,ok?69:41); doc.text("Pause "+pt.txt,(LX(L.bs[0].s)+bx)/2,mid-6.6,{align:"center"}); }
-        doc.setTextColor(PDFCOL.ink[0],PDFCOL.ink[1],PDFCOL.ink[2]);
-      }
+      /* Keine Pausen-Pfeile/-Texte im PDF (Issue: Aushang braucht sie nicht) -
+         anders als on-screen (renderFlow()) bewusst nicht gezeichnet. */
     });
   });
   }
-  flowY=head("Wege der Startgruppen","Eine Zeile je Startgruppe · Pfeil = Pause zwischen den Runden");
+  flowY=head("Wege der Startgruppen","Eine Zeile je Startgruppe");
   flowPage=page;
   foot();
 
