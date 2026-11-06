@@ -1438,11 +1438,11 @@ body.editing{caret-color:var(--ink)}
     </div>
 
     <h3>Personen und ihre Teams</h3>
-    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf. Über die Spalte „Finale" lässt sich zusätzlich festlegen, wer im Finale welche Wertung sichert (z. B. Markus Körner für U15 weiblich) – unabhängig vom Quali-Team, taucht bei Finalquoten und auf den Klemmbrett-Karten auf.</p>
+    <p class="lede">Jede Person bekommt eine Kategorie und – wenn sie an einer Route steht – ein Team. Wer keinem Team zugeordnet ist (Buffet, Orga, Meldebüro), erscheint darunter in der eigenen Liste. Die Zuordnung taucht sofort in der Team-Tabelle oben und im PDF auf. Der Schalter „Call Zone" markiert Schiris/Sicherungspersonal, die zeitweise dort aushelfen – erscheint dann überall mit, wo die Person sonst auch auftaucht (Team-Zeitplan, Klemmbrett-Karten). Über die Spalte „Finale" lässt sich zusätzlich festlegen, wer im Finale welche Wertung sichert (z. B. Markus Körner für U15 weiblich) – unabhängig vom Quali-Team, taucht bei Finalquoten und auf den Klemmbrett-Karten auf.</p>
     <div class="scroller peo-catstats" id="peoCatStats"></div>
     <div class="att-filters" id="peoCatChips" role="group" aria-label="Personen nach Kategorie filtern"></div>
     <div class="tblwrap"><table id="peotab">
-      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th>Qualifizierung</th><th>Finale</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Kategorie</th><th>Team</th><th class="num">Springer</th><th class="num">Call Zone</th><th>Qualifizierung</th><th>Finale</th><th>Notiz</th><th class="email-col">E-Mail</th><th></th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="cfgbox">
